@@ -23,27 +23,15 @@ class UserService @Inject() (userDao:UserDao) extends IdentityService[User] {
   def find(id:UUID) = userDao.find(id)
   def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)
   def link(user:User, socialProfile:CommonSocialProfile) = {
-    val profile = toProfile(socialProfile)
+    val profile = Profile(socialProfile)
     if (user.profiles.exists(_.loginInfo == profile.loginInfo)) Future.successful(user) else userDao.link(user, profile)
   }
 
   def save(socialProfile:CommonSocialProfile) = {
-    val profile = toProfile(socialProfile)
+    val profile = Profile(socialProfile)
     userDao.find(profile.loginInfo).flatMap {
       case None => userDao.save(User(UUID.randomUUID(), List(profile)))
       case Some(user) => userDao.update(profile)
     }
   }
-
-  private def toProfile(p:CommonSocialProfile) = Profile(
-    loginInfo = p.loginInfo,
-    confirmed = true,
-    email = p.email,
-    firstName = p.firstName,
-    lastName = p.lastName,
-    fullName = p.fullName,
-    passwordInfo = None,
-    oauth1Info = None,
-    avatarUrl = p.avatarURL
-  )
 }

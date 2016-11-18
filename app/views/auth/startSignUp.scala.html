@@ -23,7 +23,23 @@
       @b3.text(signUpForm("lastName"), 
         '_label -> Messages("signup.lastName"), 
         'placeholder -> Messages("signup.lastName"))
-      
+
+      @b3.text(signUpForm("mobilePhone"),
+        '_label -> Messages("signup.mobilePhone"),
+        'placeholder -> Messages("signup.mobilePhone"))
+
+      @b3.date(signUpForm("birthday"),
+        '_label -> Messages("signup.birthday"),
+        'placeholder -> Messages("signup.birthday"))
+
+      @b3.select(signUpForm("sex"),
+        options = Seq(
+          "male"->Messages("signup.sex.male"),
+          "female"->Messages("signup.sex.female"),
+          "other"->Messages("signup.sex.other")
+        ),
+        '_label -> Messages("signup.sex"))
+
       @b3.password(signUpForm("password.password1"), 
         '_label -> Messages("signup.password"), 
         'placeholder -> Messages("signup.password"))

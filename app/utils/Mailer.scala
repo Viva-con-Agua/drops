@@ -34,8 +34,8 @@ class Mailer @Inject() (configuration:Configuration, mailer:MailerClient) {
   def welcome(profile:Profile, link:String)(implicit messages:Messages) = {
     sendEmailAsync(profile.email.get)(
       subject = Messages("mail.welcome.subject"), 
-      bodyHtml = Some(views.html.mails.welcome(profile.firstName.get, link).toString),
-      bodyText = Some(views.html.mails.welcomeText(profile.firstName.get, link).toString)
+      bodyHtml = Some(views.html.mails.welcome(profile.supporter.firstName.get, link).toString),
+      bodyText = Some(views.html.mails.welcomeText(profile.supporter.firstName.get, link).toString)
     )
   }
 

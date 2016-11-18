@@ -1,41 +1,53 @@
 package controllers
 
-import java.util.UUID
+import java.util.{Date, UUID}
 import javax.inject.Inject
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
 import net.ceedubs.ficus.Ficus._
-
 import com.mohiva.play.silhouette.api.Authenticator.Implicits._
-import com.mohiva.play.silhouette.api.{Environment,LoginInfo,Silhouette}
+import com.mohiva.play.silhouette.api.{Environment, LoginInfo, Silhouette}
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.services.AvatarService
-import com.mohiva.play.silhouette.api.util.{Credentials,PasswordHasher}
+import com.mohiva.play.silhouette.api.util.{Credentials, PasswordHasher}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.exceptions.IdentityNotFoundException
 import com.mohiva.play.silhouette.impl.providers._
-
 import play.api._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.mvc._
-import play.api.i18n.{I18nSupport,MessagesApi,Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
-
-import models.{Profile,User,UserToken}
-import services.{UserService,UserTokenService}
+import models.{Profile, User, UserToken}
+import services.{UserService, UserTokenService}
 import utils.Mailer
-
 import org.joda.time.DateTime
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object AuthForms {
 
+  val allNumbers = """\d{4}[-/\s]?\d*""".r//"""(\d{4})-(\d*)""".r
+  val sex = """male|female|other""".r
+
+  def telephoneCheck(implicit messages:Messages): Constraint[String] = Constraint("constraints.telephone")(
+    _ match {
+      case allNumbers() => Valid
+      case _ => Invalid(Seq(ValidationError(Messages("error.telphone.wrongFormat"))))
+    }
+  )
+  def sexCheck(implicit messages:Messages): Constraint[String] = Constraint("constraints.sex")(
+    _ match {
+      case sex() => Valid
+      case _ => Invalid(Seq(ValidationError(Messages("error.sex.notAllowed"))))
+    }
+  )
+
   // Sign up
-  case class SignUpData(email:String, password:String, firstName:String, lastName:String)
+  case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, birthday:Date, sex:String)
   def signUpForm(implicit messages:Messages) = Form(mapping(
       "email" -> email,
       "password" -> tuple(
@@ -43,10 +55,13 @@ object AuthForms {
         "password2" -> nonEmptyText
       ).verifying(Messages("error.passwordsDontMatch"), password => password._1 == password._2),
       "firstName" -> nonEmptyText,
-      "lastName" -> nonEmptyText
+      "lastName" -> nonEmptyText,
+      "mobilePhone" -> nonEmptyText(minLength = 5).verifying(telephoneCheck),
+      "birthday" -> date,
+      "sex" -> nonEmptyText.verifying(sexCheck)
     )
-    ((email, password, firstName, lastName) => SignUpData(email, password._1, firstName, lastName))
-    (signUpData => Some((signUpData.email, ("",""), signUpData.firstName, signUpData.lastName)))
+    ((email, password, firstName, lastName, mobilePhone, birthday, sex) => SignUpData(email, password._1, firstName, lastName, mobilePhone, birthday, sex))
+    (signUpData => Some((signUpData.email, ("",""), signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.birthday, signUpData.sex)))
   )
 
   // Sign in
@@ -100,16 +115,17 @@ class Auth @Inject() (
             Future.successful(Redirect(routes.Auth.startSignUp()).flashing(
               "error" -> Messages("error.userExists", signUpData.email)))
           case None => 
-            val profile = Profile(
-              loginInfo = loginInfo, 
-              confirmed = false,
-              email = Some(signUpData.email), 
-              firstName = Some(signUpData.firstName), 
-              lastName = Some(signUpData.lastName), 
-              fullName = Some(s"${signUpData.firstName} ${signUpData.lastName}"),
-              passwordInfo = None, 
-              oauth1Info = None,
-              avatarUrl = None)
+//            val profile = Profile(
+//              loginInfo = loginInfo,
+//              confirmed = false,
+//              email = Some(signUpData.email),
+//              firstName = Some(signUpData.firstName),
+//              lastName = Some(signUpData.lastName),
+//              fullName = Some(s"${signUpData.firstName} ${signUpData.lastName}"),
+//              passwordInfo = None,
+//              oauth1Info = None,
+//              avatarUrl = None)
+            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.birthday, signUpData.sex)
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
               user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatarUrl = avatarUrl))))

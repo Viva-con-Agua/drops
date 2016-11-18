@@ -25,19 +25,31 @@
         <div class="col-md-12">
           <div class="row">
             <p class="col-md-6 strong">@Messages("profile.firstName")</p>
-            <p class="col-md-6">@profile.firstName.getOrElse(Messages("profile.none"))</p>
+            <p class="col-md-6">@profile.supporter.firstName.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
             <p class="col-md-6 strong">@Messages("profile.lastName")</p>
-            <p class="col-md-6">@profile.lastName.getOrElse(Messages("profile.none"))</p>
+            <p class="col-md-6">@profile.supporter.lastName.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
             <p class="col-md-6 strong">@Messages("profile.fullName")</p>
-            <p class="col-md-6">@loggedUser.fullName(loginInfo).getOrElse(Messages("profile.none"))</p>
+            <p class="col-md-6">@profile.supporter.fullName.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
             <p class="col-md-6 strong">@Messages("profile.email")</p>
             <p class="col-md-6">@profile.email.getOrElse(Messages("profile.none"))</p>
+          </div>
+          <div class="row">
+            <p class="col-md-6 strong">@Messages("profile.mobilePhone")</p>
+            <p class="col-md-6">@profile.supporter.mobilePhone.getOrElse(Messages("profile.none"))</p>
+          </div>
+          <div class="row">
+            <p class="col-md-6 strong">@Messages("profile.birthday")</p>
+            <p class="col-md-6">@profile.supporter.birthString.getOrElse(Messages("profile.none"))</p>
+          </div>
+          <div class="row">
+            <p class="col-md-6 strong">@Messages("profile.sex")</p>
+            <p class="col-md-6">@profile.supporter.sex.getOrElse(Messages("profile.none"))</p>
           </div>
         </div>
       </div>

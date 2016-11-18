@@ -1,5 +1,7 @@
 app.title=Drops
 
+date.format=YYYY-MM-dd
+
 navbar.welcome=Drops
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
@@ -32,6 +34,9 @@ profile.firstName=First name
 profile.lastName=Last name
 profile.fullName=Full name
 profile.email=Email
+profile.mobilePhone=Mobile Phone
+profile.birthday=Birthday
+profile.sex=Sex
 profile.linked=Linked authentication providers
 profile.available=Available authentication providers
 profile.none=None
@@ -41,6 +46,12 @@ signup.legend=Sign up for a new account
 signup.email=Email
 signup.firstName=First name
 signup.lastName=Last name
+signup.mobilePhone=Mobile phone
+signup.birthday=Birthday
+signup.sex=Sex
+signup.sex.male=Male
+signup.sex.female=Female
+signup.sex.other=other
 signup.password=Password
 signup.verify=Verify password
 signup.submit=Sign up
@@ -88,6 +99,8 @@ error.onlyHttpsAllowed=Only https allowed!
 error.onlyHttpsAllowedMsg=Only https access is allowed. Try <a href={0}>{0}</a>.
 error.profileError=Error getting profile data
 error.profileUnauth=Can't access profile information: must authenticate first.
+error.sex.notAllowed=Given sexuality is unknown, please enter a known one (male, female, other).
+error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123456 or +176/123456
 
 mail.welcome.subject=Welcome
 mail.welcome.hi=Hello, {0}!
