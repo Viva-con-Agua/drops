@@ -1,9 +1,11 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 @import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
 
-@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry)(implicit request:RequestHeader,messages:Messages)
+@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[Geography])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
+
+@implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
 
 @views.html.templates.mainApp(Messages("profile.title"), tab = "profile", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
   @request.flash.get("error").map { msg =>
@@ -51,6 +53,33 @@
             <p class="col-md-6 strong">@Messages("profile.sex")</p>
             <p class="col-md-6">@profile.supporter.sex.getOrElse(Messages("profile.none"))</p>
           </div>
+          @b3.form(routes.Application.updateGeography) {
+            <fieldset>
+              <legend>@Messages("geography.legend")</legend>
+              @helper.CSRF.formField
+
+              @b3.text(geoForm("country"),
+                '_label -> Messages("geography.country"),
+                'placeholder -> Messages("geography.country"),
+                'autofocus -> true,
+                'value -> profile.supporter.geography.map[String](_.country).getOrElse(None)
+              )
+
+              @b3.text(geoForm("city"),
+                '_label -> Messages("geography.city"),
+                'placeholder -> Messages("geography.city"),
+                'value -> profile.supporter.geography.map[String](_.city).getOrElse(None)
+              )
+
+              @b3.checkbox(geoForm("active"),
+                '_text -> Messages("geography.active"),
+                'placeholder -> Messages("geography.active"),
+                'checked -> profile.supporter.geography.map(_.active).getOrElse(false))
+              @b3.submit('class -> "btn btn-primary") {
+                @Messages("geography.submit")
+              }
+            </fieldset>
+          }
         </div>
       </div>
 

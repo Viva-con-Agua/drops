@@ -21,6 +21,7 @@ trait UserDao {
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
   def save(user:User):Future[User]
+  def replace(user:User):Future[User]
   def confirm(loginInfo:LoginInfo):Future[User]
   def link(user:User, profile:Profile):Future[User]
   def update(profile:Profile):Future[User]
@@ -40,6 +41,11 @@ class MongoUserDao extends UserDao {
 
   def save(user:User):Future[User] =
     users.insert(user).map(_ => user)
+
+  def replace(user: User): Future[User] =
+    users.remove(Json.obj("id" -> user.id)).flatMap[User](wr => wr.n match {
+      case 1 if wr.ok => users.insert(user).map[User](_ => user)
+    })
 
   def confirm(loginInfo:LoginInfo):Future[User] = for {
     _ <- users.update(Json.obj(

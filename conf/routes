@@ -1,6 +1,7 @@
 # Application
 GET     /                           controllers.Application.index
 GET     /profile                    controllers.Application.profile
+POST    /geo                        controllers.Application.updateGeography
 
 # Rest api
 GET      /rest/profile              controllers.RestApi.profile

@@ -20,6 +20,7 @@ import models.{User,Profile}
 class UserService @Inject() (userDao:UserDao) extends IdentityService[User] {
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = userDao.save(user)
+  def update(updatedUser: User) = userDao.replace(updatedUser)
   def find(id:UUID) = userDao.find(id)
   def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)
   def link(user:User, socialProfile:CommonSocialProfile) = {

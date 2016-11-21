@@ -109,6 +109,10 @@ object Profile {
 }
 
 case class User(id: UUID, profiles: List[Profile]) extends Identity {
+  def updateProfile(updatedProfile: Profile) = User(this.id, profiles.map(p => p.loginInfo match {
+    case updatedProfile.loginInfo => updatedProfile
+    case _ => p
+  }))
   def profileFor(loginInfo:LoginInfo) = profiles.find(_.loginInfo == loginInfo)
   def fullName(loginInfo:LoginInfo) = profileFor(loginInfo).flatMap(_.supporter.fullName)
 }

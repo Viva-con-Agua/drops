@@ -60,8 +60,12 @@ object AuthForms {
       "birthday" -> date,
       "sex" -> nonEmptyText.verifying(sexCheck)
     )
-    ((email, password, firstName, lastName, mobilePhone, birthday, sex) => SignUpData(email, password._1, firstName, lastName, mobilePhone, birthday, sex))
-    (signUpData => Some((signUpData.email, ("",""), signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.birthday, signUpData.sex)))
+    (
+      (email, password, firstName, lastName, mobilePhone, birthday, sex) =>
+        SignUpData(email, password._1, firstName, lastName, mobilePhone, birthday, sex)
+    )
+    (signUpData =>
+      Some((signUpData.email, ("",""), signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.birthday, signUpData.sex)))
   )
 
   // Sign in

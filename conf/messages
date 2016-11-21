@@ -109,3 +109,10 @@ mail.welcome.instructions=Thanks for signing up. Just go to the following url to
 mail.reset.subject=Reset password
 mail.reset.hi=Hello, {0}!
 mail.reset.instructions=We have received a request to reset your password. Just go to the following url to proceed.
+
+geography.legend=Geography
+geography.country=Country
+geography.city=City
+geography.active=Active Member of the crew?
+geography.submit=Speichern
+geography.update.noProfileForLogin=Internal Server Error: Found no profile for the current user.
