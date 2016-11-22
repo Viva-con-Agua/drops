@@ -23,21 +23,21 @@ class Application @Inject() (
   }
 
   def profile = SecuredAction { implicit request =>
-    Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, GeographyForms.geoForm))
+    Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm))
   }
 
-  def updateGeography = SecuredAction.async { implicit request =>
-    GeographyForms.geoForm.bindFromRequest.fold(
+  def updateCrew = SecuredAction.async { implicit request =>
+    CrewForms.geoForm.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm))),
-      geoData => {
+      crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
-            val updatedSupporter = profile.supporter.copy(geography = Some(geoData))
+            val updatedSupporter = profile.supporter.copy(crew = Some(crewData))
             val updatedProfile = profile.copy(supporter = updatedSupporter)
             userService.update(request.identity.updateProfile(updatedProfile))
             Future.successful(Redirect("/profile"))
           }
-          case None =>  Future.successful(InternalServerError(Messages("geography.update.noProfileForLogin")))
+          case None =>  Future.successful(InternalServerError(Messages("crew.update.noProfileForLogin")))
         }
       }
     )

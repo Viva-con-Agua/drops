@@ -7,13 +7,13 @@ package controllers
 import play.api._
 import play.api.data.Form
 import play.api.data.Forms._
-import models.Geography
+import models.Crew
 
-object GeographyForms {
+object CrewForms {
 
   def geoForm = Form(mapping(
     "country" -> nonEmptyText,
     "city" -> nonEmptyText,
     "active" -> boolean
-  )(Geography.apply)(Geography.unapply))
+  )(Crew.apply)(Crew.unapply))
 }

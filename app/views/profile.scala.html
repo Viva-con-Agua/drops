@@ -1,7 +1,7 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 @import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
 
-@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[Geography])(implicit request:RequestHeader,messages:Messages)
+@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[Crew])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
@@ -53,30 +53,30 @@
             <p class="col-md-6 strong">@Messages("profile.sex")</p>
             <p class="col-md-6">@profile.supporter.sex.getOrElse(Messages("profile.none"))</p>
           </div>
-          @b3.form(routes.Application.updateGeography) {
+          @b3.form(routes.Application.updateCrew) {
             <fieldset>
-              <legend>@Messages("geography.legend")</legend>
+              <legend>@Messages("crew.legend")</legend>
               @helper.CSRF.formField
 
               @b3.text(geoForm("country"),
-                '_label -> Messages("geography.country"),
-                'placeholder -> Messages("geography.country"),
+                '_label -> Messages("crew.country"),
+                'placeholder -> Messages("crew.country"),
                 'autofocus -> true,
-                'value -> profile.supporter.geography.map[String](_.country).getOrElse(None)
+                'value -> profile.supporter.crew.map[String](_.country).getOrElse(None)
               )
 
               @b3.text(geoForm("city"),
-                '_label -> Messages("geography.city"),
-                'placeholder -> Messages("geography.city"),
-                'value -> profile.supporter.geography.map[String](_.city).getOrElse(None)
+                '_label -> Messages("crew.city"),
+                'placeholder -> Messages("crew.city"),
+                'value -> profile.supporter.crew.map[String](_.city).getOrElse(None)
               )
 
               @b3.checkbox(geoForm("active"),
-                '_text -> Messages("geography.active"),
-                'placeholder -> Messages("geography.active"),
-                'checked -> profile.supporter.geography.map(_.active).getOrElse(false))
+                '_text -> Messages("crew.active"),
+                'placeholder -> Messages("crew.active"),
+                'checked -> profile.supporter.crew.map(_.active).getOrElse(false))
               @b3.submit('class -> "btn btn-primary") {
-                @Messages("geography.submit")
+                @Messages("crew.submit")
               }
             </fieldset>
           }
