@@ -14,6 +14,7 @@ This is a user management component for a micro-component application, supportin
 ChangeLog
 =========
 
-## Version 0.2.0 (2016-11-22)
+## Version 0.3.0 (2016-11-22)
+*  [[F] #3 - Users login](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/3)
 *  [[F] #2 - Users are able to register themselves](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/2)
 *  [[F] #1 - Represent a user](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/1)
