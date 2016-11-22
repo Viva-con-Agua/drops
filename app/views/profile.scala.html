@@ -46,6 +46,10 @@
             <p class="col-md-6">@profile.supporter.mobilePhone.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
+            <p class="col-md-6 strong">@Messages("profile.placeOfResidence")</p>
+            <p class="col-md-6">@profile.supporter.placeOfResidence.getOrElse(Messages("profile.none"))</p>
+          </div>
+          <div class="row">
             <p class="col-md-6 strong">@Messages("profile.birthday")</p>
             <p class="col-md-6">@profile.supporter.birthString.getOrElse(Messages("profile.none"))</p>
           </div>

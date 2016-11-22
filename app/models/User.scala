@@ -17,6 +17,7 @@ case class Supporter(
   fullName: Option[String],
   username: Option[String],
   mobilePhone: Option[String],
+  placeOfResidence: Option[String],
   birthday: Option[Long],
   sex: Option[String],
   crew: Option[Crew]
@@ -33,14 +34,14 @@ case class Supporter(
 }
 
 object Supporter {
-  def apply(firstName: String, lastName: String, mobilePhone: String, birthday: Date, sex : String) : Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(birthday.getTime()), Some(sex), None)
+  def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None)
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
-    Supporter(firstName, lastName, fullName, None, None, None, None, None)
+    Supporter(firstName, lastName, fullName, None, None, None, None, None, None)
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew])) : Supporter =
-    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8)
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew])) : Supporter =
+    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
   implicit val supporterWrites : OWrites[Supporter] = (
     (JsPath \ "firstName").writeNullable[String] and
@@ -48,6 +49,7 @@ object Supporter {
       (JsPath \ "fullName").writeNullable[String] and
       (JsPath \ "username").writeNullable[String] and
       (JsPath \ "mobilePhone").writeNullable[String] and
+      (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
       (JsPath \ "crew").writeNullable[Crew]
@@ -58,6 +60,7 @@ object Supporter {
       (JsPath \ "fullName").readNullable[String] and
       (JsPath \ "username").readNullable[String] and
       (JsPath \ "mobilePhone").readNullable[String] and
+      (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
       (JsPath \ "crew").readNullable[Crew]
@@ -76,9 +79,9 @@ case class Profile(
 
 object Profile {
 
-  def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, birthday: Date, sex : String) : Profile =
+  def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Profile =
     // confirmation is false by default, because this apply function is designed for using it during the default sign up process
-    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, birthday, sex), None, None, None)
+    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, None)
 
   def apply(tuple: (LoginInfo, Boolean, Option[String], Supporter, Option[PasswordInfo], Option[OAuth1Info], Option[String])) : Profile =
     Profile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)

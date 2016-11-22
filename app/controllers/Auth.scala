@@ -47,7 +47,7 @@ object AuthForms {
   )
 
   // Sign up
-  case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, birthday:Date, sex:String)
+  case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, placeOfResidence: String, birthday:Date, sex:String)
   def signUpForm(implicit messages:Messages) = Form(mapping(
       "email" -> email,
       "password" -> tuple(
@@ -57,15 +57,16 @@ object AuthForms {
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
       "mobilePhone" -> nonEmptyText(minLength = 5).verifying(telephoneCheck),
+      "placeOfResidence" -> nonEmptyText,
       "birthday" -> date,
       "sex" -> nonEmptyText.verifying(sexCheck)
     )
     (
-      (email, password, firstName, lastName, mobilePhone, birthday, sex) =>
-        SignUpData(email, password._1, firstName, lastName, mobilePhone, birthday, sex)
+      (email, password, firstName, lastName, mobilePhone, placeOfResidence, birthday, sex) =>
+        SignUpData(email, password._1, firstName, lastName, mobilePhone, placeOfResidence, birthday, sex)
     )
     (signUpData =>
-      Some((signUpData.email, ("",""), signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.birthday, signUpData.sex)))
+      Some((signUpData.email, ("",""), signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex)))
   )
 
   // Sign in
@@ -129,7 +130,7 @@ class Auth @Inject() (
 //              passwordInfo = None,
 //              oauth1Info = None,
 //              avatarUrl = None)
-            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.birthday, signUpData.sex)
+            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex)
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
               user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatarUrl = avatarUrl))))
