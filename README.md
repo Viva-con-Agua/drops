@@ -14,4 +14,5 @@ This is a user management component for a micro-component application, supportin
 ChangeLog
 =========
 
-**Todo**
+## Version 0.1.0
+*  [[F] #1 - Represent a user](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/1)
