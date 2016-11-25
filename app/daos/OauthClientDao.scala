@@ -4,7 +4,10 @@ import scala.concurrent.Future
 import models.OauthClient
 import play.api.Play._
 import play.api.libs.json.Json
+import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.modules.reactivemongo.ReactiveMongoApi
+import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 
 /**

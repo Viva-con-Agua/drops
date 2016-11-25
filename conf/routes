@@ -22,6 +22,9 @@ POST    /auth/reset/:token          controllers.Auth.handleResetPassword(token:S
 
 GET     /auth/social/:providerId    controllers.Auth.socialAuthenticate(providerId:String)
 
+# OAuth 2 Server
+POST    /oauth2/access_token        controllers.OAuth2Controller.accessToken
+
 # Public assets
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 GET     /webjars/*file              controllers.WebJarAssets.at(file)
