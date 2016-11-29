@@ -6,6 +6,9 @@ POST    /crew                       controllers.Application.updateCrew
 # Rest api
 GET      /rest/profile              controllers.RestApi.profile
 
+# OAuth2 Rest API
+GET     /oauth2/rest/profile        controllers.Oauth2RestApi.profile
+
 # Authentication
 GET     /auth/signup                controllers.Auth.startSignUp
 POST    /auth/signup                controllers.Auth.handleStartSignUp
@@ -23,7 +26,9 @@ POST    /auth/reset/:token          controllers.Auth.handleResetPassword(token:S
 GET     /auth/social/:providerId    controllers.Auth.socialAuthenticate(providerId:String)
 
 # OAuth 2 Server
-POST    /oauth2/access_token        controllers.OAuth2Controller.accessToken
+GET     /oauth2/access_token        controllers.OAuth2Controller.accessToken
+GET     /oauth2/register            controllers.Application.registration
+POST    /oauth2/register            controllers.Application.registerOAuth2Client
 
 # Public assets
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
