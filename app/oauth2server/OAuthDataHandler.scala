@@ -6,7 +6,7 @@ import com.mohiva.play.silhouette.api.util.Credentials
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import daos.{OauthClientDao, OauthTokenDao}
+import daos.{OauthClientDao, OauthCodeDao, OauthTokenDao}
 import models.{OauthToken, User}
 import play.api.i18n.Messages
 import play.api.Play.current
@@ -22,6 +22,7 @@ import scalaoauth2.provider._
   */
 class OAuthDataHandler @Inject() (
   oauthTokenDao: OauthTokenDao,
+  oauthCodeDao: OauthCodeDao,
   oauthClientDao: OauthClientDao,
   userService: UserService,
   credentialsProvider: CredentialsProvider
@@ -62,19 +63,18 @@ class OAuthDataHandler @Inject() (
   def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[User]]] =
     oauthTokenDao.findByRefresh(refreshToken).flatMap(_ match {
       case Some(token) => userService.find(token.userId).map( _.map(
-        user => AuthInfo(user, Some(token.client.id), token.accessToken.scope, Some(token.client.redirectUri))
+        user => AuthInfo(user, Some(token.client.id), token.accessToken.scope, token.client.redirectUri)
       ))
       case _ => Future.successful(None)
     })
 
 
   /**
-    * Currently we do not support Authorization Code Grant, so we don't need to implement this method.
     * @param token
     * @return
     */
   def deleteAuthCode(code: String): Future[Unit] = {
-    // TODO!
+    oauthCodeDao.delete(code)
     Future.successful(())
   }
 
@@ -107,8 +107,10 @@ class OAuthDataHandler @Inject() (
     * @return
     */
   def findAuthInfoByCode(code: String): Future[Option[AuthInfo[User]]] = {
-    // TODO!
-    Future.successful(None)
+    oauthCodeDao.find(code).map(_.map(code => {
+      // Todo: How to get the scope?
+      AuthInfo(code.user, Some(code.client.id), None, code.client.redirectUri)
+    }))
   }
 
   def findAccessToken(token: String): Future[Option[AccessToken]] =
@@ -117,7 +119,7 @@ class OAuthDataHandler @Inject() (
   def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[User]]] =
     oauthTokenDao.find(accessToken).flatMap(_ match {
       case Some(token) => userService.find(token.userId).map(_.map(user =>
-        AuthInfo(user, Some(token.client.id), token.accessToken.scope, Some(token.client.redirectUri))
+        AuthInfo(user, Some(token.client.id), token.accessToken.scope, token.client.redirectUri)
       ))
       case _ => Future.successful(None)
     })

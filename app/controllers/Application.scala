@@ -63,15 +63,16 @@ class Application @Inject() (
 }
 
 object OAuth2ClientForms {
-  case class OAuth2ClientRegister(id:String, secret: String, redirectUri: String, grantTypes: Set[String]) {
-    def toClient = OauthClient(id, secret, redirectUri, grantTypes)
+  case class OAuth2ClientRegister(id:String, secret: String, redirectUri: Option[String], codeRedirectUri: String, grantTypes: Set[String]) {
+    def toClient = OauthClient(id, secret, redirectUri, codeRedirectUri, grantTypes)
   }
   def register = Form(mapping(
     "id" -> nonEmptyText,
     "secret" -> nonEmptyText,
-    "redirectUri" -> nonEmptyText,
+    "redirectUri" -> optional(text),
+    "codeRedirectUri" -> nonEmptyText,
     "grantTypes" -> nonEmptyText
   )
-  ((id, secret, redirectUri, grantTypes) => OAuth2ClientRegister(id, secret, redirectUri, grantTypes.split(",").toSet))
-  ((rawData) => Some((rawData.id, rawData.secret, rawData.redirectUri, rawData.grantTypes.mkString(",")))))
+  ((id, secret, redirectUri, codeRedirectUri, grantTypes) => OAuth2ClientRegister(id, secret, redirectUri, codeRedirectUri, grantTypes.split(",").toSet))
+  ((rawData) => Some((rawData.id, rawData.secret, rawData.redirectUri, rawData.codeRedirectUri, rawData.grantTypes.mkString(",")))))
 }
