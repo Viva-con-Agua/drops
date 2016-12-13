@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
   "com.adrianhurt" %% "play-bootstrap" % "1.1-P24-B3",
   "com.mohiva" %% "play-silhouette-testkit" % "3.0.0" % "test",
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.7.play24",
+  "com.nulab-inc" %% "play2-oauth2-provider" % "0.16.1",
   specs2 % Test
 )
 

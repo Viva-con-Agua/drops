@@ -6,6 +6,7 @@ navbar.welcome=Drops
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
 navbar.profile=My Profile
+navbar.oauth.register=New Oauth2 Client
 navbar.username=Hello, {0}!
 navbar.signout=Sign Out
 navbar.signin=Sign In
@@ -118,3 +119,16 @@ crew.city=City
 crew.active=Active Member of the crew?
 crew.submit=Speichern
 crew.update.noProfileForLogin=Internal Server Error: Found no profile for the current user.
+
+oauth2server.clientId.notFound=No client application is registered with the given client ID.
+oauth2server.clientId.missing=No client ID is given.
+
+oauth2.register.title=Register Oauth2 Client
+oauth2.register.legend=Register Oauth2 Client
+oauth2.register.id=Identifier
+oauth2.register.secret=Secret
+oauth2.register.redirectUri=URI for Redirect
+oauth2.register.codeRedirectUri=URI for Code Flow
+oauth2.register.grantTypes.label=Grant types
+oauth2.register.grantTypes.placeholder=Use separation by Komma
+oauth2.register.submit=Save new client
