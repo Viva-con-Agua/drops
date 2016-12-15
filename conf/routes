@@ -3,6 +3,10 @@ GET     /                                                   controllers.Applicat
 GET     /profile                                            controllers.Application.profile
 POST    /crew                                               controllers.Application.updateCrew
 
+# Roles
+GET     /roles                                              controllers.Roles.index
+POST    /roles/update                                       controllers.Roles.update
+
 # Rest api
 GET      /rest/profile                                      controllers.RestApi.profile
 

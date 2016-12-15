@@ -25,6 +25,7 @@ trait UserDao {
   def confirm(loginInfo:LoginInfo):Future[User]
   def link(user:User, profile:Profile):Future[User]
   def update(profile:Profile):Future[User]
+  def list : Future[List[User]]
 }
 
 class MongoUserDao extends UserDao {
@@ -73,4 +74,6 @@ class MongoUserDao extends UserDao {
     ))
     user <- find(profile.loginInfo)
   } yield user.get
+
+  def list = users.find(Json.obj()).cursor[User]().collect[List]()
 }
