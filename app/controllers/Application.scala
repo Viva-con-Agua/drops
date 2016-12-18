@@ -9,11 +9,12 @@ import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import play.api._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import models.{OauthClient, User}
+import models.{OauthClient, RoleAdmin, RoleEmployee, User}
 import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
 import daos.OauthClientDao
+import utils.WithRole
 
 class Application @Inject() (
   oauth2ClientDao: OauthClientDao,
@@ -47,11 +48,11 @@ class Application @Inject() (
     )
   }
 
-  def registration = SecuredAction { implicit request =>
+  def registration = SecuredAction(WithRole(RoleAdmin) || WithRole(RoleEmployee)) { implicit request =>
     Ok(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register))
   }
 
-  def registerOAuth2Client = SecuredAction.async { implicit request =>
+  def registerOAuth2Client = SecuredAction(WithRole(RoleAdmin) || WithRole(RoleEmployee)).async { implicit request =>
     OAuth2ClientForms.register.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm))),
       registerData => {
