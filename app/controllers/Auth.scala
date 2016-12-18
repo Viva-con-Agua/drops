@@ -1,5 +1,6 @@
 package controllers
 
+import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 import javax.inject.Inject
 
@@ -22,7 +23,7 @@ import play.api.data.validation.Constraints._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
-import models.{Profile, User, UserToken}
+import models.{Profile, RoleAdmin, User, UserToken}
 import services.{UserService, UserTokenService}
 import utils.Mailer
 import org.joda.time.DateTime
@@ -102,6 +103,35 @@ class Auth @Inject() (
   mailer: Mailer) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
+
+  def init = Action.async { implicit request => {
+    val config = configuration.getConfig("admin.default")
+    userService.retrieve(LoginInfo(CredentialsProvider.ID, config.get.getString("email").get)).flatMap(_ match {
+      case Some(user) => Future.successful(Redirect("/"))
+      case None => {
+        val df = new SimpleDateFormat("yyyy-mm-dd")
+        val loginInfo = LoginInfo(CredentialsProvider.ID, config.get.getString("email").get)
+        val profile = Profile(
+          loginInfo,
+          config.get.getString("email").get,
+          config.get.getString("name.first").get,
+          config.get.getString("name.last").get,
+          config.get.getString("mobilephone").get,
+          config.get.getString("placeOfResidence").get,
+          df.parse(config.get.getString("birthday").get),
+          config.get.getString("sex").get
+        )
+        for {
+          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatarUrl = None)), roles = Set(RoleAdmin)))
+          _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(config.get.getString("password").get))
+          token <- userTokenService.save(UserToken.create(user.id, config.get.getString("email").get, true))
+        } yield {
+          mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
+          Ok(views.html.auth.finishSignUp(profile))
+        }
+      }
+    })
+  }}
 
   def startSignUp = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
