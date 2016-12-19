@@ -7,12 +7,14 @@
     <li class="@("active".when(tab == "index"))"><a href="@routes.Application.index">@Messages("navbar.index")</a></li>
     @if(loggedUser.isDefined) {
       <li class="@("active".when(tab == "profile"))"><a href="@routes.Application.profile">@Messages("navbar.profile")</a></li>
-      <li class="@("active".when(tab == "oauth-register"))"><a href="@routes.Application.registration">@Messages("navbar.oauth.register")</a></li>
-      <li class="@("active".when(tab == "roles"))"><a href="@routes.Roles.index">@Messages("navbar.roles")</a></li>
+      @if(loggedUser.map((u) => u.hasRole(RoleAdmin) || u.hasRole(RoleEmployee)).getOrElse(false)) {
+        <li class="@("active".when(tab == "oauth-register"))"><a href="@routes.Application.registration">@Messages("navbar.oauth.register")</a></li>
+      }
+      @if(loggedUser.map((u) => u.hasRole(RoleAdmin)).getOrElse(false)) {
+        <li class="@("active".when(tab == "roles"))"><a href="@routes.Roles.index">@Messages("navbar.roles")</a></li>
+      }
     } else {
       <li class="disabled"><a>@Messages("navbar.profile")</a></li>
-      <li class="disabled"><a>@Messages("navbar.oauth.register")</a></li>
-      <li class="disabled"><a>@Messages("navbar.roles")</a></li>
     }
   </ul>
   <ul class="nav navbar-nav navbar-right">

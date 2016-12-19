@@ -119,6 +119,7 @@ case class User(id: UUID, profiles: List[Profile], roles: Set[Role] = Set(RoleSu
   def profileFor(loginInfo:LoginInfo) = profiles.find(_.loginInfo == loginInfo)
   def fullName(loginInfo:LoginInfo) = profileFor(loginInfo).flatMap(_.supporter.fullName)
   def setRoles(roles : Set[Role]) = this.copy(roles = roles)
+  def hasRole(role: Role) = this.roles.contains(role)
 }
 
 object User {

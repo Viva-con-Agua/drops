@@ -14,7 +14,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
 import daos.OauthClientDao
-import utils.WithRole
+import utils.{WithAlternativeRoles, WithRole}
 
 class Application @Inject() (
   oauth2ClientDao: OauthClientDao,
@@ -48,11 +48,11 @@ class Application @Inject() (
     )
   }
 
-  def registration = SecuredAction(WithRole(RoleAdmin) || WithRole(RoleEmployee)) { implicit request =>
+  def registration = SecuredAction(WithAlternativeRoles(RoleAdmin, RoleEmployee)) { implicit request =>
     Ok(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register))
   }
 
-  def registerOAuth2Client = SecuredAction(WithRole(RoleAdmin) || WithRole(RoleEmployee)).async { implicit request =>
+  def registerOAuth2Client = SecuredAction(WithAlternativeRoles(RoleAdmin, RoleEmployee)).async { implicit request =>
     OAuth2ClientForms.register.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm))),
       registerData => {
