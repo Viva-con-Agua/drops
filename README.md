@@ -19,7 +19,8 @@ Additionally the same can be done for crews. The route that should be used is <c
 ChangeLog
 =========
 
-## Version 0.6.0 (2016-12-19)
+## Version 0.7.0 (2016-12-19)
+*  [[F] #8 - Different groups](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/8)
 *  [[F] #11 - Configurable geography](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/11)
 *  [[F] #7 - Different roles](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/7)
 *  [[F] #4 - Oauth 2 provider](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/4)
