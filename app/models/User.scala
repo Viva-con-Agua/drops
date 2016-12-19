@@ -20,7 +20,7 @@ case class Supporter(
   placeOfResidence: Option[String],
   birthday: Option[Long],
   sex: Option[String],
-  crew: Option[Crew]
+  crew: Option[CrewSupporter]
 ) {
   def birthString(implicit messages: Messages): Option[String] = this.birthday match {
     case Some(l) => {
@@ -40,7 +40,7 @@ object Supporter {
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
     Supporter(firstName, lastName, fullName, None, None, None, None, None, None)
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew])) : Supporter =
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewSupporter])) : Supporter =
     Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
   implicit val supporterWrites : OWrites[Supporter] = (
@@ -52,7 +52,7 @@ object Supporter {
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
-      (JsPath \ "crew").writeNullable[Crew]
+      (JsPath \ "crew").writeNullable[CrewSupporter]
     )(unlift(Supporter.unapply))
   implicit val supporterReads : Reads[Supporter] = (
       (JsPath \ "firstName").readNullable[String] and
@@ -63,7 +63,7 @@ object Supporter {
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
-      (JsPath \ "crew").readNullable[Crew]
+      (JsPath \ "crew").readNullable[CrewSupporter]
     ).tupled.map(Supporter( _ ))
 }
 

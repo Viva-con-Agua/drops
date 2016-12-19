@@ -36,6 +36,7 @@ class Module extends AbstractModule with ScalaModule {
   def configure() {
     bind[IdentityService[User]].to[UserService]
     bind[UserDao].to[MongoUserDao]
+    bind[CrewDao].to[MongoCrewDao]
     bind[UserTokenDao].to[MongoUserTokenDao]
     bind[OauthClientDao].to[MongoOauthClientDao]
     bind[OauthTokenDao].to[MongoOauthTokenDao]
