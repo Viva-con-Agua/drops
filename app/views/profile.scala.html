@@ -1,7 +1,8 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 @import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
 
-@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[CrewForms.CrewData], availableCrews : Set[Crew])(implicit request:RequestHeader,messages:Messages)
+@import controllers.PillarForms.PillarData
+@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[CrewForms.CrewData], availableCrews : Set[Crew], pillarForm : Form[PillarData])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
@@ -78,6 +79,35 @@
                 'checked -> profile.supporter.crew.map(_.active).getOrElse(false))
               @b3.submit('class -> "btn btn-primary") {
                 @Messages("crew.submit")
+              }
+            </fieldset>
+          }
+          @b3.form(routes.Application.updatePillar) {
+            <fieldset>
+              <legend>@Messages("pillar.legend")</legend>
+              @helper.CSRF.formField
+
+              @b3.checkbox(pillarForm("education"),
+                '_text -> Messages("pillar.education"),
+                'placeholder -> Messages("pillar.education"),
+                'checked -> profile.supporter.pillars.contains(Education))
+
+              @b3.checkbox(pillarForm("operation"),
+                '_text -> Messages("pillar.operation"),
+                'placeholder -> Messages("pillar.operation"),
+                'checked -> profile.supporter.pillars.contains(Operation))
+
+              @b3.checkbox(pillarForm("finance"),
+                '_text -> Messages("pillar.finance"),
+                'placeholder -> Messages("pillar.finance"),
+                'checked -> profile.supporter.pillars.contains(Finance))
+
+              @b3.checkbox(pillarForm("network"),
+                '_text -> Messages("pillar.network"),
+                'placeholder -> Messages("pillar.network"),
+                'checked -> profile.supporter.pillars.contains(Network))
+              @b3.submit('class -> "btn btn-primary") {
+                @Messages("pillar.submit")
               }
             </fieldset>
           }

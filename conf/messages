@@ -143,3 +143,10 @@ roles.employee=Employee
 roles.volunteerManager=Volunteer Manager
 roles.supporter=Supporter
 roles.submit=Save
+
+pillar.legend=Pillars of Viva con Agua
+pillar.submit=Save selection
+pillar.education=Education
+pillar.operation=Action
+pillar.finance=Finance
+pillar.network=Network
