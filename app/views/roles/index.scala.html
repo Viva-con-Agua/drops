@@ -1,0 +1,61 @@
+@import com.mohiva.play.silhouette.api.LoginInfo
+
+@(loggedUser:User, loginInfo:LoginInfo, rolesForm : Form[RolesForms.UsersRoles])(implicit request:RequestHeader, messages: Messages)
+
+@implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
+
+@views.html.templates.mainApp(Messages("roles.title"), tab = "roles", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
+  @request.flash.get("error").map { msg =>
+    @errors.alert(msg, "error")
+  }
+
+  <div class="col-md-8 col-md-offset-2">
+    <div class="row">
+      <h3 class="col-md-8 text-primary">@Messages("roles.title")</h3>
+      <div class="col-md-8 col-md-offset-2">
+      @b3.form(routes.Roles.update) {
+        <fieldset>
+          <legend>@Messages("roles.legend")</legend>
+          @helper.CSRF.formField
+
+          @helper.repeat(rolesForm("users"), min = 1) { userFields =>
+            <div class="row border-bottom">
+              <div class="col-md-6">
+              @b3.text(userFields("userId"),
+                '_label -> Messages("roles.userId"),
+                'placeholder -> Messages("roles.userId")
+              )
+              </div>
+
+              <div class="col-md-6">
+              @b3.checkbox(userFields("roles.admin"),
+                '_text -> Messages("roles.admin"),
+                'placeholder -> Messages("roles.admin")
+              )
+
+              @b3.checkbox(userFields("roles.employee"),
+                '_text -> Messages("roles.employee"),
+                'placeholder -> Messages("roles.employee")
+              )
+
+              @b3.checkbox(userFields("roles.volunteerManager"),
+                '_text -> Messages("roles.volunteerManager"),
+                'placeholder -> Messages("roles.volunteerManager")
+              )
+
+              @b3.checkbox(userFields("roles.supporter"),
+                '_text -> Messages("roles.supporter"),
+                'placeholder -> Messages("roles.supporter")
+              )
+              </div>
+            </div>
+          }
+          @b3.submit('class -> "btn btn-primary") {
+            @Messages("roles.submit")
+          }
+        </fieldset>
+        </div>
+      }
+    </div>
+  </div>
+}

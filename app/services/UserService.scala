@@ -35,4 +35,6 @@ class UserService @Inject() (userDao:UserDao) extends IdentityService[User] {
       case Some(user) => userDao.update(profile)
     }
   }
+
+  def list = userDao.list
 }

@@ -3,6 +3,10 @@ GET     /                                                   controllers.Applicat
 GET     /profile                                            controllers.Application.profile
 POST    /crew                                               controllers.Application.updateCrew
 
+# Roles
+GET     /roles                                              controllers.Roles.index
+POST    /roles/update                                       controllers.Roles.update
+
 # Rest api
 GET      /rest/profile                                      controllers.RestApi.profile
 
@@ -11,6 +15,8 @@ GET     /oauth2/rest/profile                                controllers.Oauth2Re
 GET     /oauth2/code/get/:clientId/:clientSecret            controllers.OAuth2Controller.getCode(clientId : String, clientSecret : String)
 
 # Authentication
+GET     /auth/init                                          controllers.Auth.init
+
 GET     /auth/signup                                        controllers.Auth.startSignUp
 POST    /auth/signup                                        controllers.Auth.handleStartSignUp
 GET     /auth/signup/:token                                 controllers.Auth.signUp(token:String)
