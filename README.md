@@ -11,10 +11,16 @@ This is a user management component for a micro-component application, supportin
   * Anonymous or authenticated access to home page.
   * Profile information for authenticated users.
 
+Install
+=======
+After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
+
+
 ChangeLog
 =========
 
-## Version 0.4.0 (2016-12-13)
+## Version 0.5.0 (2016-12-19)
+*  [[F] #7 - Different roles](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/7)
 *  [[F] #4 - Oauth 2 provider](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/4)
 *  [[F] #3 - Users login](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/3)
 *  [[F] #2 - Users are able to register themselves](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/2)
