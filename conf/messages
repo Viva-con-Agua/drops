@@ -115,10 +115,11 @@ mail.reset.hi=Hello, {0}!
 mail.reset.instructions=We have received a request to reset your password. Just go to the following url to proceed.
 
 crew.legend=Crew
+crew.name=Crew Name
 crew.country=Country
 crew.city=City
 crew.active=Active Member of the crew?
-crew.submit=Speichern
+crew.submit=Save
 crew.update.noProfileForLogin=Internal Server Error: Found no profile for the current user.
 
 oauth2server.clientId.notFound=No client application is registered with the given client ID.

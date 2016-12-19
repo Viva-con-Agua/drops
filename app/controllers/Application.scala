@@ -32,13 +32,15 @@ class Application @Inject() (
     Future.successful(Ok(views.html.index(request.identity, request.authenticator.map(_.loginInfo))))
   }
 
-  def profile = SecuredAction { implicit request =>
-    Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm))
+  def profile = SecuredAction.async { implicit request =>
+    crewDao.list.map(l =>
+      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet))
+    )
   }
 
   def updateCrew = SecuredAction.async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm))),
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, l.toSet))),
       crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
