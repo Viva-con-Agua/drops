@@ -9,18 +9,23 @@ import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import play.api._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import models.{OauthClient, RoleAdmin, RoleEmployee, User}
+import models._
 import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
-import daos.OauthClientDao
+import daos.{CrewDao, OauthClientDao}
 import utils.{WithAlternativeRoles, WithRole}
+
+import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class Application @Inject() (
   oauth2ClientDao: OauthClientDao,
   userService: UserService,
+  crewDao: CrewDao,
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator],
+  configuration: Configuration,
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
   def index = UserAwareAction.async { implicit request =>
@@ -37,15 +42,31 @@ class Application @Inject() (
       crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
-            val updatedSupporter = profile.supporter.copy(crew = Some(crewData))
-            val updatedProfile = profile.copy(supporter = updatedSupporter)
-            userService.update(request.identity.updateProfile(updatedProfile))
-            Future.successful(Redirect("/profile"))
+            crewDao.find(crewData.crewName).map( _ match {
+              case Some(crew) => {
+                val updatedSupporter = profile.supporter.copy(crew = Some(CrewSupporter(crew, crewData.active)))
+                val updatedProfile = profile.copy(supporter = updatedSupporter)
+                userService.update(request.identity.updateProfile(updatedProfile))
+                Redirect("/profile")
+              }
+              case None => Redirect("/profile")
+            })
+
           }
           case None =>  Future.successful(InternalServerError(Messages("crew.update.noProfileForLogin")))
         }
       }
     )
+  }
+
+  def initCrews = Action.async { request =>
+    configuration.getConfigList("crews").map(_.toList.map(c =>
+      crewDao.find(c.getString("name").get).map(_ match {
+        case Some(crew) => crew
+        case _ => crewDao.save(Crew(c.getString("name").get, c.getString("country").get, c.getStringList("cities").get.toSet))
+      })
+    ))
+    Future.successful(Redirect("/"))
   }
 
   def registration = SecuredAction(WithAlternativeRoles(RoleAdmin, RoleEmployee)) { implicit request =>

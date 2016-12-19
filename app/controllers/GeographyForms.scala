@@ -11,9 +11,10 @@ import models.Crew
 
 object CrewForms {
 
+  case class CrewData(crewName : String, active: Boolean)
+
   def geoForm = Form(mapping(
-    "country" -> nonEmptyText,
-    "city" -> nonEmptyText,
+    "crewName" -> nonEmptyText,
     "active" -> boolean
-  )(Crew.apply)(Crew.unapply))
+  )(CrewData.apply)(CrewData.unapply))
 }

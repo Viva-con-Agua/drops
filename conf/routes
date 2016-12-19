@@ -3,6 +3,8 @@ GET     /                                                   controllers.Applicat
 GET     /profile                                            controllers.Application.profile
 POST    /crew                                               controllers.Application.updateCrew
 
+GET     /crews/init                                         controllers.Application.initCrews
+
 # Roles
 GET     /roles                                              controllers.Roles.index
 POST    /roles/update                                       controllers.Roles.update

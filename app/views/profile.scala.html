@@ -1,7 +1,7 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 @import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
 
-@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[Crew])(implicit request:RequestHeader,messages:Messages)
+@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[CrewForms.CrewData])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
@@ -62,17 +62,11 @@
               <legend>@Messages("crew.legend")</legend>
               @helper.CSRF.formField
 
-              @b3.text(geoForm("country"),
-                '_label -> Messages("crew.country"),
-                'placeholder -> Messages("crew.country"),
+              @b3.text(geoForm("crewName"),
+                '_label -> Messages("crew.name"),
+                'placeholder -> Messages("crew.name"),
                 'autofocus -> true,
-                'value -> profile.supporter.crew.map[String](_.country).getOrElse(None)
-              )
-
-              @b3.text(geoForm("city"),
-                '_label -> Messages("crew.city"),
-                'placeholder -> Messages("crew.city"),
-                'value -> profile.supporter.crew.map[String](_.city).getOrElse(None)
+                'value -> profile.supporter.crew.map[String](_.crew.name).getOrElse(None)
               )
 
               @b3.checkbox(geoForm("active"),
