@@ -2,6 +2,7 @@
 GET     /                                                   controllers.Application.index
 GET     /profile                                            controllers.Application.profile
 POST    /crew                                               controllers.Application.updateCrew
+POST    /pillar                                             controllers.Application.updatePillar
 
 GET     /crews/init                                         controllers.Application.initCrews
 

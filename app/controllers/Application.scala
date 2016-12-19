@@ -34,13 +34,13 @@ class Application @Inject() (
 
   def profile = SecuredAction.async { implicit request =>
     crewDao.list.map(l =>
-      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet))
+      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet, PillarForms.define))
     )
   }
 
   def updateCrew = SecuredAction.async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, l.toSet))),
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, l.toSet, PillarForms.define))),
       crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
@@ -57,6 +57,24 @@ class Application @Inject() (
           }
           case None =>  Future.successful(InternalServerError(Messages("crew.update.noProfileForLogin")))
         }
+      }
+    )
+  }
+
+  def updatePillar = SecuredAction.async { implicit request =>
+    PillarForms.define.bindFromRequest.fold(
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet, bogusForm))),
+      pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
+        case Some(profile) => {
+          val pillars = pillarData.toMap.foldLeft[Set[Pillar]](Set())((pillars, data) => data._2 match {
+            case true => pillars + Pillar(data._1)
+            case false => pillars
+          })
+          val supporter = profile.supporter.copy(pillars = pillars)
+          val updatedProfile = profile.copy(supporter = supporter)
+          userService.update(request.identity.updateProfile(updatedProfile)).map((u) => Redirect("/"))
+        }
+        case _ => Future.successful(Redirect("/"))
       }
     )
   }
