@@ -29,7 +29,7 @@ class ApiAction @Inject()(
         case Some(oauthClient) => block(apiRequest)
         case _ => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.noValidAPIClient"))))
       })
-      case Failure(f) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.noValidAPIRequest"))))
+      case Failure(f) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.noValidAPIRequest", f.getMessage))))
     }
   }
 }

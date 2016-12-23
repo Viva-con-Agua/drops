@@ -150,3 +150,6 @@ pillar.education=Education
 pillar.operation=Action
 pillar.finance=Finance
 pillar.network=Network
+
+rest.api.noValidAPIRequest=Not a valid API request: {0}
+rest.api.noValidAPIClient=Not a valid API client

@@ -3,18 +3,14 @@ package daos
 import java.util.UUID
 
 import scala.concurrent.Future
-
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
-
 import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
-
 import com.mohiva.play.silhouette.api.LoginInfo
-
-import models.{User,Profile}
+import models.{Profile, User}
 import models.User._
 
 trait UserDao {
@@ -26,6 +22,12 @@ trait UserDao {
   def link(user:User, profile:Profile):Future[User]
   def update(profile:Profile):Future[User]
   def list : Future[List[User]]
+
+  trait UserWS {
+    def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
+    def list(queryExtension: JsObject):Future[List[User]]
+  }
+  val ws : UserWS
 }
 
 class MongoUserDao extends UserDao {
@@ -38,7 +40,8 @@ class MongoUserDao extends UserDao {
     )).one[User]
 
   def find(userId:UUID):Future[Option[User]] =
-    users.find(Json.obj("id" -> userId)).one[User]
+    ws.find(userId, Json.obj())
+    //users.find(Json.obj("id" -> userId)).one[User]
 
   def save(user:User):Future[User] =
     users.insert(user).map(_ => user)
@@ -75,5 +78,14 @@ class MongoUserDao extends UserDao {
     user <- find(profile.loginInfo)
   } yield user.get
 
-  def list = users.find(Json.obj()).cursor[User]().collect[List]()
+  def list = ws.list(Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
+
+  class MongoUserWS extends UserWS {
+    override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] =
+      users.find(Json.obj("id" -> userId) ++ queryExtension).one[User]
+
+    override def list(queryExtension: JsObject): Future[List[User]] =
+      users.find(queryExtension).cursor[User]().collect[List]()
+  }
+  val ws = new MongoUserWS()
 }

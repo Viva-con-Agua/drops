@@ -12,7 +12,7 @@ POST    /roles/update                                       controllers.Roles.up
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
-GET     /rest/users                                         controllers.RestApi.users
+POST    /rest/users                                         controllers.RestApi.users
 GET     /rest/users/:id                                     controllers.RestApi.user(id : String)
 GET     /rest/crews                                         controllers.RestApi.crews
 
