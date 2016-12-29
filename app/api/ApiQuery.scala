@@ -1,7 +1,13 @@
 package api
 
-import daos.MongoUserApiQueryDao
+import java.util.UUID
+
+import daos.{MongoUserApiQueryDao, UserDao}
+import play.api.libs.functional.syntax._
 import play.api.libs.json._
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by johann on 21.12.16.
@@ -30,7 +36,7 @@ object PillarArea extends Area {
   val name = "pillar"
 }
 
-case class Page(start : Int, countsPerPage : Int)
+case class Page(lastId : Option[UUID], countsPerPage : Int)
 
 case class Search(keyword: String, fields: Set[String])
 
@@ -41,8 +47,10 @@ case class FilterBy(page: Option[Page], search: Option[Search], groups : Option[
 // Todo: Implement more potential query options (like GroupBy, etc.)
 
 case class ApiQuery(filterBy : FilterBy) {
-  private val queryDao = MongoUserApiQueryDao(this)
-  def toQueryExtension : JsObject = queryDao.filter
+  private def queryDao(implicit userDao: UserDao) = MongoUserApiQueryDao(this, userDao)
+  def toExtension(implicit userDao: UserDao) = queryDao.filter
+  def toQueryExtension(implicit userDao: UserDao) : Future[JsObject] = queryDao.filter.map(_._1)
+  def toLimit(implicit userDao: UserDao) : Future[Option[Int]] = queryDao.filter.map(_._2.get("limit"))
 }
 
 object ApiQuery {

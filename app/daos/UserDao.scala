@@ -10,10 +10,12 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import com.mohiva.play.silhouette.api.LoginInfo
-import models.{Profile, User}
+import models.{ObjectId, ObjectIdWrapper, Profile, User}
 import models.User._
+import reactivemongo.bson.BSONObjectID
 
 trait UserDao {
+  def getObjectId(userId: UUID):Future[Option[ObjectIdWrapper]]
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
   def save(user:User):Future[User]
@@ -25,7 +27,7 @@ trait UserDao {
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
-    def list(queryExtension: JsObject):Future[List[User]]
+    def list(queryExtension: JsObject, limit : Int):Future[List[User]]
   }
   val ws : UserWS
 }
@@ -33,6 +35,9 @@ trait UserDao {
 class MongoUserDao extends UserDao {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   val users = reactiveMongoApi.db.collection[JSONCollection]("users")
+
+  override def getObjectId(userId: UUID): Future[Option[ObjectIdWrapper]] =
+    users.find(Json.obj("id" -> userId), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
 
   def find(loginInfo:LoginInfo):Future[Option[User]] = 
     users.find(Json.obj(
@@ -78,14 +83,14 @@ class MongoUserDao extends UserDao {
     user <- find(profile.loginInfo)
   } yield user.get
 
-  def list = ws.list(Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
+  def list = ws.list(Json.obj(), 20)//users.find(Json.obj()).cursor[User]().collect[List]()
 
   class MongoUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] =
       users.find(Json.obj("id" -> userId) ++ queryExtension).one[User]
 
-    override def list(queryExtension: JsObject): Future[List[User]] =
-      users.find(queryExtension).cursor[User]().collect[List]()
+    override def list(queryExtension: JsObject, limit : Int): Future[List[User]] =
+      users.find(queryExtension).cursor[User]().collect[List](limit)
   }
   val ws = new MongoUserWS()
 }

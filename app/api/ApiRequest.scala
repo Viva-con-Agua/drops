@@ -2,7 +2,7 @@ package api
 
 import javax.inject.Inject
 
-import daos.OauthClientDao
+import daos.{OauthClientDao, UserDao}
 import models.OauthClient
 import play.api.libs.json._
 import play.api.mvc.Request
@@ -13,14 +13,15 @@ import scala.util.{Failure, Success, Try}
 
 
 class ApiRequestProvider @Inject() (
-  oauthClientDao : OauthClientDao
+  oauthClientDao : OauthClientDao,
+  userDao: UserDao
 ) {
-  def get[A](request: Request[A]) = ApiRequest[A](request, oauthClientDao)
+  def get[A](request: Request[A]) = ApiRequest[A](request, oauthClientDao, userDao)
 }
 /**
   * Created by johann on 21.12.16.
   */
-case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao){
+case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, userDao: UserDao){
   val cĺientId = request.queryString("client_id").headOption.getOrElse(
     throw new Exception // Todo: Meaningful Exception
   )

@@ -43,24 +43,29 @@ class RestApi @Inject() (
   }
 
   def users = ApiAction.async { implicit request => {
-    val query = request.query match {
-      case Some(query) => query.toQueryExtension
-      case None => Json.obj()
-    }
-    userDao.ws.list(query).map(users => Ok(
+    def body(query : JsObject, limit : Int) = userDao.ws.list(query, limit).map(users => Ok(
       Json.toJson(users.map(PublicUser(_)))
     ))
+    implicit val u: UserDao = userDao
+    request.query match {
+      case Some(query) => query.toExtension.flatMap((ext) =>
+        body(ext._1, ext._2.get("limit").getOrElse(20))
+      )
+      case None => body(Json.obj(), 20)
+    }
   }}
 
   def user(id : String) = ApiAction.async { implicit request => {
-    val query = request.query match {
-      case Some(query) => query.toQueryExtension
-      case None => Json.obj()
-    }
-    userDao.ws.find(UUID.fromString(id), query).map(_ match {
+    def body(query: JsObject) = userDao.ws.find(UUID.fromString(id), query).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
+    implicit val u: UserDao = userDao
+    request.query match {
+      case Some(query) => query.toExtension.flatMap((ext) => body(ext._1))
+      case None => body(Json.obj())
+    }
+
   }}
 
   def crews = ApiAction.async { implicit request =>
