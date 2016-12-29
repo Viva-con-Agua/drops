@@ -14,8 +14,8 @@ import models.{ObjectId, ObjectIdWrapper, Profile, User}
 import models.User._
 import reactivemongo.bson.BSONObjectID
 
-trait UserDao {
-  def getObjectId(userId: UUID):Future[Option[ObjectIdWrapper]]
+trait UserDao extends ObjectIdResolver{
+//  def getObjectId(userId: UUID):Future[Option[ObjectIdWrapper]]
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
   def save(user:User):Future[User]
@@ -36,8 +36,8 @@ class MongoUserDao extends UserDao {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   val users = reactiveMongoApi.db.collection[JSONCollection]("users")
 
-  override def getObjectId(userId: UUID): Future[Option[ObjectIdWrapper]] =
-    users.find(Json.obj("id" -> userId), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
+  override def getObjectId(id: String): Future[Option[ObjectIdWrapper]] =
+    users.find(Json.obj("id" -> UUID.fromString(id)), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
 
   def find(loginInfo:LoginInfo):Future[Option[User]] = 
     users.find(Json.obj(

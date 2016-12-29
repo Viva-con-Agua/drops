@@ -12,14 +12,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait UserApiQueryDao[A] {
   def filter : Future[(A, Map[String, Int])]
-  def filterByPage(lastId: Option[UUID], countsPerPage: Int) : Future[(A, Map[String, Int])]
+  def filterByPage(lastId: Option[String], countsPerPage: Int) : Future[(A, Map[String, Int])]
   def filterByGroups(groups: Set[Group]) : A
   def filterBySearch(keyword: String, fields: Set[String]): A
 
   def getSortCriteria : A
 }
 
-case class MongoUserApiQueryDao(query: ApiQuery, userDao: UserDao) extends UserApiQueryDao[JsObject] {
+case class MongoUserApiQueryDao(query: ApiQuery, resolver: ObjectIdResolver) extends UserApiQueryDao[JsObject] {
 
   def filter = query.filterBy match {
     case Some(filter) => {
@@ -48,8 +48,8 @@ case class MongoUserApiQueryDao(query: ApiQuery, userDao: UserDao) extends UserA
     )
   )
 
-  override def filterByPage(lastId: Option[UUID], countsPerPage: Int): Future[(JsObject, Map[String, Int])] =
-    lastId.map((id) => userDao.getObjectId(id).map(_ match {
+  override def filterByPage(lastId: Option[String], countsPerPage: Int): Future[(JsObject, Map[String, Int])] =
+    lastId.map((id) => resolver.getObjectId(id).map(_ match {
       case Some(userObjId) => Json.obj("_id" -> Json.obj("$gt" -> Json.toJson(userObjId._id)))
       case None => Json.obj()
     }).map(

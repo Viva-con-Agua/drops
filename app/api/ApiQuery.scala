@@ -2,7 +2,7 @@ package api
 
 import java.util.UUID
 
-import daos.{MongoUserApiQueryDao, UserDao}
+import daos.{MongoUserApiQueryDao, ObjectIdResolver, UserDao}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -36,7 +36,7 @@ object PillarArea extends Area {
   val name = "pillar"
 }
 
-case class Page(lastId : Option[UUID], countsPerPage : Int)
+case class Page(lastId : Option[String], countsPerPage : Int)
 
 case class Search(keyword: String, fields: Set[String])
 
@@ -85,13 +85,13 @@ object SortField {
 // Todo: Implement more potential query options (like GroupBy, etc.)
 
 case class ApiQuery(filterBy : Option[FilterBy], sortBy: Option[List[SortField]]) {
-  private def queryDao(implicit userDao: UserDao) = MongoUserApiQueryDao(this, userDao)
+  private def queryDao(implicit resolver: ObjectIdResolver) = MongoUserApiQueryDao(this, resolver) // Todo: Refactoring! This should be implicit by bind!
 
-  def toExtension(implicit userDao: UserDao) = queryDao.filter
-  def toQueryExtension(implicit userDao: UserDao) : Future[JsObject] = queryDao.filter.map(_._1)
-  def toLimit(implicit userDao: UserDao) : Future[Option[Int]] = queryDao.filter.map(_._2.get("limit"))
+  def toExtension(implicit resolver: ObjectIdResolver) = queryDao.filter
+  def toQueryExtension(implicit resolver: ObjectIdResolver) : Future[JsObject] = queryDao.filter.map(_._1)
+  def toLimit(implicit resolver: ObjectIdResolver) : Future[Option[Int]] = queryDao.filter.map(_._2.get("limit"))
 
-  def getSortCriteria(implicit userDao: UserDao) = queryDao.getSortCriteria
+  def getSortCriteria(implicit resolver: ObjectIdResolver) = queryDao.getSortCriteria
 }
 
 object ApiQuery {
