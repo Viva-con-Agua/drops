@@ -99,6 +99,6 @@ object ApiQuery {
   implicit val searchFormat = Json.format[Search]
   implicit val groupFormat = Json.format[Group]
   implicit val filterByFormat = Json.format[FilterBy]
-  
+
   implicit val apiQueryFormat = Json.format[ApiQuery]
 }

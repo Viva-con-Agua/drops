@@ -21,6 +21,11 @@ trait CrewDao {
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def list : Future[List[Crew]]
+
+  trait CrewWS {
+    def list(queryExtension: JsObject, limit : Int, sort: JsObject):Future[List[Crew]]
+  }
+  val ws : CrewWS
 }
 
 class MongoCrewDao extends CrewDao {
@@ -35,5 +40,12 @@ class MongoCrewDao extends CrewDao {
   def save(crew: Crew):Future[Crew] =
     crews.insert(crew).map(_ => crew)
 
-  def list = crews.find(Json.obj()).cursor[Crew]().collect[List]()
+  def list = ws.list(Json.obj(), 20, Json.obj())//crews.find(Json.obj()).cursor[Crew]().collect[List]()
+
+  class MongoCrewWS extends CrewWS {
+    override def list(queryExtension: JsObject, limit: Int, sort: JsObject): Future[List[Crew]] =
+      crews.find(queryExtension).sort(sort).cursor[Crew]().collect[List](limit)
+  }
+
+  val ws = new MongoCrewWS
 }

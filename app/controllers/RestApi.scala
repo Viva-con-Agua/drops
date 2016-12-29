@@ -68,7 +68,15 @@ class RestApi @Inject() (
 
   }}
 
-  def crews = ApiAction.async { implicit request =>
-    crewDao.list.map((crews) => Ok(Json.toJson(crews)))
-  }
+  def crews = ApiAction.async { implicit request => {
+    def body(query: JsObject, limit: Int, sort: JsObject) = crewDao.ws.list(query, limit, sort).map((crews) => Ok(Json.toJson(crews)))
+
+    implicit val u: UserDao = userDao
+    request.query match {
+      case Some(query) => query.toExtension.flatMap((ext) =>
+        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
+      )
+      case None => body(Json.obj(), 20, Json.obj())
+    }
+  }}
 }
