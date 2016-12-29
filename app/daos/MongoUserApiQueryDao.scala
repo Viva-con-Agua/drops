@@ -2,7 +2,7 @@ package daos
 
 import java.util.UUID
 
-import api.{ApiQuery, Group, PillarArea, RoleArea}
+import api._
 import models.{Pillar, Role, User}
 import play.api.libs.json._
 import reactivemongo.bson.BSONObjectID
@@ -15,24 +15,29 @@ trait UserApiQueryDao[A] {
   def filterByPage(lastId: Option[UUID], countsPerPage: Int) : Future[(A, Map[String, Int])]
   def filterByGroups(groups: Set[Group]) : A
   def filterBySearch(keyword: String, fields: Set[String]): A
+
+  def getSortCriteria : A
 }
 
 case class MongoUserApiQueryDao(query: ApiQuery, userDao: UserDao) extends UserApiQueryDao[JsObject] {
 
-  def filter = {
-    val q = (query.filterBy.groups match {
-      case Some(groups) => filterByGroups(groups)
-      case _ => Json.obj()
-    }) ++ (query.filterBy.search match {
-      case Some(search) => filterBySearch(search.keyword, search.fields)
-      case None => Json.obj()
-    })
-    query.filterBy.page match {
-      case Some(page) => {
-        filterByPage(page.lastId, page.countsPerPage).map((pageQ) => (pageQ._1 ++ q, pageQ._2))
+  def filter = query.filterBy match {
+    case Some(filter) => {
+      val q = (filter.groups match {
+        case Some(groups) => filterByGroups(groups)
+        case _ => Json.obj()
+      }) ++ (filter.search match {
+        case Some(search) => filterBySearch(search.keyword, search.fields)
+        case None => Json.obj()
+      })
+      filter.page match {
+        case Some(page) => {
+          filterByPage(page.lastId, page.countsPerPage).map((pageQ) => (pageQ._1 ++ q, pageQ._2))
+        }
+        case None => Future.successful((q, Map[String, Int]()))
       }
-      case None => Future.successful((q, Map[String, Int]()))
     }
+    case None => Future.successful((Json.obj(), Map[String, Int]()))
   }
 
   def filterByGroups(groups: Set[Group]) = groups.foldLeft(Json.obj())((json, group) => json ++ filterByGroup(group))
@@ -58,5 +63,15 @@ case class MongoUserApiQueryDao(query: ApiQuery, userDao: UserDao) extends UserA
     case PillarArea => Json.obj(
       "profiles.supporter.pillars.pillar" -> group.groupName
     )
+  }
+
+  override def getSortCriteria: JsObject = query.sortBy match {
+    case Some(sortation) => sortation.foldLeft[JsObject](Json.obj())(
+      (res, field) => res ++ Json.obj(field.field -> (field.dir match {
+        case Asc => 1
+        case Desc => -1
+      }))
+    )
+    case None => Json.obj()
   }
 }

@@ -44,13 +44,54 @@ case class Group(groupName: String, area : Area)
 
 case class FilterBy(page: Option[Page], search: Option[Search], groups : Option[Set[Group]])
 
+trait Sort {
+  val dir : String
+}
+
+object Sort {
+  def apply(dir: String) = dir match {
+    case Asc.dir => Asc
+    case Desc.dir => Desc
+    case _ => throw new Exception // Todo: Use meaningful exception!
+  }
+  def unapply(arg: Sort): Option[String] = Some(arg.dir)
+
+  implicit val sortJsonFormat = Json.format[Sort]
+}
+
+object Asc extends Sort {
+  val dir = "asc"
+}
+
+object Desc extends Sort {
+  val dir = "desc"
+}
+
+case class SortField(field: String, dir: Sort)
+
+object SortField {
+  def apply(tuple: (String, String)) : SortField = SortField(tuple._1, Sort(tuple._2))
+
+  implicit val sortFieldWrites: Writes[SortField] = (
+    (__ \ 'field).write[String] and
+      (__ \ 'dir).write[String]
+    )(raw => (raw.field, raw.dir.dir))
+  implicit val sortFieldReads : Reads[SortField] = (
+    (JsPath \ "field").read[String] and
+      (JsPath \ "dir").read[String]
+    ).tupled.map(SortField( _ ))
+}
+
 // Todo: Implement more potential query options (like GroupBy, etc.)
 
-case class ApiQuery(filterBy : FilterBy) {
+case class ApiQuery(filterBy : Option[FilterBy], sortBy: Option[List[SortField]]) {
   private def queryDao(implicit userDao: UserDao) = MongoUserApiQueryDao(this, userDao)
+
   def toExtension(implicit userDao: UserDao) = queryDao.filter
   def toQueryExtension(implicit userDao: UserDao) : Future[JsObject] = queryDao.filter.map(_._1)
   def toLimit(implicit userDao: UserDao) : Future[Option[Int]] = queryDao.filter.map(_._2.get("limit"))
+
+  def getSortCriteria(implicit userDao: UserDao) = queryDao.getSortCriteria
 }
 
 object ApiQuery {
@@ -58,5 +99,6 @@ object ApiQuery {
   implicit val searchFormat = Json.format[Search]
   implicit val groupFormat = Json.format[Group]
   implicit val filterByFormat = Json.format[FilterBy]
+  
   implicit val apiQueryFormat = Json.format[ApiQuery]
 }

@@ -27,7 +27,7 @@ trait UserDao {
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
-    def list(queryExtension: JsObject, limit : Int):Future[List[User]]
+    def list(queryExtension: JsObject, limit : Int, sort: JsObject):Future[List[User]]
   }
   val ws : UserWS
 }
@@ -83,14 +83,14 @@ class MongoUserDao extends UserDao {
     user <- find(profile.loginInfo)
   } yield user.get
 
-  def list = ws.list(Json.obj(), 20)//users.find(Json.obj()).cursor[User]().collect[List]()
+  def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 
   class MongoUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] =
       users.find(Json.obj("id" -> userId) ++ queryExtension).one[User]
 
-    override def list(queryExtension: JsObject, limit : Int): Future[List[User]] =
-      users.find(queryExtension).cursor[User]().collect[List](limit)
+    override def list(queryExtension: JsObject, limit : Int, sort: JsObject): Future[List[User]] =
+      users.find(queryExtension).sort(sort).cursor[User]().collect[List](limit)
   }
   val ws = new MongoUserWS()
 }

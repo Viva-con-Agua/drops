@@ -43,15 +43,15 @@ class RestApi @Inject() (
   }
 
   def users = ApiAction.async { implicit request => {
-    def body(query : JsObject, limit : Int) = userDao.ws.list(query, limit).map(users => Ok(
+    def body(query : JsObject, limit : Int, sort : JsObject) = userDao.ws.list(query, limit, sort).map(users => Ok(
       Json.toJson(users.map(PublicUser(_)))
     ))
     implicit val u: UserDao = userDao
     request.query match {
       case Some(query) => query.toExtension.flatMap((ext) =>
-        body(ext._1, ext._2.get("limit").getOrElse(20))
+        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
       )
-      case None => body(Json.obj(), 20)
+      case None => body(Json.obj(), 20, Json.obj())
     }
   }}
 
