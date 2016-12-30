@@ -11,7 +11,7 @@ import reactivemongo.bson.BSONObjectID
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait UserApiQueryDao[A] {
+trait ApiQueryDao[A] {
   def filter : Future[(A, Map[String, Int])]
   def filterByPage(lastId: Option[String], countsPerPage: Int) : Future[(A, Map[String, Int])]
   def filterByGroups(groups: Set[Group]) : A
@@ -20,7 +20,7 @@ trait UserApiQueryDao[A] {
   def getSortCriteria : A
 }
 
-case class MongoUserApiQueryDao(query: ApiQuery, resolver: ObjectIdResolver, config : RequestConfig) extends UserApiQueryDao[JsObject] {
+case class MongoApiQueryDao(query: ApiQuery, resolver: ObjectIdResolver, config : RequestConfig) extends ApiQueryDao[JsObject] {
 
   def filter = query.filterBy match {
     case Some(filter) => {

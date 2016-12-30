@@ -3,7 +3,7 @@ package api
 import java.util.UUID
 
 import api.ApiQuery.RequestConfig
-import daos.{MongoUserApiQueryDao, ObjectIdResolver, UserDao}
+import daos.{MongoApiQueryDao, ObjectIdResolver, UserDao}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -86,7 +86,7 @@ object SortField {
 // Todo: Implement more potential query options (like GroupBy, etc.)
 
 case class ApiQuery(filterBy : Option[FilterBy], sortBy: Option[List[SortField]]) {
-  private def queryDao(implicit resolver: ObjectIdResolver, config : RequestConfig) = MongoUserApiQueryDao(this, resolver, config) // Todo: Refactoring! This should be implicit by bind!
+  private def queryDao(implicit resolver: ObjectIdResolver, config : RequestConfig) = MongoApiQueryDao(this, resolver, config) // Todo: Refactoring! This should be implicit by bind!
 
   def toExtension(implicit resolver: ObjectIdResolver, config : RequestConfig) = queryDao.filter
   def toQueryExtension(implicit resolver: ObjectIdResolver, config : RequestConfig) : Future[JsObject] = queryDao.filter.map(_._1)

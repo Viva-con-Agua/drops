@@ -14,7 +14,7 @@ import models.{OauthClient, PublicUser, User}
 import User._
 import api.ApiAction
 import api.ApiQuery.{CrewRequest, RequestConfig, UserRequest}
-import daos.{CrewDao, OauthClientDao, UserApiQueryDao, UserDao}
+import daos.{CrewDao, OauthClientDao, UserDao}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
