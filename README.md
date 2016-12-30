@@ -16,10 +16,143 @@ Install
 After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
 Additionally the same can be done for crews. The route that should be used is <code>/crews/init/</code>.
 
+Webservice results
+==================
+The Drops service implements a webservice for requesting users and crews. Users will be described by the following JSON that is also returned to a valid request:
+```json
+{
+    "id": "f2329fe0-c94b-4b33-a039-296c1a7dcba6",
+    "profiles": [
+      {
+        "loginInfo": {
+          "providerID": "credentials",
+          "providerKey": "test@test.com"
+        },
+        "primary": true,
+        "confirmed": true,
+        "email": "test@test.com",
+        "supporter": {
+          "firstName": "Tester",
+          "lastName": "Tester",
+          "fullName": "Tester Tester",
+          "mobilePhone": "0000/0000000",
+          "placeOfResidence": "Hamburg",
+          "birthday": 315529200000,
+          "sex": "male",
+          "crew": {
+            "crew": {
+              "name": "Berlin",
+              "country": "DE",
+              "cities": [
+                "Berlin"
+              ]
+            },
+            "active": true
+          },
+          "pillars": [
+            {
+              "pillar": "operation"
+            },
+            {
+              "pillar": "finance"
+            }
+          ]
+        }
+      }
+    ],
+    "roles": [
+      {
+        "role": "supporter"
+      }
+    ]
+  }
+```
+A user consists of an ID, multiple profiles and multiple roles. Drops implements different ways to create a virtual representation for a user. So he or she could
+use default credentials or an existing Google or Facebook account. Also the users could connect their Drops accounts to Google or Facebook Accounts. In order to 
+establish which profile should be used, the <code>primary</code> flag marks the so called profile. Additionally, it is possible to detect if an user has confirmed 
+his or her account using the confirmation mail after the sign up (<code>confirmed</code> flag).
+
+Next to the master data associated to the <code>Supporter</code>, there are two information specific to Viva con Agua:
+*  Supporters can have a Crew
+*  Supporters can have a selection of the four Viva con Agua pillars (<code>operation</code> - dt. "Aktionen", <code>finance</code>, <code>education</code> and <code>network</code>)
+
+Currently, four different roles are implemented: <code>supporter</code> (default role), <code>volunteerManager</code>, <code>employee</code> and <code>admin</code>.
+*Supporters* are all volunteering people of Viva con Agua, while a *volunteer manager* is a supporter that coordinates a crew. So, these roles are connected and one
+crew can have multiple *volunteer managers*. An *employee* is not volunteering, but works for Viva con Agua and coordinates all entities inside the social system
+(means crews and supporter). 
+Contrary to the other roles the *admin* is more technical. Users holding this role are able to access all possible configurations of the system.
+
+Also the webservice will describe a crew by the following JSON:
+
+```json
+{
+  "name": "Berlin",
+  "country": "DE",
+  "cities": [
+    "Berlin"
+  ]
+}
+```
+
+A crew has a name, a country code (described using the 2-Alpha codes of the [ISO 3166-1](https://en.wikipedia.org/wiki/ISO_3166-1)) and a set of cities. Maybe there
+are regions with a lot of small cities or towns and a working infrastructure, where multiple volunteers in different cities join to one crew.
+
+Access Webservice
+=================
+There are three entry points implemented:
+*  <code>/rest/users</code>: Returns a JSON containing a list of requested users
+*  <code>/rest/users/:id</code>: Returns a JSON containing the user identified by the given ID
+*  <code>/rest/crews</code>: Returns a JSON containing a list of requested crews 
+
+All these entry points are routes using the HTTP method <code>POST</code> and the body of these requests can contain a query JSON like the following example:
+```json
+{
+	"filterBy" : {
+		"page" :  {
+			"lastId": "f2329fe0-c94b-4b33-a039-296c1a7dcba6",
+			"countsPerPage": 1
+		},
+		"search" : {
+			"keyword" : "Test",
+			"fields": ["profiles.supporter.firstName", "profiles.supporter.lastName"]
+		},
+		"groups" : [
+			{
+				"groupName" : "supporter",
+				"area" : { "name" : "role" }
+			},
+			{
+				"groupName" : "finance",
+				"area" : { "name" : "pillar" }
+			}	
+		]
+	},
+	"sortBy" : [
+		{
+			"field": "profiles.supporter.firstName",
+			"dir" : "asc"
+		}
+	]
+}
+```
+>
+If the crews webservice is requested, the <code>groups</code> filter will be ignored. Additionally, the <code>lastId</code> inside the <code>page</code> filter can be used for the crews name.
+>
+
+The <code>filterBy</code> JSON block reduces the resulting set. It is possible to reduce the set using a pagination (<code>lastId</code> is optional and if given the object with this ID won't be returned),
+a search query (Regex based - it found every object that contains the given keyword as a substring of it's value inside one of the given fields) and groups (returns each object that is part of all given groups).
+
+Using the <code>sortBy</code> list of fields the results can be ordered. The sorting criteria will be applied in the given order.
+
+>
+*Note*: Every <code>POST</code> request to an entry points has to set the HTTP header <code>Content-Type: application/json</code>
+>
+
 ChangeLog
 =========
 
-## Version 0.7.0 (2016-12-19)
+## Version 0.8.0 (2016-12-30)
+*  [[F] #9 - Supporter Webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/9)
 *  [[F] #8 - Different groups](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/8)
 *  [[F] #11 - Configurable geography](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/11)
 *  [[F] #7 - Different roles](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/7)
