@@ -13,6 +13,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models.{OauthClient, PublicUser, User}
 import User._
 import api.ApiAction
+import api.ApiQuery.{CrewRequest, RequestConfig, UserRequest}
 import daos.{CrewDao, OauthClientDao, UserApiQueryDao, UserDao}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -47,6 +48,7 @@ class RestApi @Inject() (
       Json.toJson(users.map(PublicUser(_)))
     ))
     implicit val u: UserDao = userDao
+    implicit val config : RequestConfig = UserRequest
     request.query match {
       case Some(query) => query.toExtension.flatMap((ext) =>
         body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
@@ -61,6 +63,7 @@ class RestApi @Inject() (
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
     implicit val u: UserDao = userDao
+    implicit val config : RequestConfig = UserRequest
     request.query match {
       case Some(query) => query.toExtension.flatMap((ext) => body(ext._1))
       case None => body(Json.obj())
@@ -72,6 +75,7 @@ class RestApi @Inject() (
     def body(query: JsObject, limit: Int, sort: JsObject) = crewDao.ws.list(query, limit, sort).map((crews) => Ok(Json.toJson(crews)))
 
     implicit val c: CrewDao = crewDao
+    implicit val config : RequestConfig = CrewRequest
     request.query match {
       case Some(query) => query.toExtension.flatMap((ext) =>
         body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)

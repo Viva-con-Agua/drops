@@ -2,6 +2,7 @@ package api
 
 import java.util.UUID
 
+import api.ApiQuery.RequestConfig
 import daos.{MongoUserApiQueryDao, ObjectIdResolver, UserDao}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -85,16 +86,39 @@ object SortField {
 // Todo: Implement more potential query options (like GroupBy, etc.)
 
 case class ApiQuery(filterBy : Option[FilterBy], sortBy: Option[List[SortField]]) {
-  private def queryDao(implicit resolver: ObjectIdResolver) = MongoUserApiQueryDao(this, resolver) // Todo: Refactoring! This should be implicit by bind!
+  private def queryDao(implicit resolver: ObjectIdResolver, config : RequestConfig) = MongoUserApiQueryDao(this, resolver, config) // Todo: Refactoring! This should be implicit by bind!
 
-  def toExtension(implicit resolver: ObjectIdResolver) = queryDao.filter
-  def toQueryExtension(implicit resolver: ObjectIdResolver) : Future[JsObject] = queryDao.filter.map(_._1)
-  def toLimit(implicit resolver: ObjectIdResolver) : Future[Option[Int]] = queryDao.filter.map(_._2.get("limit"))
+  def toExtension(implicit resolver: ObjectIdResolver, config : RequestConfig) = queryDao.filter
+  def toQueryExtension(implicit resolver: ObjectIdResolver, config : RequestConfig) : Future[JsObject] = queryDao.filter.map(_._1)
+  def toLimit(implicit resolver: ObjectIdResolver, config : RequestConfig) : Future[Option[Int]] = queryDao.filter.map(_._2.get("limit"))
 
-  def getSortCriteria(implicit resolver: ObjectIdResolver) = queryDao.getSortCriteria
+  def getSortCriteria(implicit resolver: ObjectIdResolver, config : RequestConfig) = queryDao.getSortCriteria
 }
 
 object ApiQuery {
+  trait RequestConfig {
+    val filterByPage : Boolean
+    val filterBySearch : Boolean
+    val filterByGroup : Boolean
+    val sortBy : Boolean
+  }
+
+  object UserRequest extends RequestConfig {
+    override val filterByGroup: Boolean = true
+    override val filterBySearch: Boolean = true
+    override val filterByPage: Boolean = true
+
+    override val sortBy: Boolean = true
+  }
+
+  object CrewRequest extends RequestConfig {
+    override val filterByGroup: Boolean = false
+    override val filterBySearch: Boolean = true
+    override val filterByPage: Boolean = true
+
+    override val sortBy: Boolean = true
+  }
+
   implicit val pageFormat = Json.format[Page]
   implicit val searchFormat = Json.format[Search]
   implicit val groupFormat = Json.format[Group]
