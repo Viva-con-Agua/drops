@@ -14,7 +14,7 @@ This is a user management component for a micro-component application, supportin
 Install
 =======
 After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
-Additionally the same can be done for crews. The route that should be used is <code>/crews/init/</code>.
+Additionally the same can be done for crews. The route that should be used is <code>/crews/init</code>.
 
 Webservice results
 ==================
