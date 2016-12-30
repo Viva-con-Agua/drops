@@ -11,7 +11,10 @@ GET     /roles                                              controllers.Roles.in
 POST    /roles/update                                       controllers.Roles.update
 
 # Rest api
-GET      /rest/profile                                      controllers.RestApi.profile
+GET     /rest/profile                                       controllers.RestApi.profile
+POST    /rest/users                                         controllers.RestApi.users
+POST    /rest/users/:id                                     controllers.RestApi.user(id : String)
+POST    /rest/crews                                         controllers.RestApi.crews
 
 # OAuth2 Rest API
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
