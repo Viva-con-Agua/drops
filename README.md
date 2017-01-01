@@ -16,6 +16,20 @@ Install
 After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
 Additionally the same can be done for crews. The route that should be used is <code>/crews/init</code>.
 
+Dummy Data
+==========
+Using an admin account test users can be generated. For generating the following 
+route has to be called: <code>/users/init/:count/:countSpecialRoles</code>, 
+where <code>:count</code> has to be replaced by the count of new users that 
+should be generated and <code>:countSpecialRoles</code> by the number of users 
+with special roles (next to "Supporter").
+
+>
+Currently, the generation does not uses bulk inserts, so an insert operation 
+will be executed for each test user. As a consequence, the system needs a lot of 
+time.
+>
+
 Webservice results
 ==================
 The Drops service implements a webservice for requesting users and crews. Users will be described by the following JSON that is also returned to a valid request:
@@ -151,7 +165,8 @@ Using the <code>sortBy</code> list of fields the results can be ordered. The sor
 ChangeLog
 =========
 
-## Version 0.8.0 (2016-12-30)
+## Version 0.9.0 (2017-01-01)
+*  [[F] #17 - Test Data](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/17)
 *  [[F] #9 - Supporter Webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/9)
 *  [[F] #8 - Different groups](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/8)
 *  [[F] #11 - Configurable geography](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/11)
