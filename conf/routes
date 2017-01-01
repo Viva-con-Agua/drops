@@ -5,6 +5,7 @@ POST    /crew                                               controllers.Applicat
 POST    /pillar                                             controllers.Application.updatePillar
 
 GET     /crews/init                                         controllers.Application.initCrews
+GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
 
 # Roles
 GET     /roles                                              controllers.Roles.index

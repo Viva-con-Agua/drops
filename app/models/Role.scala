@@ -21,6 +21,8 @@ object Role {
 
   def unapply(role: Role): Option[String] = Some(role.name)
 
+  def getAll : Set[Role] = Set(RoleAdmin, RoleEmployee, RoleVolunteerManager, RoleSupporter)
+
   implicit val roleJsonFormat = Json.format[Role]
 }
 

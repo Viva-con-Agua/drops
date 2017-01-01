@@ -21,6 +21,8 @@ object Pillar {
 
   def unapply(pillar: Pillar): Option[String] = Some(pillar.name)
 
+  def getAll : Set[Pillar] = Set(Education, Operation, Finance, Network)
+
   implicit val pillarJsonFormat = Json.format[Pillar]
 }
 
