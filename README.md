@@ -13,6 +13,51 @@ This is a user management component for a micro-component application, supportin
 
 Install
 =======
+Drops can be deployed using Docker. The `drops.informatik.hu-berlin.de` 
+config file (in `conf/` directory) contains all configuration information needed 
+to run the service on production. Additionally, the following BASH scripts 
+should be used:
+
+```sh
+#!/bin/bash
+docker pull mongo
+docker pull drops.informatik.hu-berlin.de:5000/sell/drops:0.9.0
+```
+(install.sh)
+
+```sh
+#!/bin/bash
+docker run --name drops-mongo -d mongo
+
+docker run --name drops --link drops-mongo:mongo -p 9000:9000 drops:0.9.0 \
+	-Dconfig.resource=drops.informatik.hu-berlin.de.conf \
+	-Dmongodb.uri=mongodb://mongo/drops \
+	-J-Xms128M -J-Xmx512m -J-server \
+	> server-output 2>&1 &
+```
+(start.sh)
+
+```sh
+#!/bin/bash
+docker stop drops-mongo
+docker stop drops
+```
+(stop.sh)
+
+```sh
+#!/bin/bash
+docker rm drops-mongo
+docker rm drops
+```
+(remove.sh)
+
+>
+*Notice:* 
+All server generated output will be written to the `server-output` file.
+This is also needed to confirm users since the production server also uses a mock
+mail server.
+>
+
 After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
 Additionally the same can be done for crews. The route that should be used is <code>/crews/init</code>.
 
