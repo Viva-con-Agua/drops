@@ -1,8 +1,10 @@
+import com.typesafe.sbt.packager.docker.Cmd
+
 name := """Drops"""
 
 version := "0.9.0"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
 scalaVersion := "2.11.7"
 
@@ -46,3 +48,11 @@ scalacOptions ++= Seq(
   "-language:reflectiveCalls"
 )
 
+// setting a maintainer which is used for all packaging types</pre>
+maintainer in Docker := "Johann Sell"
+
+// exposing the play ports
+dockerExposedPorts := Seq(9000, 9443)
+
+//dockerRepository := Some("drops.informatik.hu-berlin.de:5000/sell")
+//dockerUpdateLatest := true
