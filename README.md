@@ -21,19 +21,26 @@ should be used:
 ```sh
 #!/bin/bash
 docker pull mongo
-docker pull drops.informatik.hu-berlin.de:5000/sell/drops:0.9.0
+docker pull cses/drops:0.9.0
 ```
 (install.sh)
 
 ```sh
 #!/bin/bash
-docker run --name drops-mongo -d mongo
+docker run --name drops-mongo --restart=unless-stopped -d mongo
 
-docker run --name drops --link drops-mongo:mongo -p 9000:9000 drops:0.9.0 \
-	-Dconfig.resource=drops.informatik.hu-berlin.de.conf \
-	-Dmongodb.uri=mongodb://mongo/drops \
-	-J-Xms128M -J-Xmx512m -J-server \
-	> server-output 2>&1 &
+docker run --name drops --link drops-mongo:mongo --restart=unless-stopped -v $(pwd)/drops.informatik.hu-berlin.de.p12:/certs.p12 -h drops.informatik.hu-berlin.de -p 443:9443 cses/drops:0.9.0 \
+    -Dconfig.resource=drops.informatik.hu-berlin.de.conf \
+    -Dhttps.port=9443 \
+    -Dhttps.address=drops.informatik.hu-berlin.de \
+    -Dhttp.address=drops.informatik.hu-berlin.de \
+    -Dhttp.port=disabled \
+    -Dplay.server.https.keyStore.path=/certs.p12 \
+    -Dplay.server.https.keyStore.type=PKCS12 \
+    -Dplay.server.https.keyStore.password=61aca05eb0eb07c4c0c53f35b7edf3e1 \
+    -Dmongodb.uri=mongodb://mongo/drops \
+    -J-Xms128M -J-Xmx512m -J-server \
+    > server-output 2>&1 &
 ```
 (start.sh)
 
