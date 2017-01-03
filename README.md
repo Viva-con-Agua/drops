@@ -166,32 +166,38 @@ There are three entry points implemented:
 All these entry points are routes using the HTTP method <code>POST</code> and the body of these requests can contain a query JSON like the following example:
 ```json
 {
-	"filterBy" : {
-		"page" :  {
-			"lastId": "f2329fe0-c94b-4b33-a039-296c1a7dcba6",
-			"countsPerPage": 1
-		},
-		"search" : {
-			"keyword" : "Test",
-			"fields": ["profiles.supporter.firstName", "profiles.supporter.lastName"]
-		},
-		"groups" : [
-			{
-				"groupName" : "supporter",
-				"area" : { "name" : "role" }
-			},
-			{
-				"groupName" : "finance",
-				"area" : { "name" : "pillar" }
-			}	
-		]
-	},
-	"sortBy" : [
-		{
-			"field": "profiles.supporter.firstName",
-			"dir" : "asc"
-		}
-	]
+    "filterBy" : {
+        "page" :  {
+            "lastId": "f2329fe0-c94b-4b33-a039-296c1a7dcba6",
+            "countsPerPage": 100
+        },
+        "search" : [
+            {
+                "keyword" : "Berlin",
+                "fields": ["profiles.supporter.crew.crew.name"]
+            },
+            {
+                "keyword" : "Test",
+                "fields": ["profiles.supporter.firstName", "profiles.supporter.lastName"]
+            }
+        ],
+        "groups" : [
+            {
+                "groupName" : "supporter",
+                "area" : { "name" : "role" }
+            },
+            {
+                "groupName" : "finance",
+                "area" : { "name" : "pillar" }
+            }	
+        ]
+    },
+    "sortBy" : [
+        {
+            "field": "profiles.supporter.firstName",
+            "dir" : "asc"
+        }
+    ]
 }
 ```
 >
@@ -210,7 +216,8 @@ Using the <code>sortBy</code> list of fields the results can be ordered. The sor
 ChangeLog
 =========
 
-## Version 0.9.0 (2017-01-01)
+## Version 0.9.1 (2017-01-03)
+*  [[I] #19 - Multiple search conditions](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/19)
 *  [[F] #17 - Test Data](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/17)
 *  [[F] #9 - Supporter Webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/9)
 *  [[F] #8 - Different groups](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/8)

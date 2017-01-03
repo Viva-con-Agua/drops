@@ -43,7 +43,7 @@ case class Search(keyword: String, fields: Set[String])
 
 case class Group(groupName: String, area : Area)
 
-case class FilterBy(page: Option[Page], search: Option[Search], groups : Option[Set[Group]])
+case class FilterBy(page: Option[Page], search: Option[Set[Search]], groups : Option[Set[Group]])
 
 trait Sort {
   val dir : String

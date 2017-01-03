@@ -27,17 +27,19 @@ case class MongoApiQueryDao(query: ApiQuery, resolver: ObjectIdResolver, config 
       val q = Map("group" -> config.filterByGroup, "search" -> config.filterBySearch).foldLeft(Json.obj())(
         (query, pair) => query ++ (pair._1 match {
           case "group" => pair._2 match {
-            case true => (filter.groups match {
+            case true => filter.groups match {
               case Some(groups) => filterByGroups(groups)
               case _ => Json.obj()
-            })
+            }
             case false => Json.obj()
           }
           case "search" => pair._2 match {
-            case true => (filter.search match {
-              case Some(search) => filterBySearch(search.keyword, search.fields)
+            case true => filter.search match {
+              case Some(search) => Json.obj("$and" -> search.foldLeft(Json.arr())((conditions, condition) =>
+                conditions :+ filterBySearch(condition.keyword, condition.fields)
+              ))
               case None => Json.obj()
-            })
+            }
             case false => Json.obj()
           }
         })
