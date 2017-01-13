@@ -82,8 +82,11 @@ will be executed for each test user. As a consequence, the system needs a lot of
 time.
 >
 
-Webservice results
-==================
+Webservice
+==========
+
+Results
+-------
 The Drops service implements a webservice for requesting users and crews. Users will be described by the following JSON that is also returned to a valid request:
 ```json
 {
@@ -163,8 +166,8 @@ Also the webservice will describe a crew by the following JSON:
 A crew has a name, a country code (described using the 2-Alpha codes of the [ISO 3166-1](https://en.wikipedia.org/wiki/ISO_3166-1)) and a set of cities. Maybe there
 are regions with a lot of small cities or towns and a working infrastructure, where multiple volunteers in different cities join to one crew.
 
-Access Webservice
-=================
+Access
+------
 There are three entry points implemented:
 *  <code>/rest/users</code>: Returns a JSON containing a list of requested users
 *  <code>/rest/users/:id</code>: Returns a JSON containing the user identified by the given ID
@@ -219,6 +222,90 @@ Using the <code>sortBy</code> list of fields the results can be ordered. The sor
 >
 *Note*: Every <code>POST</code> request to an entry points has to set the HTTP header <code>Content-Type: application/json</code>
 >
+
+OAuth2 based session handshake
+==============================
+Drops allows other services to intiate an OAuth 2 handshake. The service implements
+an OAuth 2 server and allows <code>authorization_code</code> and <code>password</code>
+based authentication. Assuming that all other services are part of the official 
+infrastructure, Drops implements a small addition to the OAuth 2 standard: The 
+<code>authorization_code</code> authentication does not require additional permission
+by the user. 
+
+Basically, your service will make an HTTP redirect to the Drops service, so Drops
+can check if there exists a session for the redirected client. If there exists no
+session until now, Drops will show a login screen and the can access using his or 
+her default credentials. Otherwise Drops will generate an authorization code (based
+on the assumption that all registered services are part of the official infrastructure. 
+So, you can trust these services) and redirects back to your service. Now, your 
+service is able to request an access token using a webservice provided by Drops
+and to request the users profile by another webservice that is also provided by
+Drops and requires a valid access token as parameter.
+
+Preparation
+-----------
+Your service has to be registered in Drops. For this purpose you have to send a 
+mail to the Drops-Service administrator containing the following information:
+*  <code>client_id</code>: e.g. the name of your service
+*  <code>client_secret</code>: a safe random string (it should have at least 12 signs)
+*  <code>codeRedirectUri</code>: a URL of your service pointing to an action that 
+consumes the generated authorization code (e.g. if 
+<code>``https://example.com/oauth/code/<generated_code>``</code> points to such an action, 
+the <code>codeRedirectUri</code> would be <code>``https://example.com/oauth/code/``</code>)
+
+>
+*Info:* Don't forget possible special signs at the end of the <code>codeRedirectUri</code>
+(e.g. <code>``/``</code> or <code>``?code=``</code>), because Drops simply concatinates the given URI
+and the generated code.
+>
+
+Additionally, it should be obvious that you have to know the URL of the Drops Service 
+you want to connect to.
+
+Implementation
+--------------
+Implementing the handshake is very simple and consists of three steps:
+
+1.  Implement an URL path pointing to an action of your service that mades a
+Redirect (<code>HTTP 303</code> or <code>HTTP 302</code>) to 
+<code>``<drops_url>/oauth2/code/get/<client_id>/client_secret>``</code>. The 
+variables <code>``<drops_url>``</code>, <code>``<client_id>``</code> and 
+<code>``<client_secret>``</code> have been defined during preparation phase.
+
+2.  The action handling the <code>codeRedirectUri</code> has to be implemented. 
+This action will be accessed by an HTTP redirect initiated by the Drops service.
+It receives a code by a query parameter or inside the URL path and uses this code
+to receive an OAuth 2 <code>AccessToken</code>. For this purpose it calls the 
+Drops service directly using the webservice endpoint <code>``<drops_url>/oauth2/access_token``</code>
+and the following query parameter: 
+  *  <code>grant_type=authorization_code</code>
+  *  <code>``client_id=<client_id>``</code>
+  *  <code>``client_secret=<client_secret>``</code>
+  *  <code>``code=<received_code>``</code>
+
+3.  The responded <code>AccessToken</code> can be used to request the users profile,
+by requesting another webservice supplied by the Drops service:
+  *  endpoint: <code>``<drops_url>/oauth2/rest/profile``</code>
+  *  query string: <code>``access_token=<access_token>``</code>
+
+An error-free response of the request for an access token will be a JSON:
+```json
+{
+    "token_type" : "some_string",
+    "access_token" : "a random string",
+    "expires_in" : a long,
+    "refresh_token" : "a random string"
+}
+```
+The key <code>access_token</code> of such an response should be used as value of
+the variable <code>access_token</code> used in step 3.
+
+An error-free response of the request for a profile will be a JSON describing a 
+user as shown before. 
+
+Using this information your service is able to initiate a session for the user 
+and your service.
+
 
 ChangeLog
 =========
