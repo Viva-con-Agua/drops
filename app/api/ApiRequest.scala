@@ -2,6 +2,7 @@ package api
 
 import javax.inject.Inject
 
+import api.query._
 import daos.{OauthClientDao, UserDao}
 import models.OauthClient
 import play.api.libs.json._
@@ -28,13 +29,24 @@ case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, 
   val clientSecret = request.queryString("client_secret").headOption.getOrElse(
     throw new Exception // Todo: Meaningful Exception
   )
+  val version = request.queryString.getOrElse("version",
+    request.queryString.getOrElse("v",
+      Seq("1.0.0") // change this, if a new version of the webservice was implemented (so it uses the new version by default)
+    )
+  ).headOption.getOrElse(
+    throw new Exception // Todo: Meaningful Exception
+  )
 
   val query = request.body match {
     case b : AnyContent => b.asJson match {
       case Some(json) => json == Json.obj() match {
         // check for an empty JSON
         case true => None
-        case _ => Json.fromJson[ApiQuery](json) match {
+        case _ => (version match {
+          case "1.0.0" => Json.fromJson[v1_0_0.ApiQuery](json)
+          case _ => throw new Exception("Given version number is unknown!")
+            // add new versions here!
+        }) match {
           case JsSuccess(query, path : JsPath) => Some(query)
           case e: JsError => throw new Exception(JsError.toJson(e).toString()) // Todo: Meaning is that the given JSON query is not a valid query
         }

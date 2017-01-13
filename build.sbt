@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.docker.Cmd
 
 name := """Drops"""
 
-version := "0.9.1"
+version := "0.9.2"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
@@ -55,4 +55,3 @@ maintainer in Docker := "Johann Sell"
 dockerExposedPorts := Seq(9000, 9443)
 
 dockerRepository := Some("cses")
-//dockerUpdateLatest := true

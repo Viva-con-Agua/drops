@@ -173,6 +173,12 @@ There are three entry points implemented:
 *  <code>/rest/users/:id</code>: Returns a JSON containing the user identified by the given ID
 *  <code>/rest/crews</code>: Returns a JSON containing a list of requested crews 
 
+There are three query parameter those have to be defined:
+*  <code>client_id</code>: Your service has to be registered at the Drops service. Use the registered ID.
+*  <code>client_secret</code>: Your service has to be registered at the Drops service. Use the registered Secret.
+*  <code>version</code> or <code>v</code>: The version of the service that your request assumes. It is an optional
+parameter. If nothing is defined, the latest version will be used.
+
 All these entry points are routes using the HTTP method <code>POST</code> and the body of these requests can contain a query JSON like the following example:
 ```json
 {
@@ -310,14 +316,15 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.9.1 (2017-01-03)
-*  [[I] #19 - Multiple search conditions](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/19)
-*  [[F] #17 - Test Data](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/17)
-*  [[F] #9 - Supporter Webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/9)
-*  [[F] #8 - Different groups](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/8)
-*  [[F] #11 - Configurable geography](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/11)
-*  [[F] #7 - Different roles](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/7)
-*  [[F] #4 - Oauth 2 provider](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/4)
-*  [[F] #3 - Users login](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/3)
-*  [[F] #2 - Users are able to register themselves](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/2)
-*  [[F] #1 - Represent a user](https://repo.cses.informatik.hu-berlin.de/gitlab/sozmed/waves/issues/1)
+## Version 0.9.2 (2017-01-13)
+*  [[I] #26 - Versioning for webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/26)
+*  [[I] #19 - Multiple search conditions](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/19)
+*  [[F] #17 - Test Data](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/17)
+*  [[F] #9 - Supporter Webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/9)
+*  [[F] #8 - Different groups](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/8)
+*  [[F] #11 - Configurable geography](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/11)
+*  [[F] #7 - Different roles](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/7)
+*  [[F] #4 - Oauth 2 provider](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/4)
+*  [[F] #3 - Users login](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/3)
+*  [[F] #2 - Users are able to register themselves](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/2)
+*  [[F] #1 - Represent a user](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/1)

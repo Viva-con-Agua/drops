@@ -13,7 +13,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models.{OauthClient, PublicUser, User}
 import User._
 import api.ApiAction
-import api.ApiQuery.{CrewRequest, RequestConfig, UserRequest}
+import api.query.{CrewRequest, RequestConfig, UserRequest}
 import daos.{CrewDao, OauthClientDao, UserDao}
 
 import scala.concurrent.ExecutionContext.Implicits.global

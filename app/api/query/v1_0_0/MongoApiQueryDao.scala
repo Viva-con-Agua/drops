@@ -1,15 +1,11 @@
-package daos
+package api.query.v1_0_0
 
-import java.util.UUID
-
-import api.ApiQuery.RequestConfig
-import api._
-import models.{Pillar, Role, User}
+import api.query._
+import daos.ObjectIdResolver
 import play.api.libs.json._
-import reactivemongo.bson.BSONObjectID
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 trait ApiQueryDao[A] {
   def filter : Future[(A, Map[String, Int])]
