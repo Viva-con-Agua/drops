@@ -1,11 +1,11 @@
-package api.query.v1_0_0
+package api.query.v1_1_0
 
 import api.query._
 import daos.{CountResolver, ObjectIdResolver}
 import play.api.libs.json.{JsObject, Json}
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Created by johann on 13.01.17.
@@ -14,7 +14,7 @@ case class ApiQuery(filterBy : Option[FilterBy], sortBy: Option[List[SortField]]
   private def queryDao(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) =
     MongoApiQueryDao(this, resolver, config) // Todo: Refactoring! This should be implicit by bind!
 
-  def toExtension(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) = queryDao.filter
+  def toExtension(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) : Future[(JsObject, Map[String, Int])] = queryDao.filter
 
   def toQueryExtension(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) : Future[JsObject] =
     queryDao.filter.map(_._1)
@@ -22,7 +22,8 @@ case class ApiQuery(filterBy : Option[FilterBy], sortBy: Option[List[SortField]]
   def toLimit(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) : Future[Option[Int]] =
     queryDao.filter.map(_._2.get("limit"))
 
-  def getSortCriteria(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) = queryDao.getSortCriteria
+  def getSortCriteria(implicit resolver: ObjectIdResolver with CountResolver, config : RequestConfig) : JsObject =
+    queryDao.getSortCriteria
 }
 
 object ApiQuery {

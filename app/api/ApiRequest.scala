@@ -31,7 +31,7 @@ case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, 
   )
   val version = request.queryString.getOrElse("version",
     request.queryString.getOrElse("v",
-      Seq("1.0.0") // change this, if a new version of the webservice was implemented (so it uses the new version by default)
+      Seq("1.1.0") // change this, if a new version of the webservice was implemented (so it uses the new version by default)
     )
   ).headOption.getOrElse(
     throw new Exception // Todo: Meaningful Exception
@@ -44,6 +44,7 @@ case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, 
         case true => None
         case _ => (version match {
           case "1.0.0" => Json.fromJson[v1_0_0.ApiQuery](json)
+          case "1.1.0" => Json.fromJson[v1_1_0.ApiQuery](json)
           case _ => throw new Exception("Given version number is unknown!")
             // add new versions here!
         }) match {

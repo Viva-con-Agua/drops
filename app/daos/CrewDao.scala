@@ -13,7 +13,7 @@ import com.mohiva.play.silhouette.api.LoginInfo
 import models.{Crew, ObjectIdWrapper}
 import models.Crew._
 
-trait CrewDao extends ObjectIdResolver {
+trait CrewDao extends ObjectIdResolver with CountResolver {
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def list : Future[List[Crew]]
@@ -27,6 +27,9 @@ trait CrewDao extends ObjectIdResolver {
 class MongoCrewDao extends CrewDao {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   val crews = reactiveMongoApi.db.collection[JSONCollection]("crews")
+
+  override def getCount: Future[Int] =
+    crews.count()
 
   override def getObjectId(id: String): Future[Option[ObjectIdWrapper]] =
     crews.find(Json.obj("name" -> id), Json.obj("_id" -> 1)).one[ObjectIdWrapper]

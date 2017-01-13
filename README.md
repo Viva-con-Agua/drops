@@ -179,7 +179,14 @@ There are three query parameter those have to be defined:
 *  <code>version</code> or <code>v</code>: The version of the service that your request assumes. It is an optional
 parameter. If nothing is defined, the latest version will be used.
 
-All these entry points are routes using the HTTP method <code>POST</code> and the body of these requests can contain a query JSON like the following example:
+Currently, there are two different versions of the webservice:
+*  <code>1.0.0</code>: supports filtering by page, search and group and sorting
+*  <code>1.1.0</code>: supports all features of version <code>1.0.0</code>. Additionally, 
+this version supports the <code>all</code> filter: Returns all requested entities and ignores 
+a given pagination filter. So, if <code>all</code> is true and no search or group filter is 
+defined all saved entities will be returned.
+
+All the mentioned above entry points are routes using the HTTP method <code>POST</code> and the body of these requests can contain a query JSON like the following example (Version 1.0.0):
 ```json
 {
     "filterBy" : {
@@ -218,6 +225,19 @@ All these entry points are routes using the HTTP method <code>POST</code> and th
 ```
 >
 If the crews webservice is requested, the <code>groups</code> filter will be ignored. Additionally, the <code>lastId</code> inside the <code>page</code> filter can be used for the crews name.
+>
+
+Since version 1.1.0 the following addional parameter is allowed:
+```json
+{
+    "filterBy" : {
+        "all" : true
+    }
+}
+```
+
+>
+<code>all</code> is a boolean parameter and it's also optional. If this parameter is set to true a possibly given <code>page</code> filter will be ignored.
 >
 
 The <code>filterBy</code> JSON block reduces the resulting set. It is possible to reduce the set using a pagination (<code>lastId</code> is optional and if given the object with this ID won't be returned),
@@ -316,7 +336,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.9.2 (2017-01-13)
+## Version 0.9.3 (2017-01-13)
+*  [[I] #25 - WS: Support requesting all crews](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/25)
 *  [[I] #26 - Versioning for webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/26)
 *  [[I] #19 - Multiple search conditions](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/19)
 *  [[F] #17 - Test Data](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/17)
