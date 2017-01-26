@@ -1,11 +1,14 @@
 package api.query.v1_1_0
 
+import java.util.UUID
+
 import api.query._
 import daos.{CountResolver, ObjectIdResolver}
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Try
 
 trait ApiQueryDao[A] {
   def filter : Future[(A, Map[String, Int])]
@@ -75,12 +78,14 @@ case class MongoApiQueryDao(query: ApiQuery, resolver: ObjectIdResolver with Cou
     resolver.getCount.map((i) => (q, Map("limit" -> i)))
 
   override def filterByPage(lastId: Option[String], countsPerPage: Int): Future[(JsObject, Map[String, Int])] =
-    lastId.map((id) => resolver.getObjectId(id).map(_ match {
-      case Some(userObjId) => Json.obj("_id" -> Json.obj("$gt" -> Json.toJson(userObjId._id)))
-      case None => Json.obj()
-    }).map(
-      (queryExtension) => (queryExtension, Map("limit" -> countsPerPage))
-    )).getOrElse(Future.successful((Json.obj(), Map("limit" -> countsPerPage))))
+    lastId.map((id) =>
+      Try(resolver.getObjectId(UUID.fromString(id)))
+        .getOrElse(resolver.getObjectId(id)).map(_ match {
+        case Some(userObjId) => Json.obj("_id" -> Json.obj("$gt" -> Json.toJson(userObjId._id)))
+        case None => Json.obj()
+      }).map(
+        (queryExtension) => (queryExtension, Map("limit" -> countsPerPage))
+      )).getOrElse(Future.successful((Json.obj(), Map("limit" -> countsPerPage))))
 
   private def filterByGroup(group: Group) = group.area match {
     case RoleArea => Json.obj(

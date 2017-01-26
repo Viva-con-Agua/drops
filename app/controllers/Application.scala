@@ -1,5 +1,6 @@
 package controllers
 
+import java.util.UUID
 import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api.util.PasswordHasher
@@ -89,10 +90,28 @@ class Application @Inject() (
     configuration.getConfigList("crews").map(_.toList.map(c =>
       crewDao.find(c.getString("name").get).map(_ match {
         case Some(crew) => crew
-        case _ => crewDao.save(Crew(c.getString("name").get, c.getString("country").get, c.getStringList("cities").get.toSet))
+        case _ => crewDao.save(
+          Crew(UUID.randomUUID(), c.getString("name").get, c.getString("country").get, c.getStringList("cities").get.toSet)
+        )
       })
     ))
     Future.successful(Redirect("/"))
+  }
+
+  def fixCrewsID = SecuredAction.async { request =>
+    val crews = crewDao.listOfStubs.flatMap(l => Future.sequence(l.map(oldCrew => crewDao.update(oldCrew.toCrew))))
+    val users = crews.flatMap(l => userService.listOfStubs.flatMap(ul => Future.sequence(ul.map(user => {
+      val profiles = user.profiles.map(profile => {
+        val newCrewSupporter = profile.supporter.crew.flatMap((cs) => l.find(_.name == cs.crew.name).map(nc => CrewSupporter(nc, cs.active)))
+        profile.toProfile(newCrewSupporter)
+      })
+      userService.update(user.toUser(profiles))
+    }))))
+    val res = for {
+      crewsList <- crews
+      usersList <- users
+    } yield (crewsList, usersList)
+    res.map(pair => Ok(Json.arr(Json.toJson(pair._1), Json.toJson(pair._2))))
   }
 
   def initUsers(number: Int, specialRoleUsers : Int = 1) = SecuredAction(WithRole(RoleAdmin)).async { request => {

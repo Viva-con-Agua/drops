@@ -10,7 +10,7 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import com.mohiva.play.silhouette.api.LoginInfo
-import models.{ObjectId, ObjectIdWrapper, Profile, User}
+import models._
 import models.User._
 import reactivemongo.bson.BSONObjectID
 
@@ -24,6 +24,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def link(user:User, profile:Profile):Future[User]
   def update(profile:Profile):Future[User]
   def list : Future[List[User]]
+  def listOfStubs : Future[List[UserStub]]
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -38,8 +39,11 @@ class MongoUserDao extends UserDao {
 
   override def getCount: Future[Int] = users.count()
 
-  override def getObjectId(id: String): Future[Option[ObjectIdWrapper]] =
-    users.find(Json.obj("id" -> UUID.fromString(id)), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
+  override def getObjectId(id: UUID): Future[Option[ObjectIdWrapper]] =
+    users.find(Json.obj("id" -> id), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
+
+  override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] =
+    users.find(Json.obj("id" -> UUID.fromString(name)), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
 
   def find(loginInfo:LoginInfo):Future[Option[User]] = 
     users.find(Json.obj(
@@ -86,6 +90,10 @@ class MongoUserDao extends UserDao {
   } yield user.get
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
+
+  override def listOfStubs: Future[List[UserStub]] = this.getCount.flatMap(c =>
+    users.find(Json.obj()).sort(Json.obj()).cursor[UserStub]().collect[List](c)
+  )
 
   class MongoUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] =

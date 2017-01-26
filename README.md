@@ -155,6 +155,7 @@ Also the webservice will describe a crew by the following JSON:
 
 ```json
 {
+  "id": "4e899ba5-2897-4500-acdc-7ce998b033db",
   "name": "Berlin",
   "country": "DE",
   "cities": [
@@ -336,7 +337,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.9.3 (2017-01-13)
+## Version 0.9.4 (2017-01-26)
+*  [[I] #28 - Crews WS: IDs](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/28)
 *  [[I] #25 - WS: Support requesting all crews](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/25)
 *  [[I] #26 - Versioning for webservice](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/26)
 *  [[I] #19 - Multiple search conditions](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/19)

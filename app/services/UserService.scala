@@ -37,4 +37,5 @@ class UserService @Inject() (userDao:UserDao) extends IdentityService[User] {
   }
 
   def list = userDao.list
+  def listOfStubs = userDao.listOfStubs
 }
