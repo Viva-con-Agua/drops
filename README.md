@@ -274,7 +274,6 @@ Preparation
 Your service has to be registered in Drops. For this purpose you have to send a 
 mail to the Drops-Service administrator containing the following information:
 *  <code>client_id</code>: e.g. the name of your service
-*  <code>client_secret</code>: a safe random string (it should have at least 12 signs)
 *  <code>codeRedirectUri</code>: a URL of your service pointing to an action that 
 consumes the generated authorization code (e.g. if 
 <code>``https://example.com/oauth/code/<generated_code>``</code> points to such an action, 
@@ -293,11 +292,10 @@ Implementation
 --------------
 Implementing the handshake is very simple and consists of three steps:
 
-1.  Implement an URL path pointing to an action of your service that mades a
-Redirect (<code>HTTP 303</code> or <code>HTTP 302</code>) to 
-<code>``<drops_url>/oauth2/code/get/<client_id>/client_secret>``</code>. The 
-variables <code>``<drops_url>``</code>, <code>``<client_id>``</code> and 
-<code>``<client_secret>``</code> have been defined during preparation phase.
+1.  Implement an URL path pointing to an action of your service that redirects 
+(<code>HTTP 303</code> or <code>HTTP 302</code>) to <code>``<drops_url>/oauth2/code/get/<client_id>``</code>. 
+The variables <code>``<drops_url>``</code> and <code>``<client_id>``</code> 
+have been defined during preparation phase.
 
 2.  The action handling the <code>codeRedirectUri</code> has to be implemented. 
 This action will be accessed by an HTTP redirect initiated by the Drops service.
@@ -307,7 +305,6 @@ Drops service directly using the webservice endpoint <code>``<drops_url>/oauth2/
 and the following query parameter: 
   *  <code>grant_type=authorization_code</code>
   *  <code>``client_id=<client_id>``</code>
-  *  <code>``client_secret=<client_secret>``</code>
   *  <code>``code=<received_code>``</code>
 
 3.  The responded <code>AccessToken</code> can be used to request the users profile,
