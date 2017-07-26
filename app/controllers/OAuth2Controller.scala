@@ -41,7 +41,9 @@ class OAuth2Controller @Inject() (
   def getCode(clientId : String) = SecuredAction.async { implicit request =>
     oauthClientDao.find(clientId, None, "authorization_code").flatMap(_ match {
       case Some(client) => oauthCodeDao.save(OauthCode(request.identity, client)).map(
-        code => Redirect(code.client.codeRedirectUri + code.code)
+        code => code.client.redirectUri.map( (uri) => Redirect( uri + code.code)).getOrElse(
+          BadRequest(Messages("oauth2server.clientHasNoRedirectURI"))
+        )
       )
       case _ => Future.successful(BadRequest(Messages("oauth2server.clientId.notFound")))
     })
