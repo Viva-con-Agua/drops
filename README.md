@@ -337,6 +337,9 @@ and your service.
 ChangeLog
 =========
 
+## Version 0.9.5 (2017-07-26)
+* [[I] #59 - Remove OAuthClient Secret](https://github.com/Viva-con-Agua/drops/issues/59)
+
 ## Version 0.9.4 (2017-01-26)
 *  [[I] #28 - Crews WS: IDs](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/28)
 *  [[I] #25 - WS: Support requesting all crews](https://repo.cses.informatik.hu-berlin.de/gitlab/sell/drops/issues/25)

@@ -23,12 +23,12 @@ class ApiRequestProvider @Inject() (
   * Created by johann on 21.12.16.
   */
 case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, userDao: UserDao){
-  val cĺientId = request.queryString("client_id").headOption.getOrElse(
-    throw new Exception // Todo: Meaningful Exception
-  )
-  val clientSecret = request.queryString("client_secret").headOption.getOrElse(
-    throw new Exception // Todo: Meaningful Exception
-  )
+//  val cĺientId = request.queryString("client_id").headOption.getOrElse(
+//    throw new Exception // Todo: Meaningful Exception
+//  )
+//  val clientSecret = request.queryString("client_secret").headOption.getOrElse(
+//    throw new Exception // Todo: Meaningful Exception
+//  )
   val version = request.queryString.getOrElse("version",
     request.queryString.getOrElse("v",
       Seq("1.1.0") // change this, if a new version of the webservice was implemented (so it uses the new version by default)
@@ -57,6 +57,6 @@ case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, 
     case _ => None // all other possible contents are unknown to me
   }
 
-  def getClient : Future[Option[OauthClient]] =
-    oauthClientDao.find(cĺientId, clientSecret)
+//  def getClient : Future[Option[OauthClient]] =
+//    oauthClientDao.find(cĺientId, clientSecret)
 }
