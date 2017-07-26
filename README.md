@@ -303,9 +303,10 @@ It receives a code by a query parameter or inside the URL path and uses this cod
 to receive an OAuth 2 <code>AccessToken</code>. For this purpose it calls the 
 Drops service directly using the webservice endpoint <code>``<drops_url>/oauth2/access_token``</code>
 and the following query parameter: 
-  *  <code>grant_type=authorization_code</code>
+  *  <code>``grant_type=authorization_code``</code>
   *  <code>``client_id=<client_id>``</code>
   *  <code>``code=<received_code>``</code>
+  *  <code>``redirect_uri=<redirectUri>``</code>
 
 3.  The responded <code>AccessToken</code> can be used to request the users profile,
 by requesting another webservice supplied by the Drops service:
@@ -334,7 +335,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.9.6 (2017-07-26)
+## Version 0.9.7 (2017-07-26)
+* [[B] #61 - Clients are not authorized to get an Access Token](https://github.com/Viva-con-Agua/drops/issues/61)
 * [[I] #60 - Remove uneeded attribute OAuthClient](https://github.com/Viva-con-Agua/drops/issues/60)
 * [[I] #59 - Remove OAuthClient Secret](https://github.com/Viva-con-Agua/drops/issues/59)
 
