@@ -19,6 +19,8 @@ pipelineStages := Seq(digest,gzip)
 libraryDependencies ++= Seq(
   cache,
   filters,
+  javaJdbc,
+  evolutions,
   "com.typesafe.play" %% "play-mailer" % "3.0.1",
   "com.mohiva" %% "play-silhouette" % "3.0.0",
   "org.webjars" %% "webjars-play" % "2.4.0",
@@ -28,6 +30,7 @@ libraryDependencies ++= Seq(
   "com.mohiva" %% "play-silhouette-testkit" % "3.0.0" % "test",
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.7.play24",
   "com.nulab-inc" %% "play2-oauth2-provider" % "0.16.1",
+  "mysql" % "mysql-connector-java" % "5.1.18",
   specs2 % Test
 )
 
