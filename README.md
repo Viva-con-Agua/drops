@@ -41,12 +41,23 @@ docker run --name drops --link drops-mongo:mongo --restart=unless-stopped -v $(p
     -Dmongodb.uri=mongodb://mongo/drops \
     -J-Xms128M -J-Xmx512m -J-server \
     > server-output 2>&1 &
+
+docker pull mariadb:latest
+docker run --name drops-mariadb \
+    -e MYSQL_ROOT_PASSWORD=admin \
+    -e MYSQL_DATABASE=drops \
+    -e MYSQL_USER=drops \
+    -e MYSQL_PASSWORD=STRONG_PASSWORD \
+    -d mariadb
+
+
 ```
 (start.sh)
 
 ```sh
 #!/bin/bash
 docker stop drops-mongo
+docker stop drops-mariadb
 docker stop drops
 ```
 (stop.sh)
@@ -54,6 +65,7 @@ docker stop drops
 ```sh
 #!/bin/bash
 docker rm drops-mongo
+docker rm drops-mariadb
 docker rm drops
 ```
 (remove.sh)
