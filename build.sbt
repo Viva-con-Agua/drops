@@ -19,7 +19,7 @@ pipelineStages := Seq(digest,gzip)
 libraryDependencies ++= Seq(
   cache,
   filters,
-  javaJdbc,
+  jdbc,
   evolutions,
   "com.typesafe.play" %% "play-mailer" % "3.0.1",
   "com.mohiva" %% "play-silhouette" % "3.0.0",
