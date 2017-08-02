@@ -54,4 +54,4 @@ maintainer in Docker := "Johann Sell"
 // exposing the play ports
 dockerExposedPorts := Seq(9000, 9443)
 
-dockerRepository := Some("cses")
+dockerRepository := Some("vivaconagua")
