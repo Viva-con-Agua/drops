@@ -7,6 +7,7 @@
     <li class="@("active".when(tab == "index"))"><a href="@routes.Application.index">@Messages("navbar.index")</a></li>
     @if(loggedUser.isDefined) {
       <li class="@("active".when(tab == "profile"))"><a href="@routes.Application.profile">@Messages("navbar.profile")</a></li>
+      <li class="@("active".when(tab == "task"))"><a href="@routes.Application.task">@Messages("navbar.task")</a></li>
       @if(loggedUser.map((u) => u.hasRole(RoleAdmin) || u.hasRole(RoleEmployee)).getOrElse(false)) {
         <li class="@("active".when(tab == "oauth-register"))"><a href="@routes.Application.registration">@Messages("navbar.oauth.register")</a></li>
       }

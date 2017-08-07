@@ -16,7 +16,7 @@ import models._
 import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
-import daos.{CrewDao, OauthClientDao}
+import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
 import utils.{WithAlternativeRoles, WithRole}
@@ -28,6 +28,7 @@ class Application @Inject() (
   oauth2ClientDao: OauthClientDao,
   userService: UserService,
   crewDao: CrewDao,
+  taskDao: TaskDao,
   ws: WSClient,
   passwordHasher: PasswordHasher,
   val messagesApi: MessagesApi,
@@ -84,6 +85,13 @@ class Application @Inject() (
         case _ => Future.successful(Redirect("/"))
       }
     )
+  }
+
+  def task = SecuredAction{ implicit request =>
+    val t = taskDao.getAllAsObject()
+
+    Ok(views.html.task(request.identity, request.authenticator.loginInfo, t))
+
   }
 
   def initCrews = Action.async { request =>

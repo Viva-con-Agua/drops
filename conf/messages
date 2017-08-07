@@ -6,6 +6,7 @@ navbar.welcome=Drops
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
 navbar.profile=My Profile
+navbar.task = Task Overview
 navbar.oauth.register=New Oauth2 Client
 navbar.roles=Define roles
 navbar.username=Hello, {0}!
@@ -43,6 +44,8 @@ profile.sex=Sex
 profile.linked=Linked authentication providers
 profile.available=Available authentication providers
 profile.none=None
+
+task.title=Task Overview
 
 signup.title=Sign up
 signup.legend=Sign up for a new account

@@ -3,6 +3,7 @@ GET     /                                                   controllers.Applicat
 GET     /profile                                            controllers.Application.profile
 POST    /crew                                               controllers.Application.updateCrew
 POST    /pillar                                             controllers.Application.updatePillar
+GET     /task                                               controllers.Application.task
 
 GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
