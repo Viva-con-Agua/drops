@@ -3,6 +3,7 @@ package daos
 import java.sql.{JDBCType, ResultSet}
 import java.util.Date
 import java.sql.Types
+import java.util
 
 import play.api.Play.current
 import play.api.libs.json._
@@ -10,18 +11,19 @@ import play.api.db._
 import models._
 import models.Task._
 
+import scala.collection.mutable.ListBuffer
+
 /**
   * Created bei jottmann on 26.07.2017
   */
 
 trait TaskDao{
   def getAll(): JsValue
+  def getAllAsObject(): List[Task]
   def create(task:Task): JsValue
   def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): JsValue
   def find(id:Int): JsValue
 }
-
-
 
 class MariadbTaskDao extends TaskDao {
   val conn = DB.getConnection()
@@ -33,6 +35,12 @@ class MariadbTaskDao extends TaskDao {
     val response = stmt.executeQuery("SELECT * FROM Task")
     sqlResultSetToJson(response)
   }
+
+  def getAllAsObject(): List[Task] = {
+    val response : ResultSet = stmt.executeQuery("SELECT * FROM Task")
+    sqlResultToList(response)
+  }
+
 
   def find(id:Int): JsValue = {
     val query:String = "SELECT * FROM Task WHERE id = ?"
@@ -82,6 +90,17 @@ class MariadbTaskDao extends TaskDao {
     create(taskModel)
   }
 
+  def sqlResultToList(rs: ResultSet) : List[Task] = {
+    val tasks : ListBuffer[Task] = ListBuffer()
+    val rsmd = rs.getMetaData
+    val columnCount = rsmd.getColumnCount
+    while (rs.next) {
+      val t: Task= new Task(rs.getString(2), Some(rs.getString(3)), None, None)
+      tasks += t
+
+    }
+    tasks.toList
+  }
 
 
   //TODO: create your own implementation
