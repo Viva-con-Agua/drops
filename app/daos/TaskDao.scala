@@ -64,7 +64,7 @@ class MariadbTaskDao extends TaskDao {
     }
 
     if(task.deadline != None){
-      val deadline:java.sql.Date = task.deadline.get.asInstanceOf[java.sql.Date]
+      val deadline:java.sql.Date = new java.sql.Date(task.deadline.get.getTime)
       preparedStatement.setDate(3,deadline)
     }else{
       preparedStatement.setNull(3, Types.DATE)
@@ -94,8 +94,9 @@ class MariadbTaskDao extends TaskDao {
     val tasks : ListBuffer[Task] = ListBuffer()
     val rsmd = rs.getMetaData
     val columnCount = rsmd.getColumnCount
+
     while (rs.next) {
-      val t: Task= new Task(rs.getString(2), Some(rs.getString(3)), None, None)
+      val t: Task= new Task(rs.getString(2), Some(rs.getString(3)), Some(rs.getDate(4)), Some(rs.getInt(5)))
       tasks += t
 
     }
