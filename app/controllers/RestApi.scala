@@ -33,6 +33,13 @@ class RestApi @Inject() (
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator]) extends Silhouette[User,CookieAuthenticator] {
 
+  /** checks whether a json is validate or not
+    *
+    *  @param A Reads json datatype and request.
+    *  @return if the json in the request.body is  successful, return JsSuccess Type, else return BadRequest with json errors
+    */
+  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
   def profile = SecuredAction.async { implicit request =>
     val json = Json.toJson(request.identity.profileFor(request.authenticator.loginInfo).get)
     val prunedJson = json.transform(
