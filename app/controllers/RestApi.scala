@@ -4,11 +4,12 @@ import java.util.UUID
 import javax.inject.Inject
 
 import scala.concurrent.Future
+import scala.util.{Try, Success, Failure}
+
 import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import play.api._
 import play.api.libs.json._
-
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models.{OauthClient, PublicUser, Task, User}
@@ -97,37 +98,16 @@ class RestApi @Inject() (
     }
   }}
 
-  def tasks = Action{
-    val t = taskDao.getAll()
-
-    Ok(t)
-  }
-  def taskCreate = Action{ request: Request[AnyContent] => {
-    val error:String = """{ "error": "request body parameter title is required", "code": "400"}"""
-
-    val body: Option[JsValue] = request.body.asJson
-
-      if(body == None){
-        BadRequest(Json.parse(error))
-      }else if((body.get \"title").asOpt[String] == None) {
-        BadRequest(Json.parse(error))
-      }else{
-          val jsonBody: JsValue = body.get
-          val newTaskObj : Task = jsonBody.as[Task]
-          val t = taskDao.create(newTaskObj)
-          Ok(t)
-      }
+  //ToDo: ApiAction instead of Action
+  def tasks = Action.async{ implicit request => {
+    taskDao.getAll().map { t => Ok(t)}
   }}
 
-  def taskFind(id: Int) = Action{
-    val t:JsValue = taskDao.find(id)
+  def taskCreate = Action.async(validateJson[Task]) {implicit request  => {
+      taskDao.create(request.body).map { t => Ok(t)}
+  }}
 
-    //Check, if one task was found
-    if(t.as[JsArray].value.size == 0){
-      val error:String = """{ "error": "task not found", "code": "404"}"""
-      NotFound(Json.parse(error))
-    }else {
-      Ok(t)
-    }
-  }
+  def taskFind(id: Int) = Action.async{ implicit request => {
+      taskDao.find(id).map { t => Ok(t)}
+  }}
 }

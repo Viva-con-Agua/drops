@@ -5,9 +5,13 @@ import java.util.Date
 import java.sql.Types
 import java.util
 
+import scala.concurrent.Future
+
 import play.api.Play.current
 import play.api.libs.json._
 import play.api.db._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
 import models._
 import models.Task._
 
@@ -18,11 +22,11 @@ import scala.collection.mutable.ListBuffer
   */
 
 trait TaskDao{
-  def getAll(): JsValue
+  def getAll(): Future[JsValue]
   def getAllAsObject(): List[Task]
-  def create(task:Task): JsValue
-  def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): JsValue
-  def find(id:Int): JsValue
+  def create(task:Task): Future[JsValue]
+  def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): Future[JsValue]
+  def find(id:Int): Future[JsValue]
 }
 
 class MariadbTaskDao extends TaskDao {
@@ -31,9 +35,9 @@ class MariadbTaskDao extends TaskDao {
 
   //todo how to handle this with future
   //def find(taskId:UUID): ResultSet = //Option[Task] =
-  def getAll(): JsValue = {
+  def getAll(): Future[JsValue] = {
     val response = stmt.executeQuery("SELECT * FROM Task")
-    sqlResultSetToJson(response)
+    Future { sqlResultSetToJson(response) }
   }
 
   def getAllAsObject(): List[Task] = {
@@ -42,13 +46,14 @@ class MariadbTaskDao extends TaskDao {
   }
 
 
-  def find(id:Int): JsValue = {
+  def find(id:Int): Future[JsValue] = {
     val query:String = "SELECT * FROM Task WHERE id = ?"
     val preparedStatement = conn.prepareStatement(query)
     preparedStatement.setInt(1, id)
-    sqlResultSetToJson(preparedStatement.executeQuery())
+    Future {sqlResultSetToJson(preparedStatement.executeQuery())}
   }
-  def create(task:Task): JsValue = {
+
+  def create(task:Task): Future[JsValue] = {
 
     val query:String = """INSERT INTO Task (title, description, deadline, count_supporter)
         VALUES (?,?,?,?)"""
@@ -82,10 +87,11 @@ class MariadbTaskDao extends TaskDao {
     rs.next
     val key:Int = rs.getInt(1)
 
+    //ToDo
     find(key)
   }
 
-  def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): JsValue = {
+  def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): Future[JsValue] = {
     val taskModel = Task.apply(title, description, deadline, count_supporter)
     create(taskModel)
   }
@@ -105,6 +111,7 @@ class MariadbTaskDao extends TaskDao {
 
 
   //TODO: create your own implementation
+  //ToDo: JsObject
   //Source: https://stackoverflow.com/questions/23185334/how-to-send-results-of-a-scala-staticquery-select-query-direct-to-json-object
   def sqlResultSetToJson(rs: ResultSet): JsValue = {
     // This is loosely ported from https://gist.github.com/kdonald/2137988
