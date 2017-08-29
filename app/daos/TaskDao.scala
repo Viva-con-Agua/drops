@@ -14,6 +14,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import models._
 import models.Task._
+import utils.JsonUtils
 
 import scala.collection.mutable.ListBuffer
 
@@ -33,11 +34,9 @@ class MariadbTaskDao extends TaskDao {
   val conn = DB.getConnection()
   val stmt = conn.createStatement
 
-  //todo how to handle this with future
-  //def find(taskId:UUID): ResultSet = //Option[Task] =
   def getAll(): Future[JsValue] = {
     val response = stmt.executeQuery("SELECT * FROM Task")
-    Future { sqlResultSetToJson(response) }
+    Future { JsonUtils.sqlResultSetToJson(response) }
   }
 
   def getAllAsObject(): List[Task] = {
@@ -50,7 +49,7 @@ class MariadbTaskDao extends TaskDao {
     val query:String = "SELECT * FROM Task WHERE id = ?"
     val preparedStatement = conn.prepareStatement(query)
     preparedStatement.setInt(1, id)
-    Future {sqlResultSetToJson(preparedStatement.executeQuery())}
+    Future {JsonUtils.sqlResultSetToJson(preparedStatement.executeQuery())}
   }
 
   def create(task:Task): Future[JsValue] = {
@@ -87,7 +86,6 @@ class MariadbTaskDao extends TaskDao {
     rs.next
     val key:Int = rs.getInt(1)
 
-    //ToDo
     find(key)
   }
 
@@ -108,73 +106,4 @@ class MariadbTaskDao extends TaskDao {
     }
     tasks.toList
   }
-
-
-  //TODO: create your own implementation
-  //ToDo: JsObject
-  //Source: https://stackoverflow.com/questions/23185334/how-to-send-results-of-a-scala-staticquery-select-query-direct-to-json-object
-  def sqlResultSetToJson(rs: ResultSet): JsValue = {
-    // This is loosely ported from https://gist.github.com/kdonald/2137988
-
-    val rsmd = rs.getMetaData
-    val columnCount = rsmd.getColumnCount
-
-    var qJsonArray: JsArray = Json.arr()
-    while (rs.next) {
-      var index = 1
-
-      var rsJson: JsObject = Json.obj()
-      while (index <= columnCount) {
-        val column = rsmd.getColumnLabel(index)
-        val columnLabel = column.toLowerCase()
-
-        val value = rs.getObject(column)
-        if (value == null) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> JsNull
-          )
-        } else if (value.isInstanceOf[Integer]) {
-          println(value.asInstanceOf[Integer])
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[Int]
-          )
-        } else if (value.isInstanceOf[String]) {
-          println(value.asInstanceOf[String])
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[String]
-          )
-        } else if (value.isInstanceOf[Boolean]) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[Boolean]
-          )
-        } else if (value.isInstanceOf[Date]) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[Date].getTime
-          )
-        } else if (value.isInstanceOf[Long]) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[Long]
-          )
-        } else if (value.isInstanceOf[Double]) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[Double]
-          )
-        } else if (value.isInstanceOf[Float]) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[Float]
-          )
-        } else if (value.isInstanceOf[BigDecimal]) {
-          rsJson = rsJson ++ Json.obj(
-            columnLabel -> value.asInstanceOf[BigDecimal]
-          )
-        } else {
-          throw new IllegalArgumentException("Unmappable object type: " + value.getClass)
-        }
-        index += 1
-      }
-      qJsonArray = qJsonArray :+ rsJson
-    }
-    qJsonArray
-  }
-
 }
