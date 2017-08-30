@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.9.7 (2017-07-26)
+## Version 0.10.7 (2017-07-26)
+* [[F] #55 - Add relational database support for task managment](https://github.com/Viva-con-Agua/drops/issues/55)
 * [[B] #61 - Clients are not authorized to get an Access Token](https://github.com/Viva-con-Agua/drops/issues/61)
 * [[I] #60 - Remove uneeded attribute OAuthClient](https://github.com/Viva-con-Agua/drops/issues/60)
 * [[I] #59 - Remove OAuthClient Secret](https://github.com/Viva-con-Agua/drops/issues/59)
