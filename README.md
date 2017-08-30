@@ -41,12 +41,23 @@ docker run --name drops --link drops-mongo:mongo --restart=unless-stopped -v $(p
     -Dmongodb.uri=mongodb://mongo/drops \
     -J-Xms128M -J-Xmx512m -J-server \
     > server-output 2>&1 &
+
+docker pull mariadb:latest
+docker run --name drops-mariadb \
+    -e MYSQL_ROOT_PASSWORD=admin \
+    -e MYSQL_DATABASE=drops \
+    -e MYSQL_USER=drops \
+    -e MYSQL_PASSWORD=STRONG_PASSWORD \
+    -d mariadb
+
+
 ```
 (start.sh)
 
 ```sh
 #!/bin/bash
 docker stop drops-mongo
+docker stop drops-mariadb
 docker stop drops
 ```
 (stop.sh)
@@ -54,6 +65,7 @@ docker stop drops
 ```sh
 #!/bin/bash
 docker rm drops-mongo
+docker rm drops-mariadb
 docker rm drops
 ```
 (remove.sh)
@@ -335,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.9.7 (2017-07-26)
+## Version 0.10.7 (2017-07-26)
+* [[F] #55 - Add relational database support for task managment](https://github.com/Viva-con-Agua/drops/issues/55)
 * [[B] #61 - Clients are not authorized to get an Access Token](https://github.com/Viva-con-Agua/drops/issues/61)
 * [[I] #60 - Remove uneeded attribute OAuthClient](https://github.com/Viva-con-Agua/drops/issues/60)
 * [[I] #59 - Remove OAuthClient Secret](https://github.com/Viva-con-Agua/drops/issues/59)
