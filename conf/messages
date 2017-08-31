@@ -2,13 +2,15 @@ app.title=Drops
 
 date.format=YYYY-MM-dd
 
-navbar.welcome=Drops
+navbar.brand.logo=Logo of Viva con Agua
+navbar.brand.appName=Pool²
+navbar.brand.organisation=Viva con Agua
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
 navbar.profile=My Profile
 navbar.oauth.register=New Oauth2 Client
 navbar.roles=Define roles
-navbar.username=Hello, {0}!
+navbar.username={0}
 navbar.signout=Sign Out
 navbar.signin=Sign In
 navbar.signup = Sign Up

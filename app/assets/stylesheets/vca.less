@@ -1,0 +1,60 @@
+@background-color: #fafafa;
+@background-color-dark: f6f6f6;
+
+@primary-color: #2196f3;
+@accent-color: #ffc100;
+@warn-color: #d50000;
+
+@primary-font-color: #FFFFFF;
+@default-color: #22262b;
+
+@highlight-color: lighten(@primary-color, 30%);
+@inactive-color: #7a7a7a;
+
+.navbar-vca {
+  background-color: @primary-color;
+  color: @primary-font-color;
+  border-color: darken(@primary-color, 20%);
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.navbar-header a, #navbar-main .nav li a {
+  color: @primary-font-color;
+}
+
+#navbar-main .nav li.active a, #navbar-main .nav li:not(.disabled) a:hover {
+  color: @default-color;
+  background-color: @highlight-color;
+}
+
+#navbar-main .nav li.disabled a {
+  color: @inactive-color;
+}
+
+.navbar-brand {
+  margin: 0 0.5em 0 0;
+  padding: 0px;
+  display: flex;
+  flex-direction: row;
+}
+
+.navbar-brand div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.navbar-brand img {
+  margin-right: 0.5em;
+  font-size: 0.6em;
+}
+
+.navbar-brand div span.bold {
+  font-size: 1.6em;
+}
+
+.nav li.profile a {
+  line-height: 30px;
+  padding: 10px 15px 9px 15px;
+}
