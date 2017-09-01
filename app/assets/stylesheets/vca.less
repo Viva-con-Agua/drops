@@ -1,31 +1,115 @@
-@background-color: #fafafa;
-@background-color-dark: f6f6f6;
+@import "_defaults";
 
-@primary-color: #2196f3;
-@accent-color: #ffc100;
-@warn-color: #d50000;
+body {
+  background-color: @background-color;
+  color: @default-color;
+}
 
-@primary-font-color: #FFFFFF;
-@default-color: #22262b;
+legend {
+  color: @primary-color;
+  font-weight: bold;
+  border-bottom: 0px solid @accent-color;
+}
 
-@highlight-color: lighten(@primary-color, 30%);
-@inactive-color: #7a7a7a;
+.btn {
+  border: 0;
+  box-shadow: @shadow;
+  font-weight: bold;
+}
+
+.btn-primary {
+  color: @primary-font-color;
+  background-color: @primary-color;
+}
+
+.btn-primary:hover {
+  color: @default-color;
+  background-color: @highlight-color;
+}
+
+.btn-default {
+  color: @default-color;
+  background-color: @background-color;
+}
+
+.btn-default:hover {
+  background-color: @background-color-dark;
+}
+
+.form-control {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  border-bottom: 1px solid @inactive-color;
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+.form-control:focus {
+  border-bottom: 2px solid @primary-color;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+
+label {
+  color: @inactive-color;
+  margin: 0;
+}
 
 .navbar-vca {
   background-color: @primary-color;
   color: @primary-font-color;
-  border-color: darken(@primary-color, 20%);
+  border: 0;
   text-transform: uppercase;
   font-weight: bold;
+  padding: 0.5em 0;
+  box-shadow: @shadow;
+}
+
+.navbar-vca .navbar-brand {
+  color: @primary-font-color;
+}
+
+.navbar-vca .navbar-brand:focus, .navbar-default .navbar-brand:hover {
+  color: @primary-font-color;
+}
+
+.navbar-vca .navbar-toggle {
+  border-color: @primary-font-color;
+}
+
+.navbar-vca .navbar-toggle:focus, .navbar-default .navbar-toggle:hover {
+  background-color: darken(@primary-color, 20%);
+}
+
+.navbar-vca .navbar-toggle .icon-bar {
+  background-color: @primary-font-color;
+}
+
+.navbar-vca .navbar-collapse, .navbar-default .navbar-form {
+  border: 0;
 }
 
 .navbar-header a, #navbar-main .nav li a {
   color: @primary-font-color;
+  border-radius: 5px;
+  margin-right: 0.5em;
+
+  @media(max-width: 767px) {
+    border-radius: 0px;
+    margin: 0px;
+  }
 }
 
 #navbar-main .nav li.active a, #navbar-main .nav li:not(.disabled) a:hover {
   color: @default-color;
   background-color: @highlight-color;
+  box-shadow: @shadow;
+
+  @media(max-width: 767px) {
+    box-shadow: none;
+  }
 }
 
 #navbar-main .nav li.disabled a {
@@ -57,4 +141,15 @@
 .nav li.profile a {
   line-height: 30px;
   padding: 10px 15px 9px 15px;
+}
+
+.alert {
+  border-radius: 0px;
+  border: 0;
+  box-shadow: @shadow;
+}
+
+.alert-danger {
+  color: @warn-color;
+  background-color: lighten(@warn-color, 45%);
 }
