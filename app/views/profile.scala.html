@@ -6,7 +6,7 @@
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
-@implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
+@implicitFieldConstructor = @{b3.vertical.fieldConstructor}
 
 @views.html.templates.mainApp(Messages("profile.title"), tab = "profile", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
   @request.flash.get("error").map { msg =>
@@ -14,15 +14,10 @@
   }
 
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
-    <div class="col-md-8 col-md-offset-2">
-      <div class="row">
-        <h3 class="col-md-8 text-primary">@Messages("profile.title")</h3>
-        @profile.avatarUrl.map { url => 
-          <div class="col-md-4 text-right">
-            <img class="avatar" style="margin-top:20px" src="@url"/>
-          </div> 
+      <div class="card">
+        @profile.avatarUrl.map { url =>
+          <img src="@url"/>
         }
-        <hr class="col-md-12 small-margin-top"/>
       </div>
       <div class="row">
         <div class="col-md-12">
@@ -66,7 +61,6 @@
               @b3.select(geoForm("crewName"),
                 availableCrews.map(crew => (crew.name, crew.name + " (" + crew.country + ")")).toSeq,
                 '_label -> Messages("crew.name"),
-                'placeholder -> Messages("crew.name"),
                 'autofocus -> true,
                 'value -> profile.supporter.crew.map(cs =>
                   availableCrews.find(c => c ~ cs).map(_.name).head
@@ -75,7 +69,6 @@
 
               @b3.checkbox(geoForm("active"),
                 '_text -> Messages("crew.active"),
-                'placeholder -> Messages("crew.active"),
                 'checked -> profile.supporter.crew.map(_.active).getOrElse(false))
               @b3.submit('class -> "btn btn-primary") {
                 @Messages("crew.submit")
@@ -89,22 +82,18 @@
 
               @b3.checkbox(pillarForm("education"),
                 '_text -> Messages("pillar.education"),
-                'placeholder -> Messages("pillar.education"),
                 'checked -> profile.supporter.pillars.contains(Education))
 
               @b3.checkbox(pillarForm("operation"),
                 '_text -> Messages("pillar.operation"),
-                'placeholder -> Messages("pillar.operation"),
                 'checked -> profile.supporter.pillars.contains(Operation))
 
               @b3.checkbox(pillarForm("finance"),
                 '_text -> Messages("pillar.finance"),
-                'placeholder -> Messages("pillar.finance"),
                 'checked -> profile.supporter.pillars.contains(Finance))
 
               @b3.checkbox(pillarForm("network"),
                 '_text -> Messages("pillar.network"),
-                'placeholder -> Messages("pillar.network"),
                 'checked -> profile.supporter.pillars.contains(Network))
               @b3.submit('class -> "btn btn-primary") {
                 @Messages("pillar.submit")
@@ -151,6 +140,5 @@
           </div>
         </div>
       }
-    </div>
   }
 }
