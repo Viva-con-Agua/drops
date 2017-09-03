@@ -15,6 +15,7 @@ navbar.signout=Sign Out
 navbar.signin=Sign In
 navbar.signup = Sign Up
 navbar.none=None
+navbar.menu.admin=Administration
 
 index.header=Welcome to Viva con Agua''s Drops
 index.logged=Welcome <span class="text-success">{0}</span>, you are logged in. Go to <a href="{1}">My Profile</a> to see your profile info.
