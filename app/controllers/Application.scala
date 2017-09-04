@@ -53,7 +53,7 @@ class Application @Inject() (
           case Some(profile) => {
             crewDao.find(crewData.crewName).map( _ match {
               case Some(crew) => {
-                val updatedSupporter = profile.supporter.copy(crew = Some(CrewSupporter(crew, crewData.active)))
+                val updatedSupporter = profile.supporter.copy(crew = Some(crew))
                 val updatedProfile = profile.copy(supporter = updatedSupporter)
                 userService.update(request.identity.updateProfile(updatedProfile))
                 Redirect("/profile")
@@ -102,7 +102,7 @@ class Application @Inject() (
     val crews = crewDao.listOfStubs.flatMap(l => Future.sequence(l.map(oldCrew => crewDao.update(oldCrew.toCrew))))
     val users = crews.flatMap(l => userService.listOfStubs.flatMap(ul => Future.sequence(ul.map(user => {
       val profiles = user.profiles.map(profile => {
-        val newCrewSupporter = profile.supporter.crew.flatMap((cs) => l.find(_.name == cs.crew.name).map(nc => CrewSupporter(nc, cs.active)))
+        val newCrewSupporter = profile.supporter.crew.flatMap((crew) => l.find(_.name == crew.name))
         profile.toProfile(newCrewSupporter)
       })
       userService.update(user.toUser(profiles))

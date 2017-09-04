@@ -20,7 +20,7 @@ case class SupporterStub(
                       placeOfResidence: Option[String],
                       birthday: Option[Long],
                       sex: Option[String],
-                      crew: Option[CrewStubSupporter],
+                      crew: Option[CrewStub],
                       pillars: Set[Pillar]
                     ) {
   def birthString(implicit messages: Messages): Option[String] = this.birthday match {
@@ -33,7 +33,7 @@ case class SupporterStub(
     case _ => None
   }
 
-  def toSupporter(c: Option[CrewSupporter]) : Supporter =
+  def toSupporter(c: Option[Crew]) : Supporter =
     Supporter(firstName, lastName, fullName, username, mobilePhone, placeOfResidence, birthday, sex, c, pillars)
 }
 
@@ -44,7 +44,7 @@ object SupporterStub {
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : SupporterStub =
     SupporterStub(firstName, lastName, fullName, None, None, None, None, None, None, Set())
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStubSupporter], Set[Pillar])) : SupporterStub =
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Pillar])) : SupporterStub =
     SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
 
   implicit val supporterWrites : OWrites[SupporterStub] = (
@@ -56,7 +56,7 @@ object SupporterStub {
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
-      (JsPath \ "crew").writeNullable[CrewStubSupporter] and
+      (JsPath \ "crew").writeNullable[CrewStub] and
       (JsPath \ "pillars").write[Set[Pillar]]
     )(unlift(SupporterStub.unapply))
   implicit val supporterReads : Reads[SupporterStub] = (
@@ -68,7 +68,7 @@ object SupporterStub {
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
-      (JsPath \ "crew").readNullable[CrewStubSupporter] and
+      (JsPath \ "crew").readNullable[CrewStub] and
       (JsPath \ "pillars").read[Set[Pillar]]
     ).tupled.map(SupporterStub( _ ))
 }
@@ -81,7 +81,7 @@ case class ProfileStub(
                     passwordInfo:Option[PasswordInfo],
                     oauth1Info: Option[OAuth1Info],
                     avatarUrl: Option[String]) {
-  def toProfile(c: Option[CrewSupporter]) : Profile =
+  def toProfile(c: Option[Crew]) : Profile =
     Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info, avatarUrl)
 }
 

@@ -66,10 +66,6 @@
                   availableCrews.find(c => c ~ cs).map(_.name).head
                 ).getOrElse(None)
               )
-
-              @b3.checkbox(geoForm("active"),
-                '_text -> Messages("crew.active"),
-                'checked -> profile.supporter.crew.map(_.active).getOrElse(false))
               @b3.submit('class -> "btn btn-primary") {
                 @Messages("crew.submit")
               }

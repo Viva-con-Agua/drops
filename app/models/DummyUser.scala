@@ -82,7 +82,7 @@ object DummyUser {
     val index = rand.nextInt(crews.size)
     val active = math.random < 0.4 // yields true with a probability of 0.40
 
-    val newSupporter = user.supporter.copy(crew = Some(CrewSupporter(crews.toList(index), active)))
+    val newSupporter = user.supporter.copy(crew = Some(crews.toList(index)))
     val newProfile = user.profile.copy(supporter = newSupporter)
     val newUser = user.user.copy(profiles = List(newProfile))
 
