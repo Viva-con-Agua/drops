@@ -1,0 +1,37 @@
+legend {
+  color: @primary-color;
+  font-weight: bold;
+  border: 0px;
+}
+
+label {
+  color: @inactive-color;
+  margin: 0;
+}
+
+.form-control {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  border-bottom: 1px solid @inactive-color;
+  .border-radius-shadowed(0px, none);
+
+  &:focus {
+    border-bottom: 2px solid @primary-color;
+    .box-shadow(none)
+  }
+}
+
+.post-form-opts {
+  margin-top: 20px;
+}
+
+// BUTTONS
+
+.btn-primary {
+  .vca-button-primary;
+}
+
+.btn-default {
+  .vca-button-default;
+}

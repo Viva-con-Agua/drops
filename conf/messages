@@ -2,17 +2,21 @@ app.title=Drops
 
 date.format=YYYY-MM-dd
 
-navbar.welcome=Drops
+navbar.brand.logo=Logo of Viva con Agua
+navbar.brand.appName=Pool²
+navbar.brand.organisation=Viva con Agua
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
 navbar.profile=My Profile
 navbar.oauth.register=New Oauth2 Client
 navbar.roles=Define roles
-navbar.username=Hello, {0}!
+navbar.username={0}
 navbar.signout=Sign Out
 navbar.signin=Sign In
 navbar.signup = Sign Up
 navbar.none=None
+navbar.menu.admin=Administration
+navbar.back=Back
 
 index.header=Welcome to Viva con Agua''s Drops
 index.logged=Welcome <span class="text-success">{0}</span>, you are logged in. Go to <a href="{1}">My Profile</a> to see your profile info.
@@ -89,11 +93,11 @@ reset.done=Your password has been reset.
 reset.gotoIndex=Goto to the <a href={0}>main page</a>.
 
 error.accessDenied=You need to log in to access the requested page
-error.notFound=The requested page couldn''t be found:
+error.notFound=Not found
 error.notFound.details=Requested: {0}
 error.userExists=User {0} is already registered
 error.passwordsDontMatch=Passwords don''t match
-error.serverError=Server error:
+error.serverError=Server error
 error.noUser=The requested user can''t be found
 error.unregistered=The user {0} hasn''t finished the sign up process
 error.noProvider=Authentication provider ''{0}'' isn''t registered

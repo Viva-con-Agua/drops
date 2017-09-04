@@ -35,8 +35,8 @@ class Application @Inject() (
   configuration: Configuration,
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
-  def index = UserAwareAction.async { implicit request =>
-    Future.successful(Ok(views.html.index(request.identity, request.authenticator.map(_.loginInfo))))
+  def index = SecuredAction.async { implicit request =>
+    Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
   }
 
   def profile = SecuredAction.async { implicit request =>

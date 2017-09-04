@@ -1,0 +1,124 @@
+// BUTTONS
+
+.vca-button-primary() {
+  @vca-button-primary: @primary-color;
+  @vca-button-primary-font: @primary-font-color;
+  @vca-button-highlight: @highlight-color;
+  @vca-button-highlight-font: @default-color;
+  @vca-button-disabled-font: @inactive-color;
+  @vca-button-shadow: @shadow;
+
+  .vca-button(@vca-button-primary, @vca-button-primary-font, @vca-button-highlight, @vca-button-highlight-font, @vca-button-disabled-font, @vca-button-shadow);
+}
+
+.vca-button-default() {
+  @vca-button-primary: @background-color;
+  @vca-button-primary-font: @default-color;
+  @vca-button-highlight: @background-color-dark;
+  @vca-button-highlight-font: @default-color;
+  @vca-button-disabled-font: @inactive-color;
+  @vca-button-shadow: @shadow;
+
+  .vca-button(@vca-button-primary, @vca-button-primary-font, @vca-button-highlight, @vca-button-highlight-font, @vca-button-disabled-font, @vca-button-shadow);
+}
+
+.vca-button(@vca-button-primary, @vca-button-primary-font, @vca-button-highlight, @vca-button-highlight-font, @vca-button-disabled-font, @vca-button-shadow) {
+  background-color: @vca-button-primary;
+  color: @vca-button-primary-font;
+  padding: 0.5em 0;
+  border: 0;
+  text-transform: uppercase;
+  font-weight: bold;
+  .border-radius-shadowed(@radius, @vca-button-shadow);
+
+  @media (max-width: @responsiveBreak) {
+    .border-radius(0px);
+    margin: 0px;
+  }
+
+  a {
+    color: @vca-button-primary-font;
+    padding: 0.5em 1em;
+  }
+
+  &.btn {
+    padding: 0.5em 1em;
+  }
+
+  .vca-button-primary-highlight {
+    color: @vca-button-highlight-font;
+    background-color: @vca-button-highlight;
+    .box-shadow(@vca-button-shadow);
+
+    @media (max-width: @responsiveBreak) {
+      .box-shadow(none);
+    }
+
+    a {
+      color: @vca-button-highlight-font;
+      border-radius: inherit;
+      background-color: transparent;
+    }
+  }
+
+  &.active, &:not(.disabled):hover, &.btn:not(.disabled):hover {
+    .vca-button-primary-highlight;
+  }
+
+
+  &.disabled {
+    color: @vca-button-disabled-font;
+    a {
+      color: @vca-button-disabled-font;
+    }
+  }
+  &.profile a {
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+  }
+
+
+
+  &.dropdown:not(.disabled):hover {
+    border-radius: 5px 5px 0px 0px;
+
+    @media (max-width: @responsiveBreak) {
+      .border-radius(0px);
+    }
+  }
+
+  .dropdown-content {
+    display: none;
+    list-style: none;
+    background-color: @vca-button-highlight;
+    padding: 12px 0px;
+    position: absolute;
+    min-width: 180px;
+    .box-shadow(@vca-button-shadow);
+    border-radius: 0px 5px 5px 5px;
+    z-index: 1;
+
+    @media (max-width: @responsiveBreak) {
+      position: static;
+      width: 100%;
+      .border-radius-shadowed(0px, none);
+      z-index: auto;
+    }
+
+    .nav-sub {
+      padding: 4px 16px;
+      margin: 0;
+      .border-radius(0px);
+      &:hover, &.active {
+        background-color: lighten(@vca-button-highlight, 20%);
+        a {
+          text-decoration: none;
+          background-color: transparent;
+        }
+      }
+    }
+  }
+  &.dropdown:hover .dropdown-content {
+    display: block;
+  }
+}

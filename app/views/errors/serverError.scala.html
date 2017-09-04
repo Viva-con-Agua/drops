@@ -1,6 +1,6 @@
 @(request:RequestHeader, exception:Throwable)(implicit messages:Messages)
 
-@views.html.templates.main(Messages("error.serverError")) {
-  <h4>@Messages("error.serverError")</h4>
+@views.html.templates.mainError(request, Messages("error.serverError")) {
+  <h1>@Messages("error.serverError")</h1>
   <div class="alert alert-danger" role="alert">@Messages(exception.getLocalizedMessage)</div>
 }
