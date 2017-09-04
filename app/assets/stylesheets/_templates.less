@@ -1,52 +1,75 @@
+// BUTTONS
+
 .vca-button-primary() {
-  background-color: @primary-color;
-  color: @primary-font-color;
+  @vca-button-primary: @primary-color;
+  @vca-button-primary-font: @primary-font-color;
+  @vca-button-highlight: @highlight-color;
+  @vca-button-highlight-font: @default-color;
+  @vca-button-disabled-font: @inactive-color;
+  @vca-button-shadow: @shadow;
+
+  .vca-button(@vca-button-primary, @vca-button-primary-font, @vca-button-highlight, @vca-button-highlight-font, @vca-button-disabled-font, @vca-button-shadow);
+}
+
+.vca-button-default() {
+  @vca-button-primary: @background-color;
+  @vca-button-primary-font: @default-color;
+  @vca-button-highlight: @background-color-dark;
+  @vca-button-highlight-font: @default-color;
+  @vca-button-disabled-font: @inactive-color;
+  @vca-button-shadow: @shadow;
+
+  .vca-button(@vca-button-primary, @vca-button-primary-font, @vca-button-highlight, @vca-button-highlight-font, @vca-button-disabled-font, @vca-button-shadow);
+}
+
+.vca-button(@vca-button-primary, @vca-button-primary-font, @vca-button-highlight, @vca-button-highlight-font, @vca-button-disabled-font, @vca-button-shadow) {
+  background-color: @vca-button-primary;
+  color: @vca-button-primary-font;
   padding: 0.5em 0;
   border: 0;
-  border-radius: 5px;
   text-transform: uppercase;
   font-weight: bold;
-  box-shadow: @shadow;
+  .border-radius-shadowed(@radius, @vca-button-shadow);
 
   @media (max-width: @responsiveBreak) {
-    border-radius: 0px;
+    .border-radius(0px);
     margin: 0px;
   }
 
   a {
-    color: @primary-font-color;
+    color: @vca-button-primary-font;
     padding: 0.5em 1em;
   }
 
-  &[type=submit] {
+  &.btn {
     padding: 0.5em 1em;
   }
 
   .vca-button-primary-highlight {
-    color: @default-color;
-    background-color: @highlight-color;
-    box-shadow: @shadow;
+    color: @vca-button-highlight-font;
+    background-color: @vca-button-highlight;
+    .box-shadow(@vca-button-shadow);
 
     @media (max-width: @responsiveBreak) {
-      box-shadow: none;
+      .box-shadow(none);
     }
 
     a {
-      color: @default-color;
+      color: @vca-button-highlight-font;
       border-radius: inherit;
       background-color: transparent;
     }
   }
 
-  &.active, &:not(.disabled):hover, &[type=submit]:not(.disabled):hover {
+  &.active, &:not(.disabled):hover, &.btn:not(.disabled):hover {
     .vca-button-primary-highlight;
   }
 
 
   &.disabled {
-    color: @inactive-color;
+    color: @vca-button-disabled-font;
     a {
-      color: @inactive-color;
+      color: @vca-button-disabled-font;
     }
   }
   &.profile a {
@@ -60,37 +83,34 @@
     border-radius: 5px 5px 0px 0px;
 
     @media (max-width: @responsiveBreak) {
-      border-radius: 0px;
+      .border-radius(0px);
     }
   }
 
   .dropdown-content {
     display: none;
     list-style: none;
-    background-color: @highlight-color;
+    background-color: @vca-button-highlight;
     padding: 12px 0px;
     position: absolute;
     min-width: 180px;
-    box-shadow: @shadow;
+    .box-shadow(@vca-button-shadow);
     border-radius: 0px 5px 5px 5px;
     z-index: 1;
 
     @media (max-width: @responsiveBreak) {
       position: static;
       width: 100%;
-      box-shadow: none;
-      -webkit-border-radius: 0px;
-      -moz-border-radius: 0px;
-      border-radius: 0px;
+      .border-radius-shadowed(0px, none);
       z-index: auto;
     }
 
     .nav-sub {
       padding: 4px 16px;
       margin: 0;
-      border-radius: 0px;
+      .border-radius(0px);
       &:hover, &.active {
-        background-color: lighten(@highlight-color, 20%);
+        background-color: lighten(@vca-button-highlight, 20%);
         a {
           text-decoration: none;
           background-color: transparent;
