@@ -47,6 +47,7 @@ profile.sex=Sex
 profile.linked=Linked authentication providers
 profile.available=Available authentication providers
 profile.none=None
+profile.no.crew.selected=Currently no crew selected
 
 signup.title=Sign up
 signup.legend=Sign up for a new account

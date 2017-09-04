@@ -14,11 +14,15 @@
   }
 
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
-      <div class="card">
-        @profile.avatarUrl.map { url =>
-          <img src="@url"/>
-        }
+    <div class="card fixedSize">
+      <div class="details">
+        <h1>@profile.supporter.fullName.getOrElse(Messages("profile.none"))</h1>
+        <h2>@profile.supporter.crew.map(_.name).getOrElse(Messages("profile.no.crew.selected"))</h2>
       </div>
+      @profile.avatarUrl.map { url =>
+        <img src="@url"/>
+      }
+    </div>
       <div class="row">
         <div class="col-md-12">
           <div class="row">
