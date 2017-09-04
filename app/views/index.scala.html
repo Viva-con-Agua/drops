@@ -49,7 +49,7 @@
     $('#profileData').empty().append(content)
 
     $('#profilePhoto').empty()
-    if ('avatarUrl' in data) $('#profilePhoto').append($('<img>',{src:data.avatarUrl, class:'small-avatar', style:'margin-top:0px'}))
+    if ('avatarUrl' in data) $('#profilePhoto').append($('<img>',{src:data.avatarUrl, class:'avatar', style:'margin-top:0px'}))
     
     $("#profileError").hide()
     $('#profileData').show()

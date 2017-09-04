@@ -22,35 +22,35 @@
       <div class="row">
         <div class="col-md-12">
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.firstName")</p>
+            <p class="col-md-6">@Messages("profile.firstName")</p>
             <p class="col-md-6">@profile.supporter.firstName.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.lastName")</p>
+            <p class="col-md-6">@Messages("profile.lastName")</p>
             <p class="col-md-6">@profile.supporter.lastName.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.fullName")</p>
+            <p class="col-md-6">@Messages("profile.fullName")</p>
             <p class="col-md-6">@profile.supporter.fullName.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.email")</p>
+            <p class="col-md-6">@Messages("profile.email")</p>
             <p class="col-md-6">@profile.email.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.mobilePhone")</p>
+            <p class="col-md-6">@Messages("profile.mobilePhone")</p>
             <p class="col-md-6">@profile.supporter.mobilePhone.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.placeOfResidence")</p>
+            <p class="col-md-6">@Messages("profile.placeOfResidence")</p>
             <p class="col-md-6">@profile.supporter.placeOfResidence.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.birthday")</p>
+            <p class="col-md-6">@Messages("profile.birthday")</p>
             <p class="col-md-6">@profile.supporter.birthString.getOrElse(Messages("profile.none"))</p>
           </div>
           <div class="row">
-            <p class="col-md-6 strong">@Messages("profile.sex")</p>
+            <p class="col-md-6">@Messages("profile.sex")</p>
             <p class="col-md-6">@profile.supporter.sex.getOrElse(Messages("profile.none"))</p>
           </div>
           @b3.form(routes.Application.updateCrew) {
@@ -109,7 +109,7 @@
             <div class="col-md-12">
               <h3 class="text-primary">@Messages("profile.linked")</h3>
             </div>
-            <hr class="col-md-12 small-margin-top"/>
+            <hr class="col-md-12"/>
           </div>
         }
         <div class="row">
@@ -127,7 +127,7 @@
             <div class="col-md-12">
               <h3 class="text-primary">@Messages("profile.available")</h3>
             </div>
-            <hr class="col-md-12 small-margin-top"/>
+            <hr class="col-md-12"/>
           </div>
         }
         <div class="row">
