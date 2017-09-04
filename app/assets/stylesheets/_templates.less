@@ -1,0 +1,104 @@
+.vca-button-primary() {
+  background-color: @primary-color;
+  color: @primary-font-color;
+  padding: 0.5em 0;
+  border: 0;
+  border-radius: 5px;
+  text-transform: uppercase;
+  font-weight: bold;
+  box-shadow: @shadow;
+
+  @media (max-width: @responsiveBreak) {
+    border-radius: 0px;
+    margin: 0px;
+  }
+
+  a {
+    color: @primary-font-color;
+    padding: 0.5em 1em;
+  }
+
+  &[type=submit] {
+    padding: 0.5em 1em;
+  }
+
+  .vca-button-primary-highlight {
+    color: @default-color;
+    background-color: @highlight-color;
+    box-shadow: @shadow;
+
+    @media (max-width: @responsiveBreak) {
+      box-shadow: none;
+    }
+
+    a {
+      color: @default-color;
+      border-radius: inherit;
+      background-color: transparent;
+    }
+  }
+
+  &.active, &:not(.disabled):hover, &[type=submit]:not(.disabled):hover {
+    .vca-button-primary-highlight;
+  }
+
+
+  &.disabled {
+    color: @inactive-color;
+    a {
+      color: @inactive-color;
+    }
+  }
+  &.profile a {
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+  }
+
+
+
+  &.dropdown:not(.disabled):hover {
+    border-radius: 5px 5px 0px 0px;
+
+    @media (max-width: @responsiveBreak) {
+      border-radius: 0px;
+    }
+  }
+
+  .dropdown-content {
+    display: none;
+    list-style: none;
+    background-color: @highlight-color;
+    padding: 12px 0px;
+    position: absolute;
+    min-width: 180px;
+    box-shadow: @shadow;
+    border-radius: 0px 5px 5px 5px;
+    z-index: 1;
+
+    @media (max-width: @responsiveBreak) {
+      position: static;
+      width: 100%;
+      box-shadow: none;
+      -webkit-border-radius: 0px;
+      -moz-border-radius: 0px;
+      border-radius: 0px;
+      z-index: auto;
+    }
+
+    .nav-sub {
+      padding: 4px 16px;
+      margin: 0;
+      border-radius: 0px;
+      &:hover, &.active {
+        background-color: lighten(@highlight-color, 20%);
+        a {
+          text-decoration: none;
+          background-color: transparent;
+        }
+      }
+    }
+  }
+  &.dropdown:hover .dropdown-content {
+    display: block;
+  }
+}

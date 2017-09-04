@@ -1,0 +1,41 @@
+legend {
+  color: @primary-color;
+  font-weight: bold;
+  border-bottom: 0px solid @accent-color;
+}
+
+label {
+  color: @inactive-color;
+  margin: 0;
+}
+
+.form-control {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  border-bottom: 1px solid @inactive-color;
+  border-radius: 0;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+
+  &:focus {
+    border-bottom: 2px solid @primary-color;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+  }
+}
+
+// BUTTONS
+
+.btn-primary {
+  .vca-button-primary;
+}
+
+.btn-default {
+  color: @default-color;
+  background-color: @background-color;
+
+  &:hover {
+    background-color: @background-color-dark;
+  }
+}
