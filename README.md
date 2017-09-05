@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.12.7 (2017-09-04)
+## Version 0.13.7 (2017-09-05)
+* [[F] #5 - Users profile]((https://github.com/Viva-con-Agua/drops/issues/5)
 * [[F] #35 - Remove active flag](https://github.com/Viva-con-Agua/drops/issues/35)
 * [[F] #22 - ReDesign](https://github.com/Viva-con-Agua/drops/issues/22)
 * [[F] #55 - Add relational database support for task managment](https://github.com/Viva-con-Agua/drops/issues/55)
