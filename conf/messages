@@ -48,6 +48,8 @@ profile.linked=Linked authentication providers
 profile.available=Available authentication providers
 profile.none=None
 profile.no.crew.selected=Currently no crew selected
+profile.submit=Update
+profile.update.legend=Change yourself
 
 signup.title=Sign up
 signup.legend=Sign up for a new account

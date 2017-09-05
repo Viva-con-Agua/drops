@@ -41,13 +41,34 @@ class Application @Inject() (
 
   def profile = SecuredAction.async { implicit request =>
     crewDao.list.map(l =>
-      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet, PillarForms.define))
+      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
+    )
+  }
+
+  def updateBase = SecuredAction.async { implicit request =>
+    UserForms.userForm.bindFromRequest.fold(
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define))),
+      userData => request.identity.profileFor(request.authenticator.loginInfo) match {
+        case Some(profile) => {
+          val supporter = profile.supporter.copy(
+            firstName = Some(userData.firstName),
+            lastName = Some(userData.lastName),
+            birthday = Some(userData.birthday.getTime),
+            mobilePhone = Some(userData.mobilePhone),
+            placeOfResidence = Some(userData.placeOfResidence),
+            sex = Some(userData.sex)
+          )
+          val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
+          userService.update(request.identity.updateProfile(updatedProfile)).map((u) => Redirect(routes.Application.profile))
+        }
+        case _ => Future.successful(Redirect(routes.Application.profile))
+      }
     )
   }
 
   def updateCrew = SecuredAction.async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, l.toSet, PillarForms.define))),
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define))),
       crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
@@ -70,7 +91,7 @@ class Application @Inject() (
 
   def updatePillar = SecuredAction.async { implicit request =>
     PillarForms.define.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet, bogusForm))),
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm))),
       pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
         case Some(profile) => {
           val pillars = pillarData.toMap.foldLeft[Set[Pillar]](Set())((pillars, data) => data._2 match {
