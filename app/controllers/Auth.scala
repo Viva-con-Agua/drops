@@ -24,28 +24,13 @@ import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models.{Profile, RoleAdmin, User, UserToken}
+import UserForms.UserConstraints
 import services.{UserService, UserTokenService}
 import utils.Mailer
 import org.joda.time.DateTime
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object AuthForms {
-
-  val allNumbers = """\d{4}[-/\s]?\d*""".r//"""(\d{4})-(\d*)""".r
-  val sex = """male|female|other""".r
-
-  def telephoneCheck(implicit messages:Messages): Constraint[String] = Constraint("constraints.telephone")(
-    _ match {
-      case allNumbers() => Valid
-      case _ => Invalid(Seq(ValidationError(Messages("error.telphone.wrongFormat"))))
-    }
-  )
-  def sexCheck(implicit messages:Messages): Constraint[String] = Constraint("constraints.sex")(
-    _ match {
-      case sex() => Valid
-      case _ => Invalid(Seq(ValidationError(Messages("error.sex.notAllowed"))))
-    }
-  )
 
   // Sign up
   case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, placeOfResidence: String, birthday:Date, sex:String)
@@ -57,10 +42,10 @@ object AuthForms {
       ).verifying(Messages("error.passwordsDontMatch"), password => password._1 == password._2),
       "firstName" -> nonEmptyText,
       "lastName" -> nonEmptyText,
-      "mobilePhone" -> nonEmptyText(minLength = 5).verifying(telephoneCheck),
+      "mobilePhone" -> nonEmptyText(minLength = 5).verifying(UserConstraints.telephoneCheck),
       "placeOfResidence" -> nonEmptyText,
       "birthday" -> date,
-      "sex" -> nonEmptyText.verifying(sexCheck)
+      "sex" -> nonEmptyText.verifying(UserConstraints.sexCheck)
     )
     (
       (email, password, firstName, lastName, mobilePhone, placeOfResidence, birthday, sex) =>

@@ -32,6 +32,8 @@ case class Supporter(
     }
     case _ => None
   }
+
+  def name : Option[String] = this.firstName.flatMap(fn => lastName.map(fn + " " + _))
 }
 
 object Supporter {
