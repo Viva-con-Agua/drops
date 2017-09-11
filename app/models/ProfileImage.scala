@@ -61,6 +61,17 @@ case class LocalProfileImage(uuid:UUID) extends ProfileImage {
     Future.successful(Some(routes.Files.get(uuid.toString).url))
 }
 
+class DefaultProfileImage extends ProfileImage {
+  val t = ProfileImageType.Default
+  /**
+    * @todo: Read from config!
+    */
+  val url = routes.Assets.versioned("images/drop_quad.png")
+
+  override def getImage(width: Int, height: Int): Future[Option[String]] =
+    Future.successful(Some(url.url))
+}
+
 object GravatarProfileImage {
   def apply(url: String) : GravatarProfileImage = GravatarProfileImage(java.net.URI.create(url).toURL)
 }
@@ -77,6 +88,7 @@ object ProfileImage {
     def apply(pi : ProfileImage) : JSONProfileImage = pi match {
       case gpi : GravatarProfileImage => JSONProfileImage(ProfileImageType.typeToString(gpi.t), None, Some(gpi.url))
       case lpi : LocalProfileImage => JSONProfileImage(ProfileImageType.typeToString(lpi.t), Some(lpi.uuid), None)
+      case dpi : DefaultProfileImage => JSONProfileImage(ProfileImageType.typeToString(dpi.t), None, None)
     }
 
     def apply(t: (String, Option[UUID], Option[URL])) : JSONProfileImage = JSONProfileImage(t._1, t._2, t._3)
@@ -102,6 +114,8 @@ object ProfileImage {
           jsonPI.url.map((url) => JsSuccess[ProfileImage](GravatarProfileImage(url))).get
         case "local" =>
           jsonPI.id.map((id) => JsSuccess[ProfileImage](LocalProfileImage(id))).get
+        case "default" =>
+          JsSuccess[ProfileImage](new DefaultProfileImage)
       })
     }
     def writes(pi: ProfileImage) = Json.toJson(JSONProfileImage(pi)).as[JsObject]
@@ -110,10 +124,11 @@ object ProfileImage {
 
 object ProfileImageType extends Enumeration {
   type ProfileImageType = Value
-  val Local, Gravatar = Value
+  val Local, Gravatar, Default = Value
 
   def typeToString(t : ProfileImageType.Value) : String = t match {
     case ProfileImageType.Gravatar => "gravatar"
     case ProfileImageType.Local => "local"
+    case ProfileImageType.Default => "default"
   }
 }

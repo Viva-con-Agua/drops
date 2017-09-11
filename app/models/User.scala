@@ -92,9 +92,9 @@ case class Profile(
 
 object Profile {
 
-  def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Profile =
+  def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String, avatar: List[ProfileImage]) : Profile =
     // confirmation is false by default, because this apply function is designed for using it during the default sign up process
-    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, Nil)
+    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
 
   def apply(tuple: (LoginInfo, Boolean, Option[String], Supporter, Option[PasswordInfo], Option[OAuth1Info], List[ProfileImage])) : Profile =
     Profile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
@@ -102,8 +102,8 @@ object Profile {
   def apply(p: CommonSocialProfile) : Profile =
     Profile(p.loginInfo, true, p.email, Supporter(p.firstName, p.lastName, p.fullName), None, None,
       p.avatarURL match {
-        case Some(url) => List(GravatarProfileImage(url))
-        case _ => Nil
+        case Some(url) => List(GravatarProfileImage(url), new DefaultProfileImage)
+        case _ => List(new DefaultProfileImage)
       }
     )
 

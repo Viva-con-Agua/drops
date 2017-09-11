@@ -104,10 +104,11 @@ class Auth @Inject() (
           config.get.getString("mobilephone").get,
           config.get.getString("placeOfResidence").get,
           df.parse(config.get.getString("birthday").get),
-          config.get.getString("sex").get
+          config.get.getString("sex").get,
+          List(new DefaultProfileImage)
         )
         for {
-          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatar = Nil)), roles = Set(RoleAdmin)))
+          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatar = List(new DefaultProfileImage))), roles = Set(RoleAdmin)))
           _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(config.get.getString("password").get))
           token <- userTokenService.save(UserToken.create(user.id, config.get.getString("email").get, true))
         } yield {
@@ -135,13 +136,13 @@ class Auth @Inject() (
             Future.successful(Redirect(routes.Auth.startSignUp()).flashing(
               "error" -> Messages("error.userExists", signUpData.email)))
           case None =>
-            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex)
+            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
               user <- userService.save(User(id = UUID.randomUUID(), profiles =
                 avatarUrl match {
-                  case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url))))
-                  case _ => List(profile)
+                  case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url),new DefaultProfileImage)))
+                  case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
                 }))
               _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
