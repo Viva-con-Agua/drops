@@ -4,6 +4,8 @@ GET     /profile                                            controllers.Applicat
 POST    /crew                                               controllers.Application.updateCrew
 POST    /pillar                                             controllers.Application.updatePillar
 POST    /user/update                                        controllers.Application.updateBase
+POST    /user/uploadAvatar                                  controllers.Files.uploadProfileImage
+GET     /file/get/:id                                       controllers.Files.get(id: String)
 
 GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID

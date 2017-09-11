@@ -19,6 +19,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
   def save(user:User):Future[User]
+  def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User]
   def replace(user:User):Future[User]
   def confirm(loginInfo:LoginInfo):Future[User]
   def link(user:User, profile:Profile):Future[User]
@@ -56,6 +57,11 @@ class MongoUserDao extends UserDao {
 
   def save(user:User):Future[User] =
     users.insert(user).map(_ => user)
+
+  override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = {
+    val newProfile = profile.copy(avatar = avatar +: profile.avatar)
+    this.update(newProfile)
+  }
 
   def replace(user: User): Future[User] =
     users.remove(Json.obj("id" -> user.id)).flatMap[User](wr => wr.n match {

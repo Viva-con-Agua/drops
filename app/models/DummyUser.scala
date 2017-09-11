@@ -47,7 +47,7 @@ object DummyUser {
       supporter = supporter,
       passwordInfo = Some(passwordHasher.hash((json \ "login" \ "password").as[String])),
       oauth1Info = None,
-      avatarUrl = Some((json \ "picture" \ "medium").as[String])
+      avatar = List(GravatarProfileImage((json \ "picture" \ "medium").as[String]))
     )
 
     val user = User(

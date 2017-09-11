@@ -1,6 +1,10 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 @import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
 
+@import scala.concurrent.Await
+@import scala.concurrent.duration._
+@import scala.language.postfixOps
+
 @import controllers.PillarForms.PillarData
 @(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, userForm: Form[UserForms.UserData], geoForm : Form[CrewForms.CrewData], availableCrews : Set[Crew], pillarForm : Form[PillarData])(implicit request:RequestHeader,messages:Messages)
 
@@ -14,15 +18,22 @@
   }
 
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
-    <div class="card fixedSize">
+          <div class="profileHeader">
+    <div class="card fixedSize profile">
       <div class="details">
         <h1>@profile.supporter.name.getOrElse(Messages("profile.none"))</h1>
         <h2>@profile.supporter.crew.map(_.name).getOrElse(Messages("profile.no.crew.selected"))</h2>
       </div>
-      @profile.avatarUrl.map { url =>
+      @profile.getAvatar.map((ava) => Await.result(ava.getImage(400,400), 3000 millis)).map { url =>
         <img src="@url"/>
       }
     </div>
+    <div>
+      <form action="@routes.Files.uploadProfileImage" class="dropzone" id="profileImage">
+        <div class="dz-message">@Messages("profile.upload.msg")</div>
+      </form>
+    </div>
+          </div>
     <div>
     @b3.form(routes.Application.updateBase) {
       <fieldset>

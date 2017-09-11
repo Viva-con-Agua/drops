@@ -1,5 +1,6 @@
 package models
 
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Date, UUID}
 
@@ -10,6 +11,11 @@ import com.mohiva.play.silhouette.api.util.PasswordInfo
 import com.mohiva.play.silhouette.impl.providers.OAuth1Info
 import com.mohiva.play.silhouette.impl.providers.CommonSocialProfile
 import play.api.i18n.Messages
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
 
 case class Supporter(
   firstName: Option[String],
@@ -79,20 +85,27 @@ case class Profile(
   supporter: Supporter,
   passwordInfo:Option[PasswordInfo], 
   oauth1Info: Option[OAuth1Info],
-  avatarUrl: Option[String]) {
+  avatar: List[ProfileImage]) {
+
+  def getAvatar = avatar.headOption
 }
 
 object Profile {
 
   def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Profile =
     // confirmation is false by default, because this apply function is designed for using it during the default sign up process
-    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, None)
+    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, Nil)
 
-  def apply(tuple: (LoginInfo, Boolean, Option[String], Supporter, Option[PasswordInfo], Option[OAuth1Info], Option[String])) : Profile =
+  def apply(tuple: (LoginInfo, Boolean, Option[String], Supporter, Option[PasswordInfo], Option[OAuth1Info], List[ProfileImage])) : Profile =
     Profile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
 
   def apply(p: CommonSocialProfile) : Profile =
-    Profile(p.loginInfo, true, p.email, Supporter(p.firstName, p.lastName, p.fullName), None, None, p.avatarURL)
+    Profile(p.loginInfo, true, p.email, Supporter(p.firstName, p.lastName, p.fullName), None, None,
+      p.avatarURL match {
+        case Some(url) => List(GravatarProfileImage(url))
+        case _ => Nil
+      }
+    )
 
   implicit val passwordInfoJsonFormat = Json.format[PasswordInfo]
   implicit val oauth1InfoJsonFormat = Json.format[OAuth1Info]
@@ -103,7 +116,7 @@ object Profile {
       (JsPath \ "supporter").write[Supporter] and
       (JsPath \ "passwordInfo").writeNullable[PasswordInfo] and
       (JsPath \ "oauth1Info").writeNullable[OAuth1Info] and
-      (JsPath \ "avatarUrl").writeNullable[String]
+      (JsPath \ "avatar").write[List[ProfileImage]]
     )(unlift(Profile.unapply))
   implicit val profileReads : Reads[Profile] = (
       (JsPath \ "loginInfo").read[LoginInfo] and
@@ -112,7 +125,7 @@ object Profile {
       (JsPath \ "supporter").read[Supporter] and
       (JsPath \ "passwordInfo").readNullable[PasswordInfo] and
       (JsPath \ "oauth1Info").readNullable[OAuth1Info] and
-      (JsPath \ "avatarUrl").readNullable[String]
+      (JsPath \ "avatar").read[List[ProfileImage]]
     ).tupled.map(Profile( _ ))
 }
 
@@ -122,13 +135,14 @@ case class PublicProfile(
   confirmed: Boolean,
   email:Option[String],
   supporter: Supporter,
-  avatarUrl: Option[String])
+  avatarUrl: List[String])
 
 object PublicProfile {
   def apply(profile: Profile, primary: Boolean = false) : PublicProfile =
-    PublicProfile(profile.loginInfo, primary, profile.confirmed, profile.email, profile.supporter, profile.avatarUrl)
+    Await.result(profile.getAvatar.map(_.allSizes).getOrElse(Future.successful(Nil)).map((urls) =>
+      PublicProfile(profile.loginInfo, primary, profile.confirmed, profile.email, profile.supporter, urls)), 3000 millis)
 
-  def apply(tuple : (LoginInfo, Boolean, Boolean, Option[String], Supporter, Option[String])) : PublicProfile =
+  def apply(tuple : (LoginInfo, Boolean, Boolean, Option[String], Supporter, List[String])) : PublicProfile =
     PublicProfile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
   implicit val publicProfileWrites : OWrites[PublicProfile] = (
@@ -137,7 +151,7 @@ object PublicProfile {
       (JsPath \ "confirmed").write[Boolean] and
       (JsPath \ "email").writeNullable[String] and
       (JsPath \ "supporter").write[Supporter] and
-      (JsPath \ "avatarUrl").writeNullable[String]
+      (JsPath \ "avatarUrl").write[List[String]]
     )(unlift(PublicProfile.unapply))
   implicit val publicProfileReads : Reads[PublicProfile] = (
     (JsPath \ "loginInfo").read[LoginInfo] and
@@ -145,7 +159,7 @@ object PublicProfile {
       (JsPath \ "confirmed").read[Boolean] and
       (JsPath \ "email").readNullable[String] and
       (JsPath \ "supporter").read[Supporter] and
-      (JsPath \ "avatarUrl").readNullable[String]
+      (JsPath \ "avatarUrl").read[List[String]]
     ).tupled.map(PublicProfile( _ ))
 }
 

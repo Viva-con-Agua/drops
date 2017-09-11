@@ -1,4 +1,8 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
+@import scala.concurrent.Await
+@import scala.concurrent.duration._
+@import scala.language.postfixOps
+@import scala.concurrent.ExecutionContext.Implicits.global
 
 @(title: String, tab: String = "", loggedUser: Option[User], loginInfo:Option[LoginInfo] = None)(content: Html)(implicit messages:Messages)
 
@@ -27,13 +31,12 @@
       @loginInfo.map { loginInfo =>
         <li class="@("active".when(tab == "profile")) profile">
           <a href="@routes.Application.profile">
-            @if(user.profileFor(loginInfo).map(_.avatarUrl.isDefined).getOrElse(false)) {
-              <img class="avatar" src="@user.profileFor(loginInfo).flatMap(_.avatarUrl)"/>
+            @user.profileFor(loginInfo).flatMap((profile) => profile.getAvatar.flatMap((ava) => Await.result(ava.getImage(30,30), 3000 millis))).map { url =>
+              <img class="avatar" src="@url" />
             }
             @Messages("navbar.username", user.fullName(loginInfo).getOrElse(Messages("navbar.none")))
           </a>
         </li>
-        <!--<li class="navbar-text">@Messages("navbar.username", user.fullName(loginInfo).getOrElse(Messages("navbar.none")))</li>-->
       }
       <li><a href="@routes.Auth.signOut">@Messages("navbar.signout")</a></li>
     }.getOrElse {
