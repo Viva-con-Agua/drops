@@ -18,22 +18,11 @@
   }
 
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
-          <div class="profileHeader">
-    <div class="card fixedSize profile">
-      <div class="details">
-        <h1>@profile.supporter.name.getOrElse(Messages("profile.none"))</h1>
-        <h2>@profile.supporter.crew.map(_.name).getOrElse(Messages("profile.no.crew.selected"))</h2>
+      <div class="profileHeader">
+        @profile.getAvatar.map((ava) => Await.result(ava.getImage(400,400), 3000 millis)).map { url =>
+          @dropzone.profileImage(url)
+        }
       </div>
-      @profile.getAvatar.map((ava) => Await.result(ava.getImage(400,400), 3000 millis)).map { url =>
-        <img src="@url"/>
-      }
-    </div>
-    <div>
-      <form action="@routes.Files.uploadProfileImage" class="dropzone" id="profileImage">
-        <div class="dz-message">@Messages("profile.upload.msg")</div>
-      </form>
-    </div>
-          </div>
     <div>
     @b3.form(routes.Application.updateBase) {
       <fieldset>

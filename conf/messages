@@ -50,7 +50,8 @@ profile.none=None
 profile.no.crew.selected=Currently no crew selected
 profile.submit=Update
 profile.update.legend=Change yourself
-profile.upload.msg=Upload or click
+profile.upload.msg=Click to upload
+profile.upload.hint=Hover here to change the image
 
 signup.title=Sign up
 signup.legend=Sign up for a new account

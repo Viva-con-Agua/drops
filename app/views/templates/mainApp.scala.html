@@ -32,7 +32,7 @@
         <li class="@("active".when(tab == "profile")) profile">
           <a href="@routes.Application.profile">
             @user.profileFor(loginInfo).flatMap((profile) => profile.getAvatar.flatMap((ava) => Await.result(ava.getImage(30,30), 3000 millis))).map { url =>
-              <img class="avatar" src="@url" />
+              <img class="avatar profile-image" src="@url" />
             }
             @Messages("navbar.username", user.fullName(loginInfo).getOrElse(Messages("navbar.none")))
           </a>

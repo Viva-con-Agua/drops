@@ -61,11 +61,14 @@ class Files @Inject() (
       request.identity.profileFor(request.authenticator.loginInfo)
         .map((profile) => userService.saveImage(profile, LocalProfileImage(fileID)))
 
-      Redirect(routes.Application.profile).flashing(
-        "success" -> Messages("success.profile.image.upload"))
+      Ok(Json.obj("msg" -> Messages("success.profile.image.upload"), "url" -> routes.Files.get(fileID.toString).url))
+//      Redirect(routes.Application.profile).flashing(
+//        "success" -> Messages("success.profile.image.upload"))
     }}.fallbackTo(
-      Future.successful(Redirect(routes.Application.profile).flashing(
-        "error" -> Messages("error.profile.image.upload"))
+      Future.successful(
+//        Redirect(routes.Application.profile).flashing(
+//        "error" -> Messages("error.profile.image.upload"))
+        Ok(Json.obj("msg" -> Messages("error.profile.image.upload")))
       )
     )
   }
