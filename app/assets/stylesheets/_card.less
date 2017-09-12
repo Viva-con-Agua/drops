@@ -1,0 +1,44 @@
+.card {
+  @shadow-card: 0 4px 8px 0 rgba(0,0,0,0.2);
+  @shadow-card-highlight: 0 8px 16px 0 rgba(0,0,0,0.2);
+  /* Add shadows to create the "card" effect */
+  .box-shadow(@shadow-card);
+  transition: 0.3s;
+  display:flex;
+  flex-flow: row;
+  justify-content: space-between;
+  align-content: space-between;
+  align-items: center;
+  padding: 1em;
+  background-color: white;
+  margin: 0em 0em 2em 0em;
+
+  &.fixedSize {
+    width: 20em;
+    @media(max-width: @responsiveBreak) {
+      width: 100%;
+    }
+  }
+
+  &:hover {
+    .box-shadow(@shadow-card-highlight);
+  }
+
+  h1 {
+    color: @default-color;
+    font-size: 2em;
+  }
+
+  h2 {
+    color: @inactive-color;
+    font-size: 1.4em;
+  }
+
+  img {
+    //width: 100%;
+  }
+
+  .details {
+    //padding: 1em;
+  }
+}

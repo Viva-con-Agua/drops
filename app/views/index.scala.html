@@ -1,17 +1,12 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 
-@(loggedUser: Option[User], loginInfo:Option[LoginInfo])(implicit messages:Messages)
+@(loggedUser: User, loginInfo:LoginInfo)(implicit messages:Messages)
 
-@views.html.templates.mainApp(Messages("app.title"), tab = "index", loggedUser = loggedUser, loginInfo=loginInfo) {
+@views.html.templates.mainApp(Messages("app.title"), tab = "index", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
   <h2 class="text-primary">@Messages("index.header")</h2>
   <p class="lead">
-    @loggedUser.map { user =>
-      @Html(Messages("index.logged", user.fullName(loginInfo.get).getOrElse(Messages("index.none")), routes.Application.profile)) <br/>
+      @Html(Messages("index.logged", loggedUser.fullName(loginInfo).getOrElse(Messages("index.none")), routes.Application.profile)) <br/>
       @Html(Messages("index.signOut", routes.Auth.signOut))
-    }.getOrElse {
-      @Html(Messages("index.notLogged", routes.Auth.signIn, routes.Auth.startSignUp)) <br/>
-      @Html(Messages("index.resetPassword", routes.Auth.startResetPassword))
-    }
   </p>
   <hr/>
   <p class="lead">@Messages("index.restProfile")</p>
@@ -54,7 +49,7 @@
     $('#profileData').empty().append(content)
 
     $('#profilePhoto').empty()
-    if ('avatarUrl' in data) $('#profilePhoto').append($('<img>',{src:data.avatarUrl, class:'small-avatar', style:'margin-top:0px'}))
+    if ('avatarUrl' in data) $('#profilePhoto').append($('<img>',{src:data.avatarUrl, class:'avatar', style:'margin-top:0px'}))
     
     $("#profileError").hide()
     $('#profileData').show()

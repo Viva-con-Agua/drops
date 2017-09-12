@@ -19,7 +19,7 @@
           @helper.CSRF.formField
 
           @helper.repeat(rolesForm("users"), min = 1) { userFields =>
-            <div class="row border-bottom">
+            <div class="row" style="border-bottom: 1px solid #e5e5e5; margin-bottom: 1em; margin-top: 1em;">
               <div class="col-md-6">
               @b3.text(userFields("userId"),
                 '_label -> Messages("roles.userId"),

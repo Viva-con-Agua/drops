@@ -2,7 +2,7 @@
 
 @(signInForm: Form[AuthForms.SignInData], socialProviderRegistry:SocialProviderRegistry)(implicit request: RequestHeader, messages:Messages)
 
-@implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
+@implicitFieldConstructor = @{b3.vertical.fieldConstructor}
 
 @views.html.templates.mainAuth(Messages("signin.title"), tab = "signin") {
   @request.flash.get("error").map { msg =>
@@ -14,14 +14,12 @@
       @helper.CSRF.formField
       
       @b3.email(signInForm("email"), 
-        '_label -> Messages("signin.email"), 
-        'placeholder -> Messages("signin.email"), 
+        '_label -> Messages("signin.email"),
         'autofocus -> true)
       
       @b3.password(signInForm("password"), 
-        '_label -> Messages("signin.password"), 
-        'placeholder -> Messages("signin.password"))
-      
+        '_label -> Messages("signin.password"))
+
       @b3.checkbox(signInForm("rememberMe"),
         '_text -> Messages("signin.rememberMe"),
         'value -> false)

@@ -1,28 +1,43 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
+@import scala.concurrent.Await
+@import scala.concurrent.duration._
+@import scala.language.postfixOps
+@import scala.concurrent.ExecutionContext.Implicits.global
 
 @(title: String, tab: String = "", loggedUser: Option[User], loginInfo:Option[LoginInfo] = None)(content: Html)(implicit messages:Messages)
 
 @navbarContent = {
   <ul class="nav navbar-nav">
-    <li class="@("active".when(tab == "index"))"><a href="@routes.Application.index">@Messages("navbar.index")</a></li>
     @if(loggedUser.isDefined) {
-      <li class="@("active".when(tab == "profile"))"><a href="@routes.Application.profile">@Messages("navbar.profile")</a></li>
       <li class="@("active".when(tab == "task"))"><a href="@routes.Application.task">@Messages("navbar.task")</a></li>
       @if(loggedUser.map((u) => u.hasRole(RoleAdmin) || u.hasRole(RoleEmployee)).getOrElse(false)) {
-        <li class="@("active".when(tab == "oauth-register"))"><a href="@routes.Application.registration">@Messages("navbar.oauth.register")</a></li>
-      }
-      @if(loggedUser.map((u) => u.hasRole(RoleAdmin)).getOrElse(false)) {
-        <li class="@("active".when(tab == "roles"))"><a href="@routes.Roles.index">@Messages("navbar.roles")</a></li>
+      <li class="dropdown">
+        <a href="#">@Messages("navbar.menu.admin")</a>
+        <ul class="dropdown-content">
+          @if(loggedUser.map((u) => u.hasRole(RoleAdmin) || u.hasRole(RoleEmployee)).getOrElse(false)) {
+            <li class="@("active".when(tab == "oauth-register")) nav-sub"><a href="@routes.Application.registration">@Messages("navbar.oauth.register")</a></li>
+          }
+          @if(loggedUser.map((u) => u.hasRole(RoleAdmin)).getOrElse(false)) {
+            <li class="@("active".when(tab == "roles")) nav-sub"><a href="@routes.Roles.index">@Messages("navbar.roles")</a></li>
+          }
+        </ul>
+      </li>
       }
     } else {
-      <li class="disabled"><a>@Messages("navbar.profile")</a></li>
+
     }
   </ul>
   <ul class="nav navbar-nav navbar-right">
     @loggedUser.map { user =>
       @loginInfo.map { loginInfo =>
-        <li><img class="avatar" src="@user.profileFor(loginInfo).flatMap(_.avatarUrl)"/></li>
-        <li class="navbar-text">@Messages("navbar.username", user.fullName(loginInfo).getOrElse(Messages("navbar.none")))</li>
+        <li class="@("active".when(tab == "profile")) profile">
+          <a href="@routes.Application.profile">
+            @user.profileFor(loginInfo).flatMap((profile) => profile.getAvatar.flatMap((ava) => Await.result(ava.getImage(30,30), 3000 millis))).map { url =>
+              <img class="avatar profile-image" src="@url" />
+            }
+            @Messages("navbar.username", user.fullName(loginInfo).getOrElse(Messages("navbar.none")))
+          </a>
+        </li>
       }
       <li><a href="@routes.Auth.signOut">@Messages("navbar.signout")</a></li>
     }.getOrElse {

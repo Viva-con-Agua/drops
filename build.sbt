@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.docker.Cmd
 
 name := """Drops"""
 
-version := "0.10.7"
+version := "0.14.8"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
@@ -50,6 +50,10 @@ scalacOptions ++= Seq(
   "-Ywarn-value-discard",
   "-language:reflectiveCalls"
 )
+
+//includeFilter in (Assets, LessKeys.less) := "vca.less" // | "bar.less"
+includeFilter in (Assets, LessKeys.less) := "*.less"
+excludeFilter in (Assets, LessKeys.less) := "_*.less"
 
 // setting a maintainer which is used for all packaging types</pre>
 maintainer in Docker := "Johann Sell"

@@ -30,32 +30,13 @@ case class Crew(
   }
 
   def ~(o : scala.Any) : Boolean = o == this || (o match {
-    case cs: CrewSupporter => cs.crew == this
+    case s: Supporter => s.crew.map(_ == this).getOrElse(false)
     case _ => false
   })
 }
 
-case class CrewSupporter(
-  crew: Crew,
-  active: Boolean
-)
-
-case class CrewStubSupporter(
-  crew: CrewStub,
-  active: Boolean
-)
-
 object Crew {
   implicit val crewJsonFormat = Json.format[Crew]
-}
-
-
-object CrewSupporter {
-  implicit val crewSupporterJsonFormat = Json.format[CrewSupporter]
-}
-
-object CrewStubSupporter {
-  implicit val crewStubSupporterJsonFormat = Json.format[CrewStubSupporter]
 }
 
 object CrewStub {

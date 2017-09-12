@@ -347,7 +347,12 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.10.7 (2017-07-26)
+## Version 0.14.8 (2017-09-12)
+* [[B] #85 - Preselection of crew does not work](https://github.com/Viva-con-Agua/drops/issues/85)
+* [[F] #12 - Extra profile image](https://github.com/Viva-con-Agua/drops/issues/12)
+* [[F] #5 - Users profile](https://github.com/Viva-con-Agua/drops/issues/5)
+* [[F] #35 - Remove active flag](https://github.com/Viva-con-Agua/drops/issues/35)
+* [[F] #22 - ReDesign](https://github.com/Viva-con-Agua/drops/issues/22)
 * [[F] #55 - Add relational database support for task managment](https://github.com/Viva-con-Agua/drops/issues/55)
 * [[B] #61 - Clients are not authorized to get an Access Token](https://github.com/Viva-con-Agua/drops/issues/61)
 * [[I] #60 - Remove uneeded attribute OAuthClient](https://github.com/Viva-con-Agua/drops/issues/60)
