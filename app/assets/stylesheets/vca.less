@@ -4,6 +4,7 @@
 @import "_navbar";
 @import "_forms";
 @import "_templates";
+@import "_dropzone";
 
 body {
   background-color: @background-color;
@@ -11,7 +12,62 @@ body {
   padding-top: 85px;
 }
 
-.avatar {
-  height: 30px;
-  border-radius: 3px;
+.profileHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: stretch;
+  align-items: stretch;
+
+  @shadow-card: 0 4px 8px 0 rgba(0,0,0,0.2);
+  @shadow-card-highlight: 0 8px 16px 0 rgba(0,0,0,0.2);
+
+  .avatar {
+    position:relative;
+    border: 0.2em solid white;
+    .box-shadow(@shadow-card);
+
+    &:hover {
+      .box-shadow(@shadow-card-highlight);
+
+      .dropzone {
+        display: block;
+      }
+      .hint {
+        display: none;
+      }
+    }
+
+    img {
+      width: 400px;
+      height: 400px;
+    }
+
+    .dropzone {
+      display: none;
+      position:absolute;
+      z-index: 999;
+      top: 0;
+      left: 0;
+      background-color: rgba(255, 255, 255, 0.6);
+      width: 400px;
+      height: 400px;
+      .box-shadow(none);
+      .dropzone-hidden-previews {
+        display: none;
+      }
+    }
+
+    .hint {
+      position:absolute;
+      z-index: 999;
+      bottom: 0;
+      left: 0;
+      background-color: rgba(255, 255, 255, 0.6);
+      width: 400px;
+      height: 2.1em;
+      line-height: 1.5em;
+      padding: 0.3em 1em;
+    }
+  }
 }

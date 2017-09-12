@@ -82,7 +82,7 @@ case class ProfileStub(
                     oauth1Info: Option[OAuth1Info],
                     avatarUrl: Option[String]) {
   def toProfile(c: Option[Crew]) : Profile =
-    Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info, avatarUrl)
+    Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info, avatarUrl.map((url) => List(GravatarProfileImage( url ), new DefaultProfileImage)).getOrElse(List(new DefaultProfileImage)))
 }
 
 object ProfileStub {
