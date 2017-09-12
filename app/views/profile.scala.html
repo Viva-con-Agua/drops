@@ -74,13 +74,17 @@
           @helper.CSRF.formField
 
           @b3.select(geoForm("crewName"),
-            availableCrews.map(crew => (crew.name, crew.name + " (" + crew.country + ")")).toSeq,
             '_label -> Messages("crew.name"),
+            '_placeholder -> "test",
             'autofocus -> true,
-            'value -> profile.supporter.crew.map(cs =>
-              availableCrews.find(c => c ~ cs).map(_.name).head
-            ).getOrElse(None)
-          )
+            'value -> availableCrews.find(c => c ~ profile.supporter).map(_.name).headOption.getOrElse("")
+          ) { implicit values => {
+              @b3.selectOption("", Messages("crew.select.one"), 'disabled -> true)
+              @for(crew <- availableCrews.toList.sortWith((c1, c2) => c1.name <= c2.name)) {
+                @b3.selectOption(crew.name, crew.name + " (" + crew.country + ")")
+              }
+            }
+          }
           @b3.submit('class -> "btn btn-primary") {
             @Messages("crew.submit")
           }

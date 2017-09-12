@@ -133,6 +133,7 @@ crew.city=City
 crew.active=Active Member of the crew?
 crew.submit=Save
 crew.update.noProfileForLogin=Internal Server Error: Found no profile for the current user.
+crew.select.one=Please, select a crew
 
 oauth2server.clientId.notFound=No client application is registered with the given client ID.
 oauth2server.clientId.missing=No client ID is given.
