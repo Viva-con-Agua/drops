@@ -88,10 +88,8 @@ class Application @Inject() (
   }
 
   def task = SecuredAction{ implicit request =>
-    val t = taskDao.getAllAsObject()
-
-    Ok(views.html.task(request.identity, request.authenticator.loginInfo, t))
-
+    val resultingTasks: Future[Seq[Task]] = taskDao.all()
+    Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
   }
 
   def initCrews = Action.async { request =>
