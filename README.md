@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.14.7 (2017-09-12)
+## Version 0.14.8 (2017-09-12)
+* [[B] #85 - Preselection of crew does not work](https://github.com/Viva-con-Agua/drops/issues/85)
 * [[F] #12 - Extra profile image](https://github.com/Viva-con-Agua/drops/issues/12)
 * [[F] #5 - Users profile](https://github.com/Viva-con-Agua/drops/issues/5)
 * [[F] #35 - Remove active flag](https://github.com/Viva-con-Agua/drops/issues/35)
