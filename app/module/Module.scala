@@ -36,6 +36,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[CrewDao].to[MongoCrewDao]
     bind[UserTokenDao].to[MongoUserTokenDao]
     bind[TaskDao].to[MariadbTaskDao]
+    bind[AccessRightDao].to[MariadbAccessRightDao]
     bind[OauthClientDao].to[MongoOauthClientDao]
     bind[OauthTokenDao].to[MongoOauthTokenDao]
     bind[OauthCodeDao].to[MongoOauthCodeDao]

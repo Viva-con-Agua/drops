@@ -1,86 +1,70 @@
 package daos
 
-import java.net.URI
-import java.sql.{ResultSet, Types}
-import java.util.Date
+import java.net.{URI, URISyntaxException}
+import javax.inject.Inject
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-import play.api.Play.current
-import play.api.libs.json._
-import play.api.db.DB
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
-
-
-import models.AccessRight
-import utils.JsonUtils
-
+import play.api.Play
+import play.api.db.slick.DatabaseConfigProvider
+import slick.driver.JdbcProfile
+import slick.driver.MySQLDriver.api._
+import models.{AccessRight, HttpMethod}
+import models.HttpMethod.HttpMethod
 
 /**
   * Created bei jottmann on 29.08.2017
   */
 
 trait AccessRightDao {
-  def find(id:Int): Future[JsValue]
-  def findByUri(uri: URI): Future[AccessRight]
-  def create(accessRight:AccessRight): Future[JsValue]
-  def create(uri: URI, name:Option[String], description: Option[String]): Future[JsValue]
+  def all(): Future[Seq[AccessRight]]
+  def find(id:Long): Future[Option[AccessRight]]
+  def create(accessRight:AccessRight): Future[Option[AccessRight]]
+  def delete(id:Long): Future[Int]
 }
 
-class MariadbAccessRightDao extends AccessRightDao {
-  val conn = DB.getConnection()
-  val stmt = conn.createStatement
+class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight") {
+  def id = column[Long]("id", O.PrimaryKey,O.AutoInc)
+  def uri = column[URI]("uri")
+  def method = column[HttpMethod]("method")
+  def name = column[String]("name")
+  def description= column[String]("description")
 
-
-  def find(id:Int): Future[JsValue] = {
-    val query:String = "SELECT * FROM AccessRight WHERE id = ?"
-    val preparedStatement = conn.prepareStatement(query)
-    preparedStatement.setInt(1, id)
-    Future {JsonUtils.sqlResultSetToJson(preparedStatement.executeQuery())}
-  }
-
-  def findByUri(uri: URI): Future[AccessRight] = {
-    val query:String = "SELECT * FROM AccessRight WHERE uri = ?"
-    val preparedStatement = conn.prepareStatement(query)
-    preparedStatement.setString(1, uri.toString())
-    val rs = preparedStatement.executeQuery()
-
-    //ToDo: Write generic ResultSet to Case Class Converter
-    Future {AccessRight(new URI(rs.getObject(2).toString),rs.getObject(3).toString, rs.getObject(4).toString)}
-  }
-
-  def create(accessRight: AccessRight): Future[JsValue] = {
-    val query:String = """INSERT INTO Task (uri, name, description)
-        VALUES (?,?,?)"""
-    val preparedStatement = conn.prepareStatement(query, Array[String]("id"))
-
-    preparedStatement.setString(1, accessRight.uri.toString)
-
-    if(accessRight.name != None){
-      val name:String = accessRight.name.get
-      preparedStatement.setString(2, name)
-    }else{
-      preparedStatement.setNull(2, Types.VARCHAR)
+  implicit val uriColumnType = MappedColumnType.base[URI, String](
+    { uri => uri.toASCIIString },
+    { str =>
+      try {
+        new URI(str)
+      } catch {
+        case e:URISyntaxException => throw new SlickException(s"Invalid URI value: $str", e)
+      }
     }
+  )
 
-    if(accessRight.description != None){
-      val description:String = accessRight.description.get
-      preparedStatement.setString(3, description)
-    }else{
-      preparedStatement.setNull(3, Types.VARCHAR)
+  implicit val httpMethodColumnType = MappedColumnType.base[HttpMethod, String](
+    {httpMethod => httpMethod.toString},
+    {
+      case "POST" => HttpMethod.POST
+      case "GET" => HttpMethod.GET
     }
+  )
 
-    preparedStatement.execute()
-    val rs = preparedStatement.getGeneratedKeys
-    rs.next
-    val key:Int = rs.getInt(1)
+  def * =
+    (id, uri, method, name.?, description.?) <>((AccessRight.mapperTo _).tupled, AccessRight.unapply)
+}
 
-    find(key)
+class MariadbAccessRightDao @Inject()(dbConfigProvider: DatabaseConfigProvider) extends AccessRightDao {
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+
+  val accessRights = TableQuery[AccessRightTableDef]
+
+  def all(): Future[Seq[AccessRight]] = dbConfig.db.run(accessRights.result)
+
+  def find(id: Long): Future[Option[AccessRight]] = dbConfig.db.run(accessRights.filter(ar => ar.id === id).result).map(_.headOption)
+
+  def create(accessRight: AccessRight): Future[Option[AccessRight]] = {
+    dbConfig.db.run((accessRights returning accessRights.map(_.id)) += accessRight).flatMap((ac)=> find(ac))
   }
 
-  def create(uri: URI, name: Option[String], description: Option[String]): Future[JsValue] = {
-    val accessRightModel = AccessRight.apply(uri, name, description);
-    create(accessRightModel)
-  }
+  def delete(id: Long): Future[Int] = dbConfig.db.run(accessRights.filter(ar => ar.id === id).delete)
 }
