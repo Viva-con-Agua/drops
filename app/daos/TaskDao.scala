@@ -1,109 +1,59 @@
 package daos
 
-import java.sql.{JDBCType, ResultSet}
+import java.sql.Timestamp
 import java.util.Date
-import java.sql.Types
-import java.util
 
-import scala.concurrent.Future
+import models.{Task}//, TaskData}
+import play.api.Play
+import play.api.db.slick.DatabaseConfigProvider
+import slick.driver.JdbcProfile
+import slick.driver.MySQLDriver.api._
 
-import play.api.Play.current
-import play.api.libs.json._
-import play.api.db._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
-import models._
-import models.Task._
-import utils.JsonUtils
-
-import scala.collection.mutable.ListBuffer
 
 /**
   * Created bei jottmann on 26.07.2017
   */
 
 trait TaskDao{
-  def getAll(): Future[JsValue]
-  def getAllAsObject(): List[Task]
-  def create(task:Task): Future[JsValue]
-  def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): Future[JsValue]
-  def find(id:Int): Future[JsValue]
+  def all(): Future[Seq[Task]]
+  def create(task:Task): Future[Option[Task]]
+  def find(id:Long): Future[Option[Task]]
+  def delete(id:Long): Future[Int]
+}
+
+class TaskTableDef(tag: Tag) extends Table[Task](tag, "Task") {
+  def id = column[Long]("id", O.PrimaryKey,O.AutoInc)
+  def title = column[String]("title")
+  def description= column[String]("description")
+  def deadline = column[Date]("deadline")
+  def count_supporter = column[Int]("count_supporter")
+
+  implicit val dateColumnType =
+    MappedColumnType .base[Date, Timestamp] (
+      d => new Timestamp(d.getTime),
+      d => new Date(d.getTime)
+    )
+
+  def * =
+    (id, title, description.?, deadline.?, count_supporter.?) <>((Task.mapperTo _).tupled, Task.unapply)
 }
 
 class MariadbTaskDao extends TaskDao {
-  val conn = DB.getConnection()
-  val stmt = conn.createStatement
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
 
-  def getAll(): Future[JsValue] = {
-    val response = stmt.executeQuery("SELECT * FROM Task")
-    Future { JsonUtils.sqlResultSetToJson(response) }
+  val tasks = TableQuery[TaskTableDef]
+
+  def all(): Future[Seq[Task]] = dbConfig.db.run(tasks.result)
+
+  def find(id: Long): Future[Option[Task]] = dbConfig.db.run(tasks.filter(t => t.id === id).result).map(_.headOption)
+
+  def create(task: Task): Future[Option[Task]] = {
+    dbConfig.db.run((tasks returning tasks.map(_.id)) += task).flatMap((id) => find(id))
   }
 
-  def getAllAsObject(): List[Task] = {
-    val response : ResultSet = stmt.executeQuery("SELECT * FROM Task")
-    sqlResultToList(response)
-  }
-
-
-  def find(id:Int): Future[JsValue] = {
-    val query:String = "SELECT * FROM Task WHERE id = ?"
-    val preparedStatement = conn.prepareStatement(query)
-    preparedStatement.setInt(1, id)
-    Future {JsonUtils.sqlResultSetToJson(preparedStatement.executeQuery())}
-  }
-
-  def create(task:Task): Future[JsValue] = {
-
-    val query:String = """INSERT INTO Task (title, description, deadline, count_supporter)
-        VALUES (?,?,?,?)"""
-    val preparedStatement = conn.prepareStatement(query, Array[String]("id"))
-
-    preparedStatement.setString(1, task.title)
-
-    if(task.description != None){
-      val description:String = task.description.get
-      preparedStatement.setString(2, description)
-    }else{
-      preparedStatement.setNull(2, Types.VARCHAR)
-    }
-
-    if(task.deadline != None){
-      val deadline:java.sql.Date = new java.sql.Date(task.deadline.get.getTime)
-      preparedStatement.setDate(3,deadline)
-    }else{
-      preparedStatement.setNull(3, Types.DATE)
-    }
-
-    if(task.count_supporter != None){
-      val count_supporter:Int = task.count_supporter.get
-      preparedStatement.setInt(4, count_supporter)
-    }else{
-      preparedStatement.setNull(4, Types.INTEGER)
-    }
-
-    preparedStatement.execute()
-    val rs = preparedStatement.getGeneratedKeys
-    rs.next
-    val key:Int = rs.getInt(1)
-
-    find(key)
-  }
-
-  def create(title: String, description: Option[String], deadline: Option[Date], count_supporter: Option[Int]): Future[JsValue] = {
-    val taskModel = Task.apply(title, description, deadline, count_supporter)
-    create(taskModel)
-  }
-
-  def sqlResultToList(rs: ResultSet) : List[Task] = {
-    val tasks : ListBuffer[Task] = ListBuffer()
-    val rsmd = rs.getMetaData
-    val columnCount = rsmd.getColumnCount
-
-    while (rs.next) {
-      val t: Task= new Task(rs.getString(2), Some(rs.getString(3)), Some(rs.getDate(4)), Some(rs.getInt(5)))
-      tasks += t
-
-    }
-    tasks.toList
-  }
+  def delete(id: Long): Future[Int] = dbConfig.db.run(tasks.filter(t => t.id === id).delete)
 }
