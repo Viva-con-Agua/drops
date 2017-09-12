@@ -14,6 +14,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.modules.reactivemongo.{MongoController, ReactiveMongoApi, ReactiveMongoComponents}
 import play.modules.reactivemongo.json._
 import models._
+import play.modules.reactivemongo.json.collection.JSONCollection
 import services.UserService
 import reactivemongo.api.gridfs.{DefaultFileToSave, FileToSave, GridFS, ReadFile}
 
@@ -44,30 +45,40 @@ class Files @Inject() (
       Logger.info(s"Checked index, result is $index")
   }
 
+  val files = reactiveMongoApi.db.collection[JSONCollection]("fs.files")
+
   def uploadProfileImage = SecuredAction.async(fsParser) { implicit request =>
     val futureFile: Future[ReadFile[JSONSerializationPack.type, JsValue]] =
       request.body.files.head.ref
 
     futureFile.map { file => {
-      val fileID = UUID.randomUUID()
+      val fileID = file.id.validate[UUID].get
       gridFS.files.update(
         Json.obj("_id" -> file.id),
         Json.obj("$set" -> Json.obj(
           "user" -> request.identity.id,
-          "id" -> fileID,
           "width" -> 400,
           "height" -> 400
         )))
+
+      // Delete all old profile images. Can be removed for issue #82!
+      request.identity.profileFor(request.authenticator.loginInfo)
+        .map { (profile) =>
+          profile.avatar.filter(_ match {
+            case pI : LocalProfileImage => true
+            case _ => false
+          }).map(_.asInstanceOf[LocalProfileImage]).map(
+            (pi) => {
+              gridFS.remove(Json toJson pi.uuid).map(_.hasErrors)
+            })
+        }
+      // Associate new local profile image to the user
       request.identity.profileFor(request.authenticator.loginInfo)
         .map((profile) => userService.saveImage(profile, LocalProfileImage(fileID)))
 
       Ok(Json.obj("msg" -> Messages("success.profile.image.upload"), "url" -> routes.Files.get(fileID.toString).url))
-//      Redirect(routes.Application.profile).flashing(
-//        "success" -> Messages("success.profile.image.upload"))
     }}.fallbackTo(
       Future.successful(
-//        Redirect(routes.Application.profile).flashing(
-//        "error" -> Messages("error.profile.image.upload"))
         Ok(Json.obj("msg" -> Messages("error.profile.image.upload")))
       )
     )
@@ -75,7 +86,7 @@ class Files @Inject() (
 
   def get(id: String) = SecuredAction.async { implicit request =>
     // find the matching attachment, if any, and streams it to the client
-    val file = gridFS.find[JsObject, JSONReadFile](Json.obj("id" -> id))
+    val file = gridFS.find[JsObject, JSONReadFile](Json.obj("_id" -> id))
 
     request.getQueryString("inline") match {
       case Some("true") =>

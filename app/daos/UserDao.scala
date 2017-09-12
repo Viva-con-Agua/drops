@@ -59,7 +59,12 @@ class MongoUserDao extends UserDao {
     users.insert(user).map(_ => user)
 
   override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = {
-    val newProfile = profile.copy(avatar = avatar +: profile.avatar)
+    // filter all old LocalProfileImage references. Can be removed for issue #82!
+    val oldAvatar = profile.avatar.filter(_ match {
+      case pi: LocalProfileImage => false
+      case _ => true
+    })
+    val newProfile = profile.copy(avatar = avatar +: oldAvatar)
     this.update(newProfile)
   }
 
