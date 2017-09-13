@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.14.8 (2017-09-12)
+## Version 0.15.8 (2017-09-12)
+* [[F] #47 - Task Object](https://github.com/Viva-con-Agua/drops/issues/47)
 * [[B] #85 - Preselection of crew does not work](https://github.com/Viva-con-Agua/drops/issues/85)
 * [[F] #12 - Extra profile image](https://github.com/Viva-con-Agua/drops/issues/12)
 * [[F] #5 - Users profile](https://github.com/Viva-con-Agua/drops/issues/5)
