@@ -8,6 +8,7 @@ navbar.brand.organisation=Viva con Agua
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
 navbar.profile=My Profile
+navbar.task = Task Overview
 navbar.oauth.register=New Oauth2 Client
 navbar.roles=Define roles
 navbar.username={0}
@@ -52,6 +53,8 @@ profile.submit=Update
 profile.update.legend=Change yourself
 profile.upload.msg=Click to upload
 profile.upload.hint=Hover here to change the image
+
+task.title=Task Overview
 
 signup.title=Sign up
 signup.legend=Sign up for a new account

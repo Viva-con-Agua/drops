@@ -9,6 +9,7 @@
 @navbarContent = {
   <ul class="nav navbar-nav">
     @if(loggedUser.isDefined) {
+      <li class="@("active".when(tab == "task"))"><a href="@routes.Application.task">@Messages("navbar.task")</a></li>
       @if(loggedUser.map((u) => u.hasRole(RoleAdmin) || u.hasRole(RoleEmployee)).getOrElse(false)) {
       <li class="dropdown">
         <a href="#">@Messages("navbar.menu.admin")</a>

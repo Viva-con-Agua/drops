@@ -1,0 +1,35 @@
+@import com.mohiva.play.silhouette.api.LoginInfo
+@import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
+@import java.util.ArrayList
+@import scala.concurrent.{Future, Await}
+@import scala.concurrent.duration._
+@import scala.language.postfixOps
+
+
+@(loggedUser:User, loginInfo:LoginInfo, tasks: Future[Seq[Task]])(implicit request:RequestHeader,messages:Messages)
+
+@linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
+
+@implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
+
+@views.html.templates.mainApp(Messages("task.title"), tab = "task", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
+    <div class="col-md-8 col-md-offset-2">
+        <div class="row">
+            <h1>Übersicht der Tasks</h1>
+        </div>
+        <div class="row">
+            <table class="table table-striped table-hover">
+
+            @for(task <- Await.result(tasks, 3000 millis)){
+                <tr>
+                    <td>@task.title</td>
+                    <td>@task.description</td>
+                    <td>@task.deadline</td>
+                    <td>@task.count_supporter</td>
+                </tr>
+            }
+            </table>
+        </div>
+    </div>
+
+}
