@@ -104,6 +104,21 @@ class RestApi @Inject() (
     taskDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
+  def getTasksWithAccessRights(id: Long) = Action.async{ implicit request => {
+    val task : Future[Option[Task]] = taskDao.find(id)
+    val accessRights : Future[Seq[AccessRight]] = accessRightDao.allForTask(id)
+
+    val combinedFuture =
+      for {
+        r1 <- task
+        r2 <- accessRights
+      } yield (r1, r2)
+
+    combinedFuture.map(r => {
+      Ok(Json.toJson(r._1).asInstanceOf[JsObject] + ("accessRights" -> Json.toJson(r._2)) )
+    })
+  }}
+
   def findTask(id: Long) = Action.async{ implicit  request => {
     taskDao.find(id).map(task => Ok(Json.toJson(task)))
   }}
