@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.15.8 (2017-09-12)
+## Version 0.16.8 (2017-09-19)
+* [[F] #70 - Relations between Tasks and Access Rights](https://github.com/Viva-con-Agua/drops/issues/70)
 * [[F] #47 - Task Object](https://github.com/Viva-con-Agua/drops/issues/47)
 * [[B] #85 - Preselection of crew does not work](https://github.com/Viva-con-Agua/drops/issues/85)
 * [[F] #12 - Extra profile image](https://github.com/Viva-con-Agua/drops/issues/12)
