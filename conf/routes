@@ -21,6 +21,7 @@ POST    /roles/update                                       controllers.Roles.up
 GET     /rest/profile                                       controllers.RestApi.profile
 POST    /rest/users                                         controllers.RestApi.users
 POST    /rest/users/:id                                     controllers.RestApi.user(id : String)
+GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 POST    /rest/crews                                         controllers.RestApi.crews
 GET     /rest/task                                          controllers.RestApi.getTasks
 POST    /rest/task                                          controllers.RestApi.createTask

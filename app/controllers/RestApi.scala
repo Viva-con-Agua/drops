@@ -104,6 +104,10 @@ class RestApi @Inject() (
     taskDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
+  def getTasksForUser(userId : UUID) = Action.async{ implicit request => {
+    taskDao.forUser(userId).map(tasks => Ok(Json.toJson(tasks)))
+  }}
+
   def getTasksWithAccessRights(id: Long) = Action.async{ implicit request => {
     taskService.getWithAccessRights(id).map(r => Ok(r))
   }}
