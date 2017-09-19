@@ -4,21 +4,20 @@ import java.util.UUID
 import javax.inject.Inject
 
 import scala.concurrent.Future
-import scala.util.{Try, Success, Failure}
-
+import scala.util.{Failure, Success, Try}
 import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import play.api._
 import play.api.libs.json._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import models.{OauthClient, PublicUser, User, Task, AccessRight}
+import models.{AccessRight, OauthClient, PublicUser, Task, User}
 import User._
 import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
 import daos.{CrewDao, OauthClientDao, UserDao}
-import daos.{TaskDao, AccessRightDao}
-import api.query.TaskRequest
+import daos.{AccessRightDao, TaskDao}
+import services.TaskService
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.parsing.json.JSONArray
@@ -31,6 +30,7 @@ class RestApi @Inject() (
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
+  val taskService : TaskService,
   val ApiAction : ApiAction,
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator]) extends Silhouette[User,CookieAuthenticator] {
@@ -102,6 +102,10 @@ class RestApi @Inject() (
   //ToDo: ApiAction instead of Action
   def getTasks = Action.async{ implicit  request => {
     taskDao.all().map(tasks => Ok(Json.toJson(tasks)))
+  }}
+
+  def getTasksWithAccessRights(id: Long) = Action.async{ implicit request => {
+    taskService.getWithAccessRights(id).map(r => Ok(r))
   }}
 
   def findTask(id: Long) = Action.async{ implicit  request => {

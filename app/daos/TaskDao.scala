@@ -3,16 +3,14 @@ package daos
 import java.sql.Timestamp
 import java.util.Date
 
-import models.{Task}//, TaskData}
+import models.Task
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.driver.MySQLDriver.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
-
+import scala.concurrent.Future
 
 /**
   * Created bei jottmann on 26.07.2017
