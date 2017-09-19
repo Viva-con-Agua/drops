@@ -62,10 +62,6 @@ class MariadbAccessRightDao @Inject()(dbConfigProvider: DatabaseConfigProvider) 
   val accessRights = TableQuery[AccessRightTableDef]
   val taskAccessRights = TableQuery[TaskAccessRightTableDef]
 
-  val innerJoin = for {
-    (ar, tar) <- (accessRights join taskAccessRights on (_.id === _.accessRightId))
-  } yield (ar, tar)
-
   def all(): Future[Seq[AccessRight]] = dbConfig.db.run(accessRights.result)
 
   def allForTask(taskId: Long) : Future[Seq[AccessRight]] = {
