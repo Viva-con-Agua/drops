@@ -17,16 +17,17 @@ case class AccessRight (
                          uri: URI,
                          method: HttpMethod,
                          name: Option[String],
-                         description: Option[String]
+                         description: Option[String],
+                         service: String
                       )
 object AccessRight{
   def mapperTo(
                 id: Long, uri: URI, method: HttpMethod,
-                name: Option[String], description: Option[String]
-              ) = apply(id, uri, method, name, description)
+                name: Option[String], description: Option[String], service: String
+              ) = apply(id, uri, method, name, description, service)
 
-  def apply(tuple: (Long, URI, HttpMethod, Option[String], Option[String])): AccessRight =
-    AccessRight(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
+  def apply(tuple: (Long, URI, HttpMethod, Option[String], Option[String], String)): AccessRight =
+    AccessRight(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
   implicit val uriWrites = new Writes[URI] {
     def writes(uri: URI) = JsString(uri.toASCIIString)
@@ -53,7 +54,8 @@ object AccessRight{
       (JsPath \ "uri").write[URI] and
       (JsPath \ "method").write[HttpMethod] and
       (JsPath \ "name").writeNullable[String] and
-      (JsPath \ "description").writeNullable[String]
+      (JsPath \ "description").writeNullable[String] and
+      (JsPath \ "service").write[String]
     )(unlift(AccessRight.unapply))
 
   implicit val accessRightReads : Reads[AccessRight] = (
@@ -61,10 +63,11 @@ object AccessRight{
       (JsPath \ "uri").read[URI] and
       (JsPath \ "method").read[HttpMethod] and
       (JsPath \ "name").readNullable[String] and
-      (JsPath \ "description").readNullable[String]
+      (JsPath \ "description").readNullable[String] and
+      (JsPath \ "service").read[String]
     ).tupled.map((task) => if(task._1.isEmpty)
-      AccessRight(0, task._2, task._3, task._4, task._5)
-      else AccessRight(task._1.get, task._2, task._3, task._4, task._5))
+      AccessRight(0, task._2, task._3, task._4, task._5, task._6)
+      else AccessRight(task._1.get, task._2, task._3, task._4, task._5, task._6))
 }
 
 object HttpMethod extends Enumeration {
