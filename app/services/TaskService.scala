@@ -16,7 +16,7 @@ class TaskService @Inject()(
 
   def getWithAccessRights(id: Long): Future[JsObject] = {
     taskDao.find(id).flatMap(t =>
-      accessRightDao.allForTask(id).map(aR =>
+      accessRightDao.forTask(id).map(aR =>
         Json.toJson(t).asInstanceOf[JsObject] + ("accessRights" -> Json.toJson(aR))))
   }
 }

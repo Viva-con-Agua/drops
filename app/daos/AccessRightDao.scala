@@ -18,7 +18,8 @@ import models.HttpMethod.HttpMethod
 
 trait AccessRightDao {
   def all(): Future[Seq[AccessRight]]
-  def allForTask(taskId: Long): Future[Seq[AccessRight]]
+  def forTask(taskId: Long): Future[Seq[AccessRight]]
+  def forTaskList(taskIdList : Seq[Long]): Future[Seq[AccessRight]]
   def find(id:Long): Future[Option[AccessRight]]
   def create(accessRight:AccessRight): Future[Option[AccessRight]]
   def delete(id:Long): Future[Int]
@@ -64,7 +65,7 @@ class MariadbAccessRightDao @Inject()(dbConfigProvider: DatabaseConfigProvider) 
 
   def all(): Future[Seq[AccessRight]] = dbConfig.db.run(accessRights.result)
 
-  def allForTask(taskId: Long) : Future[Seq[AccessRight]] = {
+  def forTask(taskId: Long) : Future[Seq[AccessRight]] = {
     val action = for {
       (ar, _) <- (accessRights join taskAccessRights.filter(tar => tar.taskId === taskId) on (_.id === _.accessRightId))
     } yield (ar)
@@ -78,4 +79,11 @@ class MariadbAccessRightDao @Inject()(dbConfigProvider: DatabaseConfigProvider) 
   }
 
   def delete(id: Long): Future[Int] = dbConfig.db.run(accessRights.filter(ar => ar.id === id).delete)
+
+  def forTaskList(taskIdList : Seq[Long]): Future[Seq[AccessRight]] = {
+    val action = for {
+      (ar, _) <- (accessRights join taskAccessRights.filter(tar => tar.taskId.inSet(taskIdList)) on (_.id === _.accessRightId))
+    } yield (ar)
+    dbConfig.db.run(action.result)
+  }
 }
