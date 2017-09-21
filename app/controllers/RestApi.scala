@@ -17,7 +17,7 @@ import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
 import daos.{CrewDao, OauthClientDao, UserDao}
 import daos.{AccessRightDao, TaskDao}
-import services.TaskService
+import services.{TaskService, UserService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.parsing.json.JSONArray
@@ -30,6 +30,7 @@ class RestApi @Inject() (
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
+  val userService : UserService,
   val taskService : TaskService,
   val ApiAction : ApiAction,
   val messagesApi: MessagesApi,
@@ -106,6 +107,10 @@ class RestApi @Inject() (
 
   def getTasksForUser(userId : UUID) = Action.async{ implicit request => {
     taskDao.forUser(userId).map(tasks => Ok(Json.toJson(tasks)))
+  }}
+
+  def getAccessRightsForUser(userId : UUID) = Action.async{ implicit  request => {
+    userService.accessRights(userId).map(accessRights => Ok(Json.toJson(accessRights)))
   }}
 
   def getTasksWithAccessRights(id: Long) = Action.async{ implicit request => {
