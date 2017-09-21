@@ -32,7 +32,8 @@ class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight
   def uri = column[URI]("uri")
   def method = column[HttpMethod]("method")
   def name = column[String]("name")
-  def description= column[String]("description")
+  def description = column[String]("description")
+  def service = column[String]("service")
 
   implicit val uriColumnType = MappedColumnType.base[URI, String](
     { uri => uri.toASCIIString },
@@ -54,7 +55,7 @@ class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight
   )
 
   def * =
-    (id, uri, method, name.?, description.?) <>((AccessRight.mapperTo _).tupled, AccessRight.unapply)
+    (id, uri, method, name.?, description.?, service) <>((AccessRight.mapperTo _).tupled, AccessRight.unapply)
 }
 
 class MariadbAccessRightDao @Inject()(dbConfigProvider: DatabaseConfigProvider) extends AccessRightDao {
