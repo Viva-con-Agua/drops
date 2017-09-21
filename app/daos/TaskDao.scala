@@ -1,7 +1,7 @@
 package daos
 
 import java.sql.Timestamp
-import java.util.Date
+import java.util.{Date, UUID}
 
 import models.Task
 import play.api.Play
@@ -21,6 +21,8 @@ trait TaskDao{
   def create(task:Task): Future[Option[Task]]
   def find(id:Long): Future[Option[Task]]
   def delete(id:Long): Future[Int]
+  def forUser(userId: UUID): Future[Seq[Task]]
+  def idsForUser(userId : UUID) : Future[Seq[Long]]
 }
 
 class TaskTableDef(tag: Tag) extends Table[Task](tag, "Task") {
@@ -44,6 +46,7 @@ class MariadbTaskDao extends TaskDao {
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
 
   val tasks = TableQuery[TaskTableDef]
+  val userTasks = TableQuery[UserTaskTableDef]
 
   def all(): Future[Seq[Task]] = dbConfig.db.run(tasks.result)
 
@@ -54,4 +57,15 @@ class MariadbTaskDao extends TaskDao {
   }
 
   def delete(id: Long): Future[Int] = dbConfig.db.run(tasks.filter(t => t.id === id).delete)
+
+  def forUser(userId : UUID) : Future[Seq[Task]] = {
+    val action = for{
+      (t, _) <- (tasks join userTasks.filter(ut => ut.userId === userId) on (_.id === _.taskId))
+    } yield(t)
+    dbConfig.db.run(action.result)
+  }
+
+  def idsForUser(userId : UUID) : Future[Seq[Long]] = {
+    dbConfig.db.run(userTasks.filter(ut => ut.userId === userId).map(_.taskId).result)
+  }
 }
