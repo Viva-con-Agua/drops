@@ -130,13 +130,11 @@ class RestApi @Inject() (
   }}
 
   def getAccessRights(query: String, f: String) = Action.async{ implicit  request => {
+    //ToDo: Query parameter optional?
     val filter : JsObject = Json.parse(f).as[JsObject]
-
-    val foo = filter.\("user").\("id").as[String]
-    println(foo)
-    val userId = UUID.fromString("e831ed78-5d66-411e-af39-eaa3d0d72a76")
+    val userId = UUID.fromString(filter.\("user").\("id").as[String])
     val service: String = filter.\("accessRight").\("service").as[String]
-    println(service)
+
     accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
   }}
 
