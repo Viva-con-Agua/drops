@@ -21,6 +21,8 @@ trait AccessRightDao {
   def all(): Future[Seq[AccessRight]]
   def forTask(taskId: Long): Future[Seq[AccessRight]]
   def forTaskList(taskIdList : Seq[Long]): Future[Seq[AccessRight]]
+  def forTaskListAndService(taskIdList : Seq[Long], service :String): Future[Seq[AccessRight]]
+  def forUserAndService(userId: UUID, service: String) : Future[Seq[AccessRight]]
   def find(id:Long): Future[Option[AccessRight]]
   def create(accessRight:AccessRight): Future[Option[AccessRight]]
   def delete(id:Long): Future[Int]
@@ -56,6 +58,27 @@ class MariadbAccessRightDao @Inject()(dbConfigProvider: DatabaseConfigProvider) 
     val action = for {
       (ar, _) <- (accessRights join taskAccessRights.filter(tar => tar.taskId.inSet(taskIdList)) on (_.id === _.accessRightId))
     } yield (ar)
+    dbConfig.db.run(action.result)
+  }
+
+  def forTaskListAndService(taskIdList : Seq[Long], service :String): Future[Seq[AccessRight]] = {
+    val action = for {
+      (ar, _) <- (accessRights.filter(aR => aR.service === service) join taskAccessRights.filter(tar => tar.taskId.inSet(taskIdList)) on (_.id === _.accessRightId))
+    } yield (ar)
+    dbConfig.db.run(action.result)
+  }
+
+  def forUserAndService(userId: UUID, service: String): Future[Seq[AccessRight]] = {
+    val action = for{
+
+      (((ar, _), _), _) <- (accessRights.filter(aR => aR.service === service)
+        join taskAccessRights on (_.id === _.accessRightId)
+        join tasks on (_._2.taskId === _.id)
+        join userTasks.filter(uT => uT.userId === userId) on (_._2.id === _.taskId)
+      )
+
+    } yield (ar)
+
     dbConfig.db.run(action.result)
   }
 }
