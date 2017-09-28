@@ -347,7 +347,14 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.12.7 (2017-09-04)
+## Version 0.17.9 (2017-09-21)
+* [[I] #69 - Associate Access Rights to Microservices](https://github.com/Viva-con-Agua/drops/issues/69)
+* [[F] #71 - Relations between users and tasks](https://github.com/Viva-con-Agua/drops/issues/71)
+* [[F] #70 - Relations between Tasks and Access Rights](https://github.com/Viva-con-Agua/drops/issues/70)
+* [[F] #47 - Task Object](https://github.com/Viva-con-Agua/drops/issues/47)
+* [[B] #85 - Preselection of crew does not work](https://github.com/Viva-con-Agua/drops/issues/85)
+* [[F] #12 - Extra profile image](https://github.com/Viva-con-Agua/drops/issues/12)
+* [[F] #5 - Users profile](https://github.com/Viva-con-Agua/drops/issues/5)
 * [[F] #35 - Remove active flag](https://github.com/Viva-con-Agua/drops/issues/35)
 * [[F] #22 - ReDesign](https://github.com/Viva-con-Agua/drops/issues/22)
 * [[F] #55 - Add relational database support for task managment](https://github.com/Viva-con-Agua/drops/issues/55)

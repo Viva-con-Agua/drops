@@ -1,8 +1,12 @@
 @import com.mohiva.play.silhouette.api.LoginInfo
 @import com.mohiva.play.silhouette.impl.providers.{CredentialsProvider,SocialProviderRegistry}
 
+@import scala.concurrent.Await
+@import scala.concurrent.duration._
+@import scala.language.postfixOps
+
 @import controllers.PillarForms.PillarData
-@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, geoForm : Form[CrewForms.CrewData], availableCrews : Set[Crew], pillarForm : Form[PillarData])(implicit request:RequestHeader,messages:Messages)
+@(loggedUser:User, loginInfo:LoginInfo, socialProviderRegistry:SocialProviderRegistry, userForm: Form[UserForms.UserData], geoForm : Form[CrewForms.CrewData], availableCrews : Set[Crew], pillarForm : Form[PillarData])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
@@ -14,127 +18,143 @@
   }
 
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
-      <div class="card">
-        @profile.avatarUrl.map { url =>
-          <img src="@url"/>
+      <div class="profileHeader">
+        @profile.getAvatar.map((ava) => Await.result(ava.getImage(400,400), 3000 millis)).map { url =>
+          @dropzone.profileImage(url)
         }
       </div>
+    <div>
+    @b3.form(routes.Application.updateBase) {
+      <fieldset>
+        <legend>@Messages("profile.update.legend")</legend>
+        @helper.CSRF.formField
+
+        @b3.email(userForm("email"),
+          '_label -> Messages("signup.email"),
+          'autofocus -> true,
+          'value -> profile.email.getOrElse(None))
+
+        @b3.text(userForm("firstName"),
+          '_label -> Messages("signup.firstName"),
+          'value -> profile.supporter.firstName.getOrElse(None))
+
+        @b3.text(userForm("lastName"),
+          '_label -> Messages("signup.lastName"),
+          'value -> profile.supporter.lastName.getOrElse(None))
+
+        @b3.text(userForm("mobilePhone"),
+          '_label -> Messages("signup.mobilePhone"),
+          'value -> profile.supporter.mobilePhone.getOrElse(None))
+
+        @b3.text(userForm("placeOfResidence"),
+          '_label -> Messages("signup.placeOfResidence"),
+          'value -> profile.supporter.placeOfResidence.getOrElse(None))
+
+        @b3.date(userForm("birthday"),
+          '_label -> Messages("signup.birthday"),
+          'value -> profile.supporter.birthString.getOrElse(None))
+
+        @b3.select(userForm("sex"),
+          options = Seq(
+            "male"->Messages("signup.sex.male"),
+            "female"->Messages("signup.sex.female"),
+            "other"->Messages("signup.sex.other")
+          ),
+          '_label -> Messages("signup.sex"),
+          'value -> profile.supporter.sex.getOrElse(None))
+
+        @b3.submit('class -> "btn btn-primary"){ @Messages("profile.submit") }
+      </fieldset>
+    }
+    </div>
+    <div>
+      @b3.form(routes.Application.updateCrew) {
+        <fieldset>
+          <legend>@Messages("crew.legend")</legend>
+          @helper.CSRF.formField
+
+          @b3.select(geoForm("crewName"),
+            '_label -> Messages("crew.name"),
+            '_placeholder -> "test",
+            'autofocus -> true,
+            'value -> availableCrews.find(c => c ~ profile.supporter).map(_.name).headOption.getOrElse("")
+          ) { implicit values => {
+              @b3.selectOption("", Messages("crew.select.one"), 'disabled -> true)
+              @for(crew <- availableCrews.toList.sortWith((c1, c2) => c1.name <= c2.name)) {
+                @b3.selectOption(crew.name, crew.name + " (" + crew.country + ")")
+              }
+            }
+          }
+          @b3.submit('class -> "btn btn-primary") {
+            @Messages("crew.submit")
+          }
+        </fieldset>
+      }
+      </div>
+      <div>
+      @b3.form(routes.Application.updatePillar) {
+        <fieldset>
+          <legend>@Messages("pillar.legend")</legend>
+          @helper.CSRF.formField
+
+          @b3.checkbox(pillarForm("education"),
+            '_text -> Messages("pillar.education"),
+            'checked -> profile.supporter.pillars.contains(Education))
+
+          @b3.checkbox(pillarForm("operation"),
+            '_text -> Messages("pillar.operation"),
+            'checked -> profile.supporter.pillars.contains(Operation))
+
+          @b3.checkbox(pillarForm("finance"),
+            '_text -> Messages("pillar.finance"),
+            'checked -> profile.supporter.pillars.contains(Finance))
+
+          @b3.checkbox(pillarForm("network"),
+            '_text -> Messages("pillar.network"),
+            'checked -> profile.supporter.pillars.contains(Network))
+          @b3.submit('class -> "btn btn-primary") {
+            @Messages("pillar.submit")
+          }
+        </fieldset>
+      }
+    </div>
+
+    @defining(loggedUser.profiles.filter(_.loginInfo.providerID != CredentialsProvider.ID)) { profiles =>
+      @if(profiles.nonEmpty) {
+        <div class="row">
+          <div class="col-md-12">
+            <h3 class="text-primary">@Messages("profile.linked")</h3>
+          </div>
+          <hr class="col-md-12"/>
+        </div>
+      }
       <div class="row">
         <div class="col-md-12">
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.firstName")</p>
-            <p class="col-md-6">@profile.supporter.firstName.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.lastName")</p>
-            <p class="col-md-6">@profile.supporter.lastName.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.fullName")</p>
-            <p class="col-md-6">@profile.supporter.fullName.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.email")</p>
-            <p class="col-md-6">@profile.email.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.mobilePhone")</p>
-            <p class="col-md-6">@profile.supporter.mobilePhone.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.placeOfResidence")</p>
-            <p class="col-md-6">@profile.supporter.placeOfResidence.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.birthday")</p>
-            <p class="col-md-6">@profile.supporter.birthString.getOrElse(Messages("profile.none"))</p>
-          </div>
-          <div class="row">
-            <p class="col-md-6">@Messages("profile.sex")</p>
-            <p class="col-md-6">@profile.supporter.sex.getOrElse(Messages("profile.none"))</p>
-          </div>
-          @b3.form(routes.Application.updateCrew) {
-            <fieldset>
-              <legend>@Messages("crew.legend")</legend>
-              @helper.CSRF.formField
-
-              @b3.select(geoForm("crewName"),
-                availableCrews.map(crew => (crew.name, crew.name + " (" + crew.country + ")")).toSeq,
-                '_label -> Messages("crew.name"),
-                'autofocus -> true,
-                'value -> profile.supporter.crew.map(cs =>
-                  availableCrews.find(c => c ~ cs).map(_.name).head
-                ).getOrElse(None)
-              )
-              @b3.submit('class -> "btn btn-primary") {
-                @Messages("crew.submit")
-              }
-            </fieldset>
-          }
-          @b3.form(routes.Application.updatePillar) {
-            <fieldset>
-              <legend>@Messages("pillar.legend")</legend>
-              @helper.CSRF.formField
-
-              @b3.checkbox(pillarForm("education"),
-                '_text -> Messages("pillar.education"),
-                'checked -> profile.supporter.pillars.contains(Education))
-
-              @b3.checkbox(pillarForm("operation"),
-                '_text -> Messages("pillar.operation"),
-                'checked -> profile.supporter.pillars.contains(Operation))
-
-              @b3.checkbox(pillarForm("finance"),
-                '_text -> Messages("pillar.finance"),
-                'checked -> profile.supporter.pillars.contains(Finance))
-
-              @b3.checkbox(pillarForm("network"),
-                '_text -> Messages("pillar.network"),
-                'checked -> profile.supporter.pillars.contains(Network))
-              @b3.submit('class -> "btn btn-primary") {
-                @Messages("pillar.submit")
-              }
-            </fieldset>
+          @profiles.map { p =>
+            <img title="@p.loginInfo.providerID" src="@routes.Assets.versioned(s"images/providers/${p.loginInfo.providerID}.png")"/>
           }
         </div>
       </div>
+    }
 
-      @defining(loggedUser.profiles.filter(_.loginInfo.providerID != CredentialsProvider.ID)) { profiles => 
-        @if(profiles.nonEmpty) {
-          <div class="row">
-            <div class="col-md-12">
-              <h3 class="text-primary">@Messages("profile.linked")</h3>
-            </div>
-            <hr class="col-md-12"/>
-          </div>
-        }
+    @defining(socialProviderRegistry.providers.filterNot(p => linkedIds.contains(p.id))) { providers =>
+      @if(providers.nonEmpty) {
         <div class="row">
           <div class="col-md-12">
-            @profiles.map { p =>
-              <img title="@p.loginInfo.providerID" src="@routes.Assets.versioned(s"images/providers/${p.loginInfo.providerID}.png")"/>
-            }
+            <h3 class="text-primary">@Messages("profile.available")</h3>
           </div>
+          <hr class="col-md-12"/>
         </div>
       }
-            
-      @defining(socialProviderRegistry.providers.filterNot(p => linkedIds.contains(p.id))) { providers => 
-        @if(providers.nonEmpty) {
-          <div class="row">
-            <div class="col-md-12">
-              <h3 class="text-primary">@Messages("profile.available")</h3>
-            </div>
-            <hr class="col-md-12"/>
-          </div>
-        }
-        <div class="row">
-          <div class="col-md-12">
-            @providers.map { p =>
-              <a href="@routes.Auth.socialAuthenticate(p.id)" title="@p.id">
-                <img alt="@p.id" src="@routes.Assets.versioned(s"images/providers/${p.id}.png")"/>
-              </a>
-            }
-          </div>
+      <div class="row">
+        <div class="col-md-12">
+          @providers.map { p =>
+            <a href="@routes.Auth.socialAuthenticate(p.id)" title="@p.id">
+              <img alt="@p.id" src="@routes.Assets.versioned(s"images/providers/${p.id}.png")"/>
+            </a>
+          }
         </div>
-      }
+      </div>
+    }
   }
 }

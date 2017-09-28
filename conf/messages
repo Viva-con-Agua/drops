@@ -8,6 +8,7 @@ navbar.brand.organisation=Viva con Agua
 navbar.toggle.nav=Toggle navigation
 navbar.index=Index
 navbar.profile=My Profile
+navbar.task = Task Overview
 navbar.oauth.register=New Oauth2 Client
 navbar.roles=Define roles
 navbar.username={0}
@@ -47,6 +48,13 @@ profile.sex=Sex
 profile.linked=Linked authentication providers
 profile.available=Available authentication providers
 profile.none=None
+profile.no.crew.selected=Currently no crew selected
+profile.submit=Update
+profile.update.legend=Change yourself
+profile.upload.msg=Click to upload
+profile.upload.hint=Hover here to change the image
+
+task.title=Task Overview
 
 signup.title=Sign up
 signup.legend=Sign up for a new account
@@ -109,6 +117,9 @@ error.profileError=Error getting profile data
 error.profileUnauth=Can't access profile information: must authenticate first.
 error.sex.notAllowed=Given sexuality is unknown, please enter a known one (male, female, other).
 error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123456 or +176/123456
+error.profile.image.upload=Profile image has not been uploaded! Try again!
+
+success.profile.image.upload=Profile image was successfully uploaded!
 
 mail.welcome.subject=Welcome
 mail.welcome.hi=Hello, {0}!
@@ -125,6 +136,7 @@ crew.city=City
 crew.active=Active Member of the crew?
 crew.submit=Save
 crew.update.noProfileForLogin=Internal Server Error: Found no profile for the current user.
+crew.select.one=Please, select a crew
 
 oauth2server.clientId.notFound=No client application is registered with the given client ID.
 oauth2server.clientId.missing=No client ID is given.

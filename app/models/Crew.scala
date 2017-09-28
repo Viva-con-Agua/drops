@@ -30,7 +30,7 @@ case class Crew(
   }
 
   def ~(o : scala.Any) : Boolean = o == this || (o match {
-    case s: Supporter => s.crew == this
+    case s: Supporter => s.crew.map(_ == this).getOrElse(false)
     case _ => false
   })
 }

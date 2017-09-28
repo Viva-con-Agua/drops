@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.docker.Cmd
 
 name := """Drops"""
 
-version := "0.12.7"
+version := "0.17.9"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
@@ -19,8 +19,6 @@ pipelineStages := Seq(digest,gzip)
 libraryDependencies ++= Seq(
   cache,
   filters,
-  jdbc,
-  evolutions,
   "com.typesafe.play" %% "play-mailer" % "3.0.1",
   "com.mohiva" %% "play-silhouette" % "3.0.0",
   "org.webjars" %% "webjars-play" % "2.4.0",
@@ -31,6 +29,8 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.7.play24",
   "com.nulab-inc" %% "play2-oauth2-provider" % "0.16.1",
   "mysql" % "mysql-connector-java" % "5.1.18",
+  "com.typesafe.play" %% "play-slick" % "1.1.1",
+  "com.typesafe.play" %% "play-slick-evolutions" % "1.1.1",
   specs2 % Test
 )
 

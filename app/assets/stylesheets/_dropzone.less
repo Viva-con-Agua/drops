@@ -1,0 +1,25 @@
+.dropzone {
+  @shadow-card: 0 4px 8px 0 rgba(0,0,0,0.2);
+  @shadow-card-highlight: 0 8px 16px 0 rgba(0,0,0,0.2);
+
+  border: 1px dashed @primary-color;
+  background-color: white;
+  .box-shadow(@shadow-card);
+  padding: 4em;
+
+  &.dz-clickable {
+    cursor: pointer;
+  }
+
+  &:hover {
+    .box-shadow(@shadow-card-highlight);
+    .dz-message {
+      color: @default-color;
+    }
+  }
+
+  .dz-message {
+    text-align: center;
+    color: @inactive-color;
+  }
+}

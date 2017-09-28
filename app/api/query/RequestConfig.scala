@@ -25,3 +25,10 @@ object CrewRequest extends RequestConfig {
 
   override val sortBy: Boolean = true
 }
+
+object TaskRequest extends RequestConfig {
+  override val filterByPage: Boolean = false
+  override val filterBySearch: Boolean = false
+  override val filterByGroup: Boolean = false
+  override val sortBy: Boolean = false
+}

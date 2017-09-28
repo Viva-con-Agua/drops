@@ -16,7 +16,7 @@ import models._
 import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
-import daos.{CrewDao, OauthClientDao}
+import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
 import utils.{WithAlternativeRoles, WithRole}
@@ -28,6 +28,7 @@ class Application @Inject() (
   oauth2ClientDao: OauthClientDao,
   userService: UserService,
   crewDao: CrewDao,
+  taskDao: TaskDao,
   ws: WSClient,
   passwordHasher: PasswordHasher,
   val messagesApi: MessagesApi,
@@ -41,13 +42,34 @@ class Application @Inject() (
 
   def profile = SecuredAction.async { implicit request =>
     crewDao.list.map(l =>
-      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet, PillarForms.define))
+      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
+    )
+  }
+
+  def updateBase = SecuredAction.async { implicit request =>
+    UserForms.userForm.bindFromRequest.fold(
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define))),
+      userData => request.identity.profileFor(request.authenticator.loginInfo) match {
+        case Some(profile) => {
+          val supporter = profile.supporter.copy(
+            firstName = Some(userData.firstName),
+            lastName = Some(userData.lastName),
+            birthday = Some(userData.birthday.getTime),
+            mobilePhone = Some(userData.mobilePhone),
+            placeOfResidence = Some(userData.placeOfResidence),
+            sex = Some(userData.sex)
+          )
+          val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
+          userService.update(request.identity.updateProfile(updatedProfile)).map((u) => Redirect(routes.Application.profile))
+        }
+        case _ => Future.successful(Redirect(routes.Application.profile))
+      }
     )
   }
 
   def updateCrew = SecuredAction.async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, l.toSet, PillarForms.define))),
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define))),
       crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
@@ -70,7 +92,7 @@ class Application @Inject() (
 
   def updatePillar = SecuredAction.async { implicit request =>
     PillarForms.define.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, CrewForms.geoForm, l.toSet, bogusForm))),
+      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm))),
       pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
         case Some(profile) => {
           val pillars = pillarData.toMap.foldLeft[Set[Pillar]](Set())((pillars, data) => data._2 match {
@@ -84,6 +106,11 @@ class Application @Inject() (
         case _ => Future.successful(Redirect("/"))
       }
     )
+  }
+
+  def task = SecuredAction{ implicit request =>
+    val resultingTasks: Future[Seq[Task]] = taskDao.all()
+    Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
   }
 
   def initCrews = Action.async { request =>
