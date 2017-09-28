@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.17.9 (2017-09-21)
+## Version 0.17.10 (2017-09-28)
+* [[B] #98 - Comments run into error on publish](https://github.com/Viva-con-Agua/drops/issues/98)
 * [[I] #69 - Associate Access Rights to Microservices](https://github.com/Viva-con-Agua/drops/issues/69)
 * [[F] #71 - Relations between users and tasks](https://github.com/Viva-con-Agua/drops/issues/71)
 * [[F] #70 - Relations between Tasks and Access Rights](https://github.com/Viva-con-Agua/drops/issues/70)
