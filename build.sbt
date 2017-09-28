@@ -31,7 +31,8 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.7.play24",
   "com.nulab-inc" %% "play2-oauth2-provider" % "0.16.1",
   "mysql" % "mysql-connector-java" % "5.1.18",
-  specs2 % Test
+  specs2 % Test,
+  ws
 )
 
 routesGenerator := InjectedRoutesGenerator

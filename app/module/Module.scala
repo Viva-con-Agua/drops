@@ -1,5 +1,6 @@
 package module
 
+import civiretention.{CiviApi, CiviApiImpl}
 import com.google.inject.{AbstractModule, Provides}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.services._
@@ -40,6 +41,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[OauthCodeDao].to[MongoOauthCodeDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[PasswordInfoDao]
     bind[DelegableAuthInfoDAO[OAuth1Info]].to[OAuth1InfoDao]
+    bind[CiviApi].to[CiviApiImpl]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
     bind[PasswordHasher].toInstance(new BCryptPasswordHasher)
     bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))

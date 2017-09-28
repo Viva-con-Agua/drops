@@ -166,3 +166,8 @@ pillar.network=Network
 
 rest.api.noValidAPIRequest=Not a valid API request: {0}
 rest.api.noValidAPIClient=Not a valid API client
+
+civi.crm.error.config.noURI=CiviCRM Connection error: No valid URL given in config file!
+civi.crm.error.config.noKey=CiviCRM Connection error: No valid Key given in config file!
+civi.crm.error.config.noApiKey=CiviCRM Connection error: No valid API Key given in config file!
+civi.crm.error.network=Network error on connection to CiviCRM!

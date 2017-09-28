@@ -11,6 +11,9 @@ GET     /crews/init                                         controllers.Applicat
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
 GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
 
+# CiviCRM
+GET     /civi/users                                         controllers.Users.civiUsers
+
 # Roles
 GET     /roles                                              controllers.Roles.index
 POST    /roles/update                                       controllers.Roles.update
