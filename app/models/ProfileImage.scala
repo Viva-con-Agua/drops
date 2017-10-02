@@ -48,6 +48,26 @@ case class GravatarProfileImage(url: URL) extends ProfileImage {
   }
 }
 
+case class CiviProfileImage(url : URL) extends ProfileImage {
+
+  val t = ProfileImageType.Civi
+  override def toString: String = this.url.toURI.toASCIIString
+
+  /**
+    * @todo use width and height parameter!
+    * @param width
+    * @param height
+    * @return
+    */
+  override def getImage(width: Int, height: Int): Future[Option[String]] = {
+    Future.successful(Some(
+      new URI(url.toURI.getScheme(), url.toURI.getAuthority(), url.toURI.getPath(), url.getQuery, url.toURI.getFragment())
+        .toURL
+        .toExternalForm
+    ))
+  }
+}
+
 case class LocalProfileImage(uuid:UUID) extends ProfileImage {
   val t = ProfileImageType.Local
   /**
@@ -87,6 +107,7 @@ object ProfileImage {
   object JSONProfileImage {
     def apply(pi : ProfileImage) : JSONProfileImage = pi match {
       case gpi : GravatarProfileImage => JSONProfileImage(ProfileImageType.typeToString(gpi.t), None, Some(gpi.url))
+      case cpi : CiviProfileImage => JSONProfileImage(ProfileImageType.typeToString(cpi.t), None, Some(cpi.url))
       case lpi : LocalProfileImage => JSONProfileImage(ProfileImageType.typeToString(lpi.t), Some(lpi.uuid), None)
       case dpi : DefaultProfileImage => JSONProfileImage(ProfileImageType.typeToString(dpi.t), None, None)
     }
@@ -112,6 +133,8 @@ object ProfileImage {
       json.validate[JSONProfileImage].flatMap((jsonPI) => jsonPI.typeOf match {
         case "gravatar" =>
           jsonPI.url.map((url) => JsSuccess[ProfileImage](GravatarProfileImage(url))).get
+        case "civi" =>
+          jsonPI.url.map((url) => JsSuccess[ProfileImage](CiviProfileImage(url))).get
         case "local" =>
           jsonPI.id.map((id) => JsSuccess[ProfileImage](LocalProfileImage(id))).get
         case "default" =>
@@ -124,11 +147,12 @@ object ProfileImage {
 
 object ProfileImageType extends Enumeration {
   type ProfileImageType = Value
-  val Local, Gravatar, Default = Value
+  val Local, Gravatar, Default, Civi = Value
 
   def typeToString(t : ProfileImageType.Value) : String = t match {
     case ProfileImageType.Gravatar => "gravatar"
     case ProfileImageType.Local => "local"
     case ProfileImageType.Default => "default"
+    case ProfileImageType.Civi => "civi"
   }
 }

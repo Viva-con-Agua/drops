@@ -39,7 +39,7 @@ class CiviApiImpl @Inject() (ws: WSClient, configuration: Configuration, message
   val keyOpt = configuration.getString("civicrm.key")
   val apiKeyOpt = configuration.getString("civicrm.apiKey")
   val debug = 0
-  val json = 1
+  val json = Json.obj("sequential" -> 1)
   val version = 3
 
   override def get[T](entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], messages: Messages) : Future[List[T]] =

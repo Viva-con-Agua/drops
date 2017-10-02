@@ -22,6 +22,6 @@ class Users @Inject() (
                        val messagesApi: MessagesApi,
                        val env:Environment[User,CookieAuthenticator]) extends  Silhouette[User,CookieAuthenticator] {
   def civiUsers = SecuredAction.async { implicit request =>
-    usersCiviDao.getAll.map((list) => Ok( "There are: " + list.size + "users\n\n" + list.mkString("\n") ))
+    usersCiviDao.getAll.map((list) => Ok( "There are: " + list.size + " users\n\n" + list.mkString("\n") ))
   }
 }
