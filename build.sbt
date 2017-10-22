@@ -17,6 +17,7 @@ resolvers ++= Seq(
 pipelineStages := Seq(digest,gzip)
 
 libraryDependencies ++= Seq(
+  ws,
   cache,
   filters,
   "com.typesafe.play" %% "play-mailer" % "3.0.1",
