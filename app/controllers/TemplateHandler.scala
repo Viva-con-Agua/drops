@@ -1,4 +1,4 @@
-package services
+package controllers
 
 import scala.io.Source
 import scala.concurrent.Future
@@ -8,10 +8,7 @@ import play.api.cache._
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import play.twirl.api.Html
-
-object TemplateHtml {
-  
+ 
   class TemplateHandler @Inject() (
     ws: WSClient,
     cache: CacheApi) {
@@ -39,4 +36,4 @@ object TemplateHtml {
 
     }
   }
-}
+
