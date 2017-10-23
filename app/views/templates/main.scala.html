@@ -1,10 +1,9 @@
 @(title: String, navbarContent: Html = Html(""))(content: Html)(implicit messages:Messages)
-@import services.TemplateHtml._
-header: String
+@(header TemplateHtml)
 <!DOCTYPE html>
 <html>
   <head>
-					@{TemplateHtml.getTemplate("header")}
+					@{header.getHtml("header")}
   </head>
   <body>
     <div class="navbar navbar-vca navbar-default navbar-fixed-top"> <!-- navbar-default -->

@@ -10,9 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import play.twirl.api.Html
 
-object TemplateHtml {
-  
-  class TemplateHandler @Inject() (
+
+class TemplateHandler @Inject() (
     ws: WSClient,
     cache: CacheApi) {
     
@@ -38,5 +37,5 @@ object TemplateHtml {
       template
 
     }
-  }
 }
+
