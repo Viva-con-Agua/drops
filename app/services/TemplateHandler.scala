@@ -7,6 +7,7 @@ import play.api.libs.ws._
 import play.api.cache._
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Try, Success, Failure}
 
 import play.twirl.api.Html
 
@@ -15,17 +16,28 @@ class TemplateHandler @Inject() (
     ws: WSClient,
     cache: CacheApi) {
     
+    def loadJson (json: String) : Try[String] = {
+      Try(Source.fromFile("app/assets/jsons/" + json + ".json").getLines.mkString)
+    }
+     
+      
+      
     def responseHandler (template : String) : String = {
-      val source: String = Source.fromFile("app/assets/jsons/" + template + ".json").getLines.mkString
-      val json: JsValue = Json.parse(source)
-      val request : WSRequest = ws.url("http://172.17.0.4:9000/getTemplate")
+      var json: JsValue = Json.parse({""""""}) 
+      loadJson(template) match {
+        case Success(j) => json = Json.parse(j)
+        case Failure(f) => println(f)
+      }
+      val request : WSRequest = ws.url("http://172.17.0.3:9000/getTemplate")
       val requestTemplate : WSRequest = request.withHeaders("Accept" -> "application/json")
       val templateResponse: Future[WSResponse] = requestTemplate.post(json)
       var body = ""
       templateResponse.map({ response =>
         body = response.body
       })
+      println(body)
       body
+      
     }
     
     def getTemplate (id: String) : String = {

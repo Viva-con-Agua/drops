@@ -1,9 +1,10 @@
 @(title: String, navbarContent: Html = Html(""))(content: Html)(implicit messages:Messages)
-@(header TemplateHtml)
+@import models._
+@header(text: TemplateHtml) = @{text.getHtml("header")}
 <!DOCTYPE html>
 <html>
   <head>
-					@{header.getHtml("header")}
+					@header(TemplateHtml(""))
   </head>
   <body>
     <div class="navbar navbar-vca navbar-default navbar-fixed-top"> <!-- navbar-default -->
