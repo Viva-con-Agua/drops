@@ -57,7 +57,11 @@ class UserCiviCRMDao @Inject() (contactResolver: ContactResolver, userDao: UserD
               case None if civiContact.contact.phone != "" => Some(civiContact.contact.phone)
               case _ => None
             },
-            placeOfResidence = if (civiContact.contact.place_of_residence != "") Some(civiContact.contact.place_of_residence) else None,
+            placeOfResidence = civiContact.getAddress match {
+              case Some(address) => Some(address.city)
+              case None if civiContact.contact.place_of_residence != "" => Some(civiContact.contact.place_of_residence)
+              case _ => None
+            },
             birthday = civiContact.contact.birth_date.map(_.getTime),
             sex = civiContact.contact.gender.map(_.stringify),
             crew = None,

@@ -22,7 +22,10 @@ class ContactResolver @Inject() (civi: CiviApi){
     (contact) => {
       val phones = civi.get[CiviPhone]("phone", Map("contact_id" -> contact.id.toString))
       val emails = civi.get[CiviEmail]("email", Map("contact_id" -> contact.id.toString))
-      phones.flatMap((phones) => emails.map(CiviContactContainer(contact, phones, _)))
+      val addresses = civi.get[CiviAddress]("address", Map("contact_id" -> contact.id.toString))
+      phones.flatMap((phones) => emails.flatMap((emails) => addresses.map(
+        CiviContactContainer(contact, phones, emails, _)
+      )))
     }
   )))
 }
