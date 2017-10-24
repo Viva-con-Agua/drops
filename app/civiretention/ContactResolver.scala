@@ -19,6 +19,10 @@ import scala.concurrent.Future
 class ContactResolver @Inject() (civi: CiviApi){
 
   def getAll(implicit messages: Messages) : Future[List[CiviContactContainer]] = civi.get[CiviContact]("contact").flatMap((l) => Future.sequence(l.map(
-    (contact) => civi.get[CiviPhone]("phone", Map("contact_id" -> contact.id.toString)).map(CiviContactContainer(contact, _))
+    (contact) => {
+      val phones = civi.get[CiviPhone]("phone", Map("contact_id" -> contact.id.toString))
+      val emails = civi.get[CiviEmail]("email", Map("contact_id" -> contact.id.toString))
+      phones.flatMap((phones) => emails.map(CiviContactContainer(contact, phones, _)))
+    }
   )))
 }

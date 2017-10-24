@@ -35,22 +35,29 @@ class UserCiviCRMDao @Inject() (contactResolver: ContactResolver, userDao: UserD
     () => userDao.save(civiUserToUser(contact)).map(Some(_))
   )
 
-  private def civiUserToUser(civiContact: CiviContactContainer) : User =
+  private def civiUserToUser(civiContact: CiviContactContainer) : User = {
+    val email = civiContact.getEmail match {
+      case Some(email) => email.address
+      case None => civiContact.contact.email
+    }
     User(
       UUID.randomUUID(),
       List(
-        Profile(LoginInfo("civi", civiContact.contact.email),true, Some(civiContact.contact.email),
+        Profile(
+          LoginInfo("civi",email),
+          true,
+          Some(email),
           Supporter(
-            firstName = if(civiContact.contact.firstName != "") Some(civiContact.contact.firstName) else None,
-            lastName = if(civiContact.contact.lastName != "") Some(civiContact.contact.lastName) else None,
-            fullName = if(civiContact.contact.displayName != "") Some(civiContact.contact.displayName) else None,
-            username = if(civiContact.contact.nickname != "") Some(civiContact.contact.nickname) else None,
+            firstName = if (civiContact.contact.firstName != "") Some(civiContact.contact.firstName) else None,
+            lastName = if (civiContact.contact.lastName != "") Some(civiContact.contact.lastName) else None,
+            fullName = if (civiContact.contact.displayName != "") Some(civiContact.contact.displayName) else None,
+            username = if (civiContact.contact.nickname != "") Some(civiContact.contact.nickname) else None,
             mobilePhone = civiContact.getMobilePhone match {
               case Some(phone) => Some(phone.phone)
               case None if civiContact.contact.phone != "" => Some(civiContact.contact.phone)
               case _ => None
             },
-            placeOfResidence = if(civiContact.contact.place_of_residence != "") Some(civiContact.contact.place_of_residence) else None,
+            placeOfResidence = if (civiContact.contact.place_of_residence != "") Some(civiContact.contact.place_of_residence) else None,
             birthday = civiContact.contact.birth_date.map(_.getTime),
             sex = civiContact.contact.gender.map(_.stringify),
             crew = None,
@@ -62,4 +69,5 @@ class UserCiviCRMDao @Inject() (contactResolver: ContactResolver, userDao: UserD
         )
       )
     )
+  }
 }
