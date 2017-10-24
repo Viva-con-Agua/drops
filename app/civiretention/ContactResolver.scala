@@ -9,6 +9,7 @@ import javax.inject.Inject
 import play.api.i18n.Messages
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 
@@ -17,7 +18,7 @@ import scala.concurrent.Future
   */
 class ContactResolver @Inject() (civi: CiviApi){
 
-  def getAll(implicit messages: Messages) : Future[List[CiviContact]] = civi.get[CiviContact]("contact")//.map(_.map(
-//    (contact) => // TODO!
-//  ))
+  def getAll(implicit messages: Messages) : Future[List[CiviContactContainer]] = civi.get[CiviContact]("contact").flatMap((l) => Future.sequence(l.map(
+    (contact) => civi.get[CiviPhone]("phone", Map("contact_id" -> contact.id.toString)).map(CiviContactContainer(contact, _))
+  )))
 }

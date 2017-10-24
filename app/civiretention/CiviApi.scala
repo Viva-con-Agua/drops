@@ -94,7 +94,7 @@ class CiviApiImpl @Inject() (ws: WSClient, configuration: Configuration, message
 
     val request: WSRequest = ws.url(uri.toURL.toString)
       .withHeaders("Accept" -> "application/json")
-      .withRequestTimeout(3000)
+      .withRequestTimeout(20000)
       .withQueryString(queryString.toSeq: _*)
 
     request.get().map(_.json).recover {
