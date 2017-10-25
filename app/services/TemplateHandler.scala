@@ -29,8 +29,9 @@ class TemplateHandler @Inject() (
         case Failure(f) => println(f)
       }
       val request : WSRequest = ws.url("http://172.17.0.3:9000/getTemplate")
-      val requestTemplate : WSRequest = request.withHeaders("Accept" -> "application/json")
-      val templateResponse: Future[WSResponse] = requestTemplate.post(json)
+        .withHeaders("Accept" -> "application/json")
+        .withRequestTimeout(10)
+      val templateResponse: Future[WSResponse] = request.post(json)
       var body = ""
       templateResponse.map({ response =>
         body = response.body
@@ -39,7 +40,11 @@ class TemplateHandler @Inject() (
       body
       
     }
-    
+   
+    def getTemplate (id: String) : String = {
+      responseHandler(id)
+    }
+    /*
     def getTemplate (id: String) : String = {
       val template : String = cache.getOrElse[String](id){
         val temp : String = responseHandler(id)
@@ -49,5 +54,6 @@ class TemplateHandler @Inject() (
       template
 
     }
+  **/
 }
 
