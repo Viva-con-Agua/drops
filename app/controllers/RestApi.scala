@@ -9,6 +9,7 @@ import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import play.api._
 import play.api.libs.json._
+import play.api.libs.json.JsObject
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models.{AccessRight, OauthClient, PublicUser, Task, User}
@@ -59,7 +60,7 @@ class RestApi @Inject() (
     Some(Future.successful(Unauthorized(Json.obj("error" -> Messages("error.profileUnauth")))))
   }
 
-  def users = ApiAction.async { implicit request => {
+  def getUsers = ApiAction.async { implicit request => {
     def body(query : JsObject, limit : Int, sort : JsObject) = userDao.ws.list(query, limit, sort).map(users => Ok(
       Json.toJson(users.map(PublicUser(_)))
     ))
@@ -73,7 +74,7 @@ class RestApi @Inject() (
     }
   }}
 
-  def user(id : String) = ApiAction.async { implicit request => {
+  def getUser(id : String) = ApiAction.async { implicit request => {
     def body(query: JsObject) = userDao.ws.find(UUID.fromString(id), query).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
@@ -85,6 +86,23 @@ class RestApi @Inject() (
       case None => body(Json.obj())
     }
 
+  }}
+
+
+
+  def createUser() = ApiAction.async(validateJson[User]) { implicit request => {
+    userDao.save(request.request.body).map(user => Ok(Json.toJson(user)))
+  }}
+
+  case class DeleteUserBody(id : UUID)
+  object DeleteUserBody {
+    implicit val idFormat = Json.format[DeleteUserBody]
+  }
+
+  def deleteUser() = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
+    val userId : UUID = request.request.body.id
+    println(userId)
+    userDao.delete(userId).map(r => Ok(Json.toJson(r)))
   }}
 
   def crews = ApiAction.async { implicit request => {
