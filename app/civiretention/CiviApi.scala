@@ -7,11 +7,12 @@ import org.apache.http.impl.client.DefaultHttpClient
 import play.Play
 import javax.inject._
 
-import civiretention.CiviApi.CiviResult
+import civiretention.CiviApi.{CiviResult, DELETE, GET, HTTPMethod, POST, PUT}
 import play.api.libs.json._
 
 import scala.concurrent.Future
 import play.api._
+import play.api.http.Writeable
 import play.api.i18n.MessagesApi
 import play.api.libs.ws._
 import play.api.libs.functional.syntax._
@@ -22,13 +23,13 @@ import play.api.i18n.Messages.Implicits._
 import play.api.libs.ws.ning.NingWSClient
 
 trait CiviApi {
-  def get[T](entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], messages: Messages): Future[List[T]]
+  def get[T](entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], messages: Messages): Future[List[T]]
 
-  def create[T](obj: T, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wts: T => Map[String, String], messages: Messages): Future[List[T]]
+  def create[T](obj: T, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], wts: T => Map[String, String], messages: Messages): Future[List[T]]
 
-  def delete[T](id: String, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], messages: Messages): Future[Boolean]
+  def delete[T](id: String, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], messages: Messages): Future[Boolean]
 
-  def update[T](obj: T, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wts: T => Map[String, String], messages: Messages): Future[List[T]]
+  def update[T](obj: T, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], wts: T => Map[String, String], messages: Messages): Future[List[T]]
 }
 
 /**
@@ -42,31 +43,31 @@ class CiviApiImpl @Inject() (ws: WSClient, configuration: Configuration, message
   val json = Json.obj("sequential" -> 1)
   val version = 3
 
-  override def get[T](entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], messages: Messages) : Future[List[T]] =
-    this.call(entity, "get", params).map(_.validate[CiviResult[T]].asOpt).map(_ match {
+  override def get[T](entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], messages: Messages) : Future[List[T]] =
+    this.call[T](None, entity, GET,  "get", params).map(_.validate[CiviResult[T]].asOpt).map(_ match {
       case Some(result) => result.values
       case _ => Nil
     })
 
-  override def create[T](obj: T, entity: String, params: Map[String, String])(implicit rds: Reads[T], wts: T => Map[String, String], messages: Messages): Future[List[T]] =
-    this.call(entity, "create", params ++ wts(obj)).map(_.validate[CiviResult[T]].asOpt).map(_ match {
+  override def create[T](obj: T, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], wts: T => Map[String, String], messages: Messages): Future[List[T]] =
+    this.call[T](Some(obj), entity, POST,  "create", params/* ++ wts(obj)*/).map(_.validate[CiviResult[T]].asOpt).map(_ match {
       case Some(result) => result.values
       case _ => Nil
     })
 
-  override def delete[T](id: String, entity: String, params: Map[String, String])(implicit rds: Reads[T], messages: Messages): Future[Boolean] =
-    this.call(entity, "delete", params ++ Map("id" -> id)).map(_.validate[CiviResult[T]].asOpt).map(_ match {
+  override def delete[T](id: String, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], messages: Messages): Future[Boolean] =
+    this.call[T](None, entity, POST,  "delete", params ++ Map("id" -> id)).map(_.validate[CiviResult[T]].asOpt).map(_ match {
       case Some(result) => result.is_error == 0
       case _ => false
     })
 
-  override def update[T](obj: T, entity: String, params: Map[String, String])(implicit rds: Reads[T], wts: (T) => Map[String, String], messages: Messages): Future[List[T]] =
-    this.call(entity, "replace", params ++ wts(obj)).map(_.validate[CiviResult[T]].asOpt).map(_ match {
+  override def update[T](obj: T, entity: String, params: Map[String, String] = Map())(implicit rds: Reads[T], wrt: Writeable[T], wts: (T) => Map[String, String], messages: Messages): Future[List[T]] =
+    this.call[T](Some(obj), entity, POST, "replace", params ++ wts(obj)).map(_.validate[CiviResult[T]].asOpt).map(_ match {
       case Some(result) => result.values
       case _ => Nil
     })
 
-  private def call(entity: String, method: String, params: Map[String, String])(implicit messages: Messages) : Future[JsValue] = {
+  private def call[T](obj: Option[T], entity: String, method: HTTPMethod, action: String, params: Map[String, String])(implicit messages: Messages, wrt: Writeable[T]) : Future[JsValue] = {
     val uri = if(uriOpt.isDefined) {
       uriOpt.get
     } else {
@@ -82,6 +83,9 @@ class CiviApiImpl @Inject() (ws: WSClient, configuration: Configuration, message
     } else {
       throw CiviConnectionError(Messages("civi.crm.error.config.noApiKey"))
     }
+    if(Set(POST, PUT).contains(method) && obj.isEmpty) {
+      throw CiviConnectionError(Messages("civi.crm.error.runtime.no.data.given"))
+    }
     val queryString = Map(
       "key" -> key,
       "api_key" -> apiKey,
@@ -89,15 +93,21 @@ class CiviApiImpl @Inject() (ws: WSClient, configuration: Configuration, message
       "json" -> this.json.toString,
       "version" -> this.version.toString,
       "entity" -> entity,
-      "action" -> method
+      "action" -> action
     ) ++ params
 
     val request: WSRequest = ws.url(uri.toURL.toString)
       .withHeaders("Accept" -> "application/json")
-      .withRequestTimeout(20000)
+      .withRequestTimeout(15510)
       .withQueryString(queryString.toSeq: _*)
 
-    request.get().map(_.json).recover {
+    val result = method match {
+      case GET => request.get()
+      case POST => request.post[T](obj.get)
+      case PUT  => request.put[T](obj.get)
+      case DELETE => request.delete()
+    }
+    result.map(_.json).recover {
       case ex: Exception => {
         Logger.error(ex.getMessage)
         throw CiviConnectionError(Messages("civi.crm.error.network"))
@@ -108,6 +118,12 @@ class CiviApiImpl @Inject() (ws: WSClient, configuration: Configuration, message
 
 object CiviApi {
   case class CiviResult[T](is_error: Int, undefined_fields: List[String], version: Int, count: Int, id: Option[Int], values: List[T])
+
+  abstract class HTTPMethod
+  object GET extends HTTPMethod
+  object POST extends HTTPMethod
+  object PUT extends HTTPMethod
+  object DELETE extends HTTPMethod
 
   implicit def fmt[T](implicit fmt: Reads[T]): Reads[CiviResult[T]] = (
     (JsPath \ "is_error").read[Int] and

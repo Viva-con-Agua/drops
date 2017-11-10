@@ -29,11 +29,21 @@ case class Supporter(
   crew: Option[Crew],
   pillars: Set[Pillar]
 ) {
-  def birthString(implicit messages: Messages): Option[String] = this.birthday match {
+
+  def birthDate: Option[Date] = this.birthday match {
     case Some(l) => {
       val now = Calendar.getInstance()
       now.setTimeInMillis(l)
-      val format = new SimpleDateFormat(Messages("date.format"))
+      Some(now.getTime())
+    }
+    case _ => None
+  }
+
+  def birthString(dateFormat : Option[SimpleDateFormat] = None)(implicit messages: Messages): Option[String] = this.birthday match {
+    case Some(l) => {
+      val now = Calendar.getInstance()
+      now.setTimeInMillis(l)
+      val format = dateFormat.getOrElse(new SimpleDateFormat(Messages("date.format")))
       Some(format.format(now.getTime()))
     }
     case _ => None

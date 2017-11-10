@@ -52,7 +52,7 @@
 
         @b3.date(userForm("birthday"),
           '_label -> Messages("signup.birthday"),
-          'value -> profile.supporter.birthString.getOrElse(None))
+          'value -> profile.supporter.birthString(None).getOrElse(None))
 
         @b3.select(userForm("sex"),
           options = Seq(

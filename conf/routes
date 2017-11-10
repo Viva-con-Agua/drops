@@ -13,6 +13,7 @@ GET     /users/init/:number/:specialRoleUsers               controllers.Applicat
 
 # CiviCRM
 GET     /civi/users                                         controllers.Users.civiUsers
+GET     /civi/save/me                                       controllers.Users.saveMeToCivi
 
 # Roles
 GET     /roles                                              controllers.Roles.index

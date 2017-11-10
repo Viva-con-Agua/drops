@@ -4,7 +4,7 @@ import java.net.URI
 import java.util.UUID
 import javax.inject.Inject
 
-import civiretention.{CiviContact, CiviContactContainer, ContactResolver, Individual}
+import civiretention._
 import com.mohiva.play.silhouette.api.LoginInfo
 import models.{CiviProfileImage, Profile, Supporter, User}
 import play.api.i18n.Messages
@@ -21,6 +21,13 @@ class UserCiviCRMDao @Inject() (contactResolver: ContactResolver, userDao: UserD
   def getAll(implicit messages: Messages) : Future[List[User]] = contactResolver.getAll.flatMap(
     (list) => Future.sequence(list.map(findOrSave( _ )))
   ).map(_.filter(_.isDefined).map(_.get))
+
+  def save(user: User)(implicit messages: Messages) : Future[List[User]] = this.userToCiviUser(user).flatMap(_.map(
+    (civiContactContainer) => contactResolver.create(civiContactContainer)
+  ).getOrElse(Future.successful(Nil))).flatMap((l) => Future.sequence(l.map(mapper( _ )(
+    (userOpt) => Future.successful(userOpt),
+    () => Future.successful(None)
+  ))).map(_.filter(_.isDefined).map(_.get)))
 
   private def mapper(contact: CiviContactContainer)(success: Option[User] => Future[Option[User]], failure: () => Future[Option[User]]) : Future[Option[User]] = contact.contact.contactType match {
     case Individual => userDao.find(contact.contact.email).flatMap((res) => res.isDefined match {
@@ -73,5 +80,14 @@ class UserCiviCRMDao @Inject() (contactResolver: ContactResolver, userDao: UserD
         )
       )
     )
+  }
+
+  private def userToCiviUser(user: User) : Future[Option[CiviContactContainer]] = {
+    val phones = CiviPhone(user)
+    val emails = CiviEmail(user)
+    val addresses = CiviAddress(user)
+    val contact = CiviContact(user)
+
+    contact.map(_.map(CiviContactContainer(_, phones, emails, addresses)))
   }
 }

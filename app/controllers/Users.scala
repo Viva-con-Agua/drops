@@ -24,4 +24,8 @@ class Users @Inject() (
   def civiUsers = SecuredAction.async { implicit request =>
     usersCiviDao.getAll.map((list) => Ok( "There are: " + list.size + " users\n\n" + list.mkString("\n") ))
   }
+
+  def saveMeToCivi = SecuredAction.async { implicit request =>
+    usersCiviDao.save(request.identity).map((list) => Ok( "Users were saved in CiviCRM:\n\n" + list.mkString("\n")))
+  }
 }
