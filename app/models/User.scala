@@ -43,6 +43,9 @@ case class Supporter(
 }
 
 object Supporter {
+  def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String): Supporter =
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
+
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
     Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
 
@@ -91,8 +94,10 @@ case class Profile(
 }
 
 object Profile {
+  def apply(loginInfo: LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, avatar: List[DefaultProfileImage]) : Profile =
+    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
 
-  def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String, avatar: List[ProfileImage]) : Profile =
+  def apply(loginInfo: LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String, avatar: List[ProfileImage]) : Profile =
     // confirmation is false by default, because this apply function is designed for using it during the default sign up process
     Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
 

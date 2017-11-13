@@ -5,20 +5,24 @@ import javax.inject.Inject
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import com.mohiva.play.silhouette.api.{Environment, Silhouette}
+import com.mohiva.play.silhouette.api.{Environment, LoginInfo, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.api.services.AvatarService
 import play.api._
 import play.api.libs.json._
 import play.api.libs.json.JsObject
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import models.{AccessRight, OauthClient, PublicUser, Task, User}
+import models._
 import User._
 import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
+import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
+import com.mohiva.play.silhouette.api.util.PasswordHasher
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import daos.{CrewDao, OauthClientDao, UserDao}
 import daos.{AccessRightDao, TaskDao}
-import services.{TaskService, UserService}
+import services.{TaskService, UserService, UserTokenService}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.parsing.json.JSONArray
@@ -35,6 +39,10 @@ class RestApi @Inject() (
   val taskService : TaskService,
   val ApiAction : ApiAction,
   val messagesApi: MessagesApi,
+  val avatarService: AvatarService,
+  val authInfoRepository: AuthInfoRepository,
+  val passwordHasher: PasswordHasher,
+  val userTokenService: UserTokenService,
   val env:Environment[User,CookieAuthenticator]) extends Silhouette[User,CookieAuthenticator] {
 
   /** checks whether a json is validate or not
@@ -88,10 +96,44 @@ class RestApi @Inject() (
 
   }}
 
+  case class CreateUserBody(
+     email: String,
+     firstName : String,
+     lastName: String,
+     mobilePhone: String,
+     placeOfResidence: String,
+     birthday: Long,
+     sex: String,
+     password: String
+  )
+  object CreateUserBody{
+    implicit val createUserBodyJsonFormat = Json.format[CreateUserBody]
+  }
 
+  def createUser() = ApiAction.async(validateJson[CreateUserBody]) { implicit request => {
+    val signUpData = request.request.body
 
-  def createUser() = ApiAction.async(validateJson[User]) { implicit request => {
-    userDao.save(request.request.body).map(user => Ok(Json.toJson(user)))
+    val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
+    userService.retrieve(loginInfo).map {
+      case Some(_) =>
+        BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email)))
+      case None =>
+      val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+      for {
+          avatarUrl <- avatarService.retrieveURL(signUpData.email)
+          user <- userService.save(User(id = UUID.randomUUID(), profiles =
+            avatarUrl match {
+              case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url),new DefaultProfileImage)))
+              case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
+            }))
+          _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
+          token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
+        } yield {
+          //mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
+
+        }
+        Ok(Json.toJson(profile))
+    }
   }}
 
   case class DeleteUserBody(id : UUID)
