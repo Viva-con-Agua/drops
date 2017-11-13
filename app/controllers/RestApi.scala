@@ -148,27 +148,32 @@ class RestApi @Inject() (
 
         val query: QueryAST = ast.right.get
         //validate if the desired functions exists in the query
-        if (query.isInstanceOf[utils.Query.A] &&
-            query.asInstanceOf[utils.Query.A].step1.isInstanceOf[utils.Query.EQ] &&
-            query.asInstanceOf[utils.Query.A].step2.isInstanceOf[utils.Query.EQ]) {
-          val and: utils.Query.A = query.asInstanceOf[utils.Query.A]
+        query match {
+          case and : utils.Query.A => and.step1 match {
+            case step1: utils.Query.EQ => and.step2 match {
+              case step2: utils.Query.EQ => {
+                val and: utils.Query.A = query.asInstanceOf[utils.Query.A]
 
-          val step1 = and.step1
-          val step2 = and.step2
-          val filter: JsObject = Json.parse(f).as[JsObject]
-          //check, if there exists an filter value for the steps respectively the functions
-          if (QueryAST.validateStep(step1, filter) && QueryAST.validateStep(step2, filter)) {
-            //Get the filter values
-            //ToDo This should be generic
-            val userId = UUID.fromString(filter.\("user").\("id").as[String])
-            val service: String = filter.\("accessRight").\("service").as[String]
+                val step1 = and.step1
+                val step2 = and.step2
+                val filter: JsObject = Json.parse(f).as[JsObject]
+                //check, if there exists an filter value for the steps respectively the functions
+                if (QueryAST.validateStep(step1, filter) && QueryAST.validateStep(step2, filter)) {
+                  //Get the filter values
+                  //ToDo This should be generic
+                  val userId = UUID.fromString(filter.\("user").\("id").as[String])
+                  val service: String = filter.\("accessRight").\("service").as[String]
 
-            accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
-          } else {
-            Future(BadRequest(Json.obj("error" -> Messages("There is no filter value for one or more query parts"))))
+                  accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
+                } else {
+                  Future(BadRequest(Json.obj("error" -> Messages("There is no filter value for one or more query parts"))))
+                }
+              }
+              case _ => Future(NotImplemented(Json.obj("error" -> Messages("One or more query functions are not implemented yet"))))
+            }
+            case _ => Future(NotImplemented(Json.obj("error" -> Messages("One or more query functions are not implemented yet"))))
           }
-        } else {
-          Future(NotImplemented(Json.obj("error" -> Messages("One or more query functions are not implemented yet"))))
+          case _ => Future(NotImplemented(Json.obj("error" -> Messages("One or more query functions are not implemented yet"))))
         }
       }
     }
