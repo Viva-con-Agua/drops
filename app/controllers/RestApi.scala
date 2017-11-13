@@ -96,7 +96,7 @@ class RestApi @Inject() (
 
   case class DeleteUserBody(id : UUID)
   object DeleteUserBody {
-    implicit val idFormat = Json.format[DeleteUserBody]
+    implicit val deleteUserBodyJsonFormat = Json.format[DeleteUserBody]
   }
 
   def deleteUser() = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
