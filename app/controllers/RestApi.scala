@@ -136,12 +136,12 @@ class RestApi @Inject() (
     //Use the lexer to validate query syntax and extract tokens
     val tokens = QueryLexer(query)
     if(tokens.isLeft){
-      Future(BadRequest("The query has an syntax error"))
+      Future(BadRequest(Json.obj("error" -> Messages("The query has an syntax error"))))
     }else {
       //Use the parser to validate and extract grammar
       val ast = QueryParser(tokens.right.get)
       if (ast.isLeft) {
-        Future(InternalServerError("The query has an grammar error"))
+        Future(InternalServerError(Json.obj("error" -> Messages("The query has an grammar error"))))
       }
       else {
 
@@ -165,10 +165,10 @@ class RestApi @Inject() (
 
             accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
           } else {
-            Future(BadRequest("There is no filter value for one or more query parts"))
+            Future(BadRequest(Json.obj("error" -> Messages("There is no filter value for one or more query parts"))))
           }
         } else {
-          Future(NotImplemented("One or more query functions are not implemented yet"))
+          Future(NotImplemented(Json.obj("error" -> Messages("One or more query functions are not implemented yet"))))
         }
       }
     }
