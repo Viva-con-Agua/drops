@@ -150,29 +150,7 @@ class RestApi @Inject() (
                              password: Option[String]
                            )
   object UpdateUserBody {
-    def apply(tuple: (String, Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[String])) : UpdateUserBody =
-      UpdateUserBody(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8)
-
-    implicit val updateUserBodyWrites : OWrites[UpdateUserBody] = (
-      (JsPath \ "email").write[String] and
-        (JsPath \ "lastName").writeNullable[String] and
-        (JsPath \ "fullName").writeNullable[String] and
-        (JsPath \ "mobilePhone").writeNullable[String] and
-        (JsPath \ "placeOfResidence").writeNullable[String] and
-        (JsPath \ "birthday").writeNullable[Long] and
-        (JsPath \ "sex").writeNullable[String] and
-        (JsPath \ "password").writeNullable[String]
-      )(unlift(UpdateUserBody.unapply))
-    implicit val updateUserBodyReads : Reads[UpdateUserBody] = (
-      (JsPath \ "email").read[String] and
-        (JsPath \ "firstName").readNullable[String] and
-        (JsPath \ "lastName").readNullable[String] and
-        (JsPath \ "mobilePhone").readNullable[String] and
-        (JsPath \ "placeOfResidence").readNullable[String] and
-        (JsPath \ "birthday").readNullable[Long] and
-        (JsPath \ "sex").readNullable[String] and
-        (JsPath \ "passwod").readNullable[String]
-      ).tupled.map(UpdateUserBody( _ ))
+    implicit val updateUserBodyJsonFormat = Json.format[UpdateUserBody]
   }
 
   def updateUser() = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
