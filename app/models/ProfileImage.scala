@@ -48,6 +48,15 @@ case class GravatarProfileImage(url: URL) extends ProfileImage {
   }
 }
 
+case class UrlProfileImage(url: URL) extends ProfileImage{
+  val t = ProfileImageType.Url
+
+  override def toString: String = this.url.toURI.toASCIIString
+
+  override def getImage(width: Int, height: Int): Future[Option[String]] =
+    Future.successful(Some(url.toString))
+}
+
 case class LocalProfileImage(uuid:UUID) extends ProfileImage {
   val t = ProfileImageType.Local
   /**
@@ -74,6 +83,10 @@ class DefaultProfileImage extends ProfileImage {
 
 object GravatarProfileImage {
   def apply(url: String) : GravatarProfileImage = GravatarProfileImage(java.net.URI.create(url).toURL)
+}
+
+object UrlProfileImage {
+  def apply(url: String): UrlProfileImage = UrlProfileImage(java.net.URI.create(url).toURL)
 }
 
 object ProfileImage {
@@ -124,11 +137,12 @@ object ProfileImage {
 
 object ProfileImageType extends Enumeration {
   type ProfileImageType = Value
-  val Local, Gravatar, Default = Value
+  val Local, Gravatar, Default, Url = Value
 
   def typeToString(t : ProfileImageType.Value) : String = t match {
     case ProfileImageType.Gravatar => "gravatar"
     case ProfileImageType.Local => "local"
+    case ProfileImageType.Url => "url"
     case ProfileImageType.Default => "default"
   }
 }
