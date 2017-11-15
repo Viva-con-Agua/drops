@@ -100,6 +100,7 @@ object ProfileImage {
   object JSONProfileImage {
     def apply(pi : ProfileImage) : JSONProfileImage = pi match {
       case gpi : GravatarProfileImage => JSONProfileImage(ProfileImageType.typeToString(gpi.t), None, Some(gpi.url))
+      case upi : UrlProfileImage => JSONProfileImage(ProfileImageType.typeToString(upi.t), None, Some(upi.url))
       case lpi : LocalProfileImage => JSONProfileImage(ProfileImageType.typeToString(lpi.t), Some(lpi.uuid), None)
       case dpi : DefaultProfileImage => JSONProfileImage(ProfileImageType.typeToString(dpi.t), None, None)
     }
@@ -129,6 +130,8 @@ object ProfileImage {
           jsonPI.id.map((id) => JsSuccess[ProfileImage](LocalProfileImage(id))).get
         case "default" =>
           JsSuccess[ProfileImage](new DefaultProfileImage)
+        case "url" =>
+          jsonPI.url.map((url) => JsSuccess[ProfileImage](UrlProfileImage(url))).get
       })
     }
     def writes(pi: ProfileImage) = Json.toJson(JSONProfileImage(pi)).as[JsObject]

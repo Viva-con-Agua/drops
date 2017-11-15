@@ -1,5 +1,6 @@
 package controllers
 
+import java.net.URL
 import java.util.UUID
 import javax.inject.Inject
 
@@ -108,7 +109,8 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
-     password: String
+     password: String,
+     profileImageUrl: Option[String]
   )
   object CreateUserBody{
     implicit val createUserBodyJsonFormat = Json.format[CreateUserBody]
@@ -118,24 +120,23 @@ class RestApi @Inject() (
     val signUpData = request.request.body
 
     val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
-    userService.retrieve(loginInfo).map {
+    userService.retrieve(loginInfo).flatMap{
       case Some(_) =>
-        BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email)))
-      case None =>
-      val profile = Profile(loginInfo, true, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
-      for {
-          avatarUrl <- avatarService.retrieveURL(signUpData.email)
-          user <- userService.save(User(id = UUID.randomUUID(), profiles =
-            avatarUrl match {
-              case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url),new DefaultProfileImage)))
+        Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
+      case None =>{
+        val profile = Profile(loginInfo, true, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+        avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
+          userService.save(User(id = UUID.randomUUID(), profiles =
+            (signUpData.profileImageUrl, avatarUrl) match {
+              case (Some(url), Some(gravatarUrl))  => List(profile.copy(avatar = List(UrlProfileImage(url),GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
+              case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
+              case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
               case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            }))
-          _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
-          token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
-        } yield {
-          mailer.welcome(profile, link = "https://" + request.request.host +  routes.Auth.signUp(token.id.toString).toString())
-        }
-        Ok(Json.toJson(profile))
+            })).flatMap((user) => {
+              authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password)).map(_ => Ok(Json.toJson(user)))
+          })
+        })
+      }
     }
   }}
 
