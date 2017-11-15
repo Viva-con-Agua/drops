@@ -23,6 +23,7 @@ import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import daos.{CrewDao, OauthClientDao, UserDao}
 import daos.{AccessRightDao, TaskDao}
 import services.{TaskService, UserService, UserTokenService}
+import utils.Mailer
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.parsing.json.JSONArray
@@ -43,6 +44,7 @@ class RestApi @Inject() (
   val authInfoRepository: AuthInfoRepository,
   val passwordHasher: PasswordHasher,
   val userTokenService: UserTokenService,
+  val mailer: Mailer,
   val env:Environment[User,CookieAuthenticator]) extends Silhouette[User,CookieAuthenticator] {
 
   /** checks whether a json is validate or not
@@ -129,8 +131,7 @@ class RestApi @Inject() (
           _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
           token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
         } yield {
-          //mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
-
+          mailer.welcome(profile, link = "https://" + request.request.host +  routes.Auth.signUp(token.id.toString).toString())
         }
         Ok(Json.toJson(profile))
     }
