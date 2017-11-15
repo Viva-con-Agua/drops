@@ -22,7 +22,7 @@ GET     /rest/profile                                       controllers.RestApi.
 POST    /rest/users/create                                  controllers.RestApi.createUser
 POST    /rest/users                                         controllers.RestApi.getUsers
 POST    /rest/users/:id                                     controllers.RestApi.getUser(id : String)
-#PUT     /rest/users                                         controllers.RestApi.updateUser
+PUT     /rest/users                                         controllers.RestApi.updateUser
 DELETE  /rest/users                                         controllers.RestApi.deleteUser
 
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)

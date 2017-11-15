@@ -43,6 +43,9 @@ case class Supporter(
 }
 
 object Supporter {
+  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
+    Supporter(firstName, lastName, None, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+  }
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String): Supporter =
     Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
 

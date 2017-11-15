@@ -11,6 +11,8 @@ import com.mohiva.play.silhouette.api.services.AvatarService
 import play.api._
 import play.api.libs.json._
 import play.api.libs.json.JsObject
+import play.api.libs.functional.syntax._
+import play.api.libs.json.{JsPath, Json, OWrites, Reads}
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models._
@@ -136,6 +138,69 @@ class RestApi @Inject() (
         Ok(Json.toJson(profile))
     }
   }}
+
+  case class UpdateUserBody(
+                             email: String,
+                             firstName : Option[String],
+                             lastName: Option[String],
+                             mobilePhone: Option[String],
+                             placeOfResidence: Option[String],
+                             birthday: Option[Long],
+                             sex: Option[String],
+                             password: Option[String]
+                           )
+  object UpdateUserBody {
+    def apply(tuple: (String, Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[String])) : UpdateUserBody =
+      UpdateUserBody(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8)
+
+    implicit val updateUserBodyWrites : OWrites[UpdateUserBody] = (
+      (JsPath \ "email").write[String] and
+        (JsPath \ "lastName").writeNullable[String] and
+        (JsPath \ "fullName").writeNullable[String] and
+        (JsPath \ "mobilePhone").writeNullable[String] and
+        (JsPath \ "placeOfResidence").writeNullable[String] and
+        (JsPath \ "birthday").writeNullable[Long] and
+        (JsPath \ "sex").writeNullable[String] and
+        (JsPath \ "password").writeNullable[String]
+      )(unlift(UpdateUserBody.unapply))
+    implicit val updateUserBodyReads : Reads[UpdateUserBody] = (
+      (JsPath \ "email").read[String] and
+        (JsPath \ "firstName").readNullable[String] and
+        (JsPath \ "lastName").readNullable[String] and
+        (JsPath \ "mobilePhone").readNullable[String] and
+        (JsPath \ "placeOfResidence").readNullable[String] and
+        (JsPath \ "birthday").readNullable[Long] and
+        (JsPath \ "sex").readNullable[String] and
+        (JsPath \ "passwod").readNullable[String]
+      ).tupled.map(UpdateUserBody( _ ))
+  }
+
+  def updateUser() = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
+    val userData = request.request.body
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    val supporter : Supporter = Supporter(userData.firstName, userData.lastName, userData.mobilePhone, userData.placeOfResidence, userData.birthday, userData.sex)
+    userDao.find(loginInfo).flatMap(userObj => {
+      userObj match {
+        case Some(user) => user.profileFor(loginInfo) match {
+          case Some(profile) => {profile.supporter.copy(
+            firstName = userData.firstName,
+            lastName = userData.lastName,
+            birthday = userData.birthday,
+            mobilePhone = userData.mobilePhone,
+            placeOfResidence = userData.placeOfResidence,
+            sex = userData.sex
+          )
+            val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
+            userService.update(userObj.get.updateProfile(updatedProfile)).map((u) => Ok(Json.toJson(u)))
+          }
+          case None => Future(NotFound(Messages("Profile not found")))
+        }
+        case None => Future(NotFound(Messages("User not found")))
+      }
+    })
+  }}
+
+
 
   case class DeleteUserBody(id : UUID)
   object DeleteUserBody {
