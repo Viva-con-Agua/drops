@@ -122,7 +122,7 @@ class RestApi @Inject() (
       case Some(_) =>
         BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email)))
       case None =>
-      val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+      val profile = Profile(loginInfo, true, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
       for {
           avatarUrl <- avatarService.retrieveURL(signUpData.email)
           user <- userService.save(User(id = UUID.randomUUID(), profiles =
