@@ -20,7 +20,7 @@ POST    /roles/update                                       controllers.Roles.up
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
 POST    /rest/users/create                                  controllers.RestApi.createUser
-POST    /rest/users/avatar                                  controllers.RestApi.updateUserProfileImage
+PUT    /rest/users/avatar                                   controllers.RestApi.updateUserProfileImage
 POST    /rest/users                                         controllers.RestApi.getUsers
 POST    /rest/users/:id                                     controllers.RestApi.getUser(id : String)
 PUT     /rest/users                                         controllers.RestApi.updateUser
