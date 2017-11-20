@@ -169,3 +169,7 @@ pillar.network=Network
 
 rest.api.noValidAPIRequest=Not a valid API request: {0}
 rest.api.noValidAPIClient=Not a valid API client
+rest.api.syntaxError=The query has an syntax error
+rest.api.syntaxGrammar=The query has an grammar error
+rest.api.missingFilterValue=There is no filter value for one or more query parts
+rest.api.queryFunctionsNotImplementedYet=One or more query functions are not implemented yet
