@@ -347,7 +347,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.17.9 (2017-09-21)
+## Version 0.18.9 (2017-11-20)
+* [[F] #73 - RESTful interface to request access rights](https://github.com/Viva-con-Agua/drops/issues/73)
 * [[I] #69 - Associate Access Rights to Microservices](https://github.com/Viva-con-Agua/drops/issues/69)
 * [[F] #71 - Relations between users and tasks](https://github.com/Viva-con-Agua/drops/issues/71)
 * [[F] #70 - Relations between Tasks and Access Rights](https://github.com/Viva-con-Agua/drops/issues/70)
