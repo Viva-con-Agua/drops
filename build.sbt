@@ -31,6 +31,7 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "5.1.18",
   "com.typesafe.play" %% "play-slick" % "1.1.1",
   "com.typesafe.play" %% "play-slick-evolutions" % "1.1.1",
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
   specs2 % Test
 )
 
