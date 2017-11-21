@@ -80,6 +80,18 @@ mail server.
 After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
 Additionally the same can be done for crews. The route that should be used is <code>/crews/init</code>.
 
+OAuth 2 Handshake
+-----------------
+You can add a specific URL to the configuration that will be used for redirect after login. By default <code>routes.Application.index</code> is used, but you can add:
+
+```
+login.flow {
+  ms.switch=true
+  ms.url=/pool/
+}
+```
+to your <code>application.conf</code>. <code>ms.url</code> can hold every valid URL (absolute and relative).
+
 Dummy Data
 ==========
 Using an admin account test users can be generated. For generating the following 
