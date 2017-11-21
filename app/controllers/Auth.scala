@@ -121,7 +121,7 @@ class Auth @Inject() (
 
   def startSignUp = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
-      case Some(user) => Redirect(routes.Application.index)
+      case Some(user) => redirectAfterLogin
       case None => Ok(views.html.auth.startSignUp(signUpForm))
     })
   }
@@ -170,7 +170,7 @@ class Auth @Inject() (
               value <- env.authenticatorService.init(authenticator)
               _ <- userService.confirm(loginInfo)
               _ <- userTokenService.remove(id)
-              result <- env.authenticatorService.embed(value, Redirect(routes.Application.index()))
+              result <- env.authenticatorService.embed(value, redirectAfterLogin)
             } yield result
         }
       case Some(token) =>
@@ -210,7 +210,7 @@ class Auth @Inject() (
                 case authenticator => authenticator
               }
               value <- env.authenticatorService.init(authenticator)
-              result <- env.authenticatorService.embed(value, Redirect(routes.Application.index()))
+              result <- env.authenticatorService.embed(value, redirectAfterLogin)
             } yield result
           }
         }.recover {
@@ -221,7 +221,7 @@ class Auth @Inject() (
   }
 
   def signOut = SecuredAction.async { implicit request =>
-    env.authenticatorService.discard(request.authenticator, Redirect(routes.Application.index()))
+    env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
   }
 
   def startResetPassword = Action { implicit request =>
@@ -288,7 +288,7 @@ class Auth @Inject() (
           authInfo <- authInfoRepository.save(profile.loginInfo, authInfo)
           authenticator <- env.authenticatorService.create(profile.loginInfo)
           value <- env.authenticatorService.init(authenticator)
-          result <- env.authenticatorService.embed(value, Redirect(routes.Application.index()))
+          result <- env.authenticatorService.embed(value, redirectAfterLogin)
         } yield result
       } 
       case _ => Future.successful(
@@ -301,5 +301,34 @@ class Auth @Inject() (
         Redirect(request.identity.fold(routes.Auth.signIn())(_ => routes.Application.profile()))
           .flashing("error" -> Messages("error.notAuthenticated", providerId))
     }
+  }
+
+  /**
+    * Defines the URL that is used after login.
+    *
+    * @return
+    */
+  def redirectAfterLogin : Result = {
+    val default = Redirect(routes.Application.index())
+
+    configuration.getBoolean("login.flow.ms.switch").map(_ match {
+      case true => configuration.getString("login.flow.ms.url").map(
+        (url) => Redirect( url )
+      ).getOrElse(
+        default
+      )
+      case false => default
+    }).getOrElse(
+      default
+    )
+  }
+
+  /**
+    * Defines the URL that is used after logout.
+    *
+    * @return
+    */
+  def redirectAfterLogout : Result = {
+    Redirect(routes.Auth.signIn)
   }
 }
