@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.18.9 (2017-11-20)
+## Version 0.18.10 (2017-11-21)
+* [[I] #111 - Default redirect page after login](https://github.com/Viva-con-Agua/drops/issues/111)
 * [[F] #73 - RESTful interface to request access rights](https://github.com/Viva-con-Agua/drops/issues/73)
 * [[I] #69 - Associate Access Rights to Microservices](https://github.com/Viva-con-Agua/drops/issues/69)
 * [[F] #71 - Relations between users and tasks](https://github.com/Viva-con-Agua/drops/issues/71)
