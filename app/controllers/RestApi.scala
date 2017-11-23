@@ -171,9 +171,9 @@ class RestApi @Inject() (
             val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
             userService.update(userObj.get.updateProfile(updatedProfile)).map((u) => Ok(Json.toJson(u)))
           }
-          case None => Future(NotFound(Messages("Profile not found")))
+          case None => Future(NotFound(Messages("error.profileError")))
         }
-        case None => Future(NotFound(Messages("User not found")))
+        case None => Future(NotFound(Messages("error.noUser")))
       }
     })
   }}
@@ -194,9 +194,9 @@ class RestApi @Inject() (
       userObj match {
         case Some(user) => user.profileFor(loginInfo) match {
           case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
-          case None => Future(NotFound(Messages("Profile not found")))
+          case None => Future(NotFound(Messages("error.profileError")))
         }
-        case None => Future(NotFound(Messages("User not found")))
+        case None => Future(NotFound(Messages("error.noUser")))
       }
     })
   }}
