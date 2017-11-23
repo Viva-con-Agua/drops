@@ -147,8 +147,7 @@ class RestApi @Inject() (
                              mobilePhone: Option[String],
                              placeOfResidence: Option[String],
                              birthday: Option[Long],
-                             sex: Option[String],
-                             password: Option[String]
+                             sex: Option[String]
                            )
   object UpdateUserBody {
     implicit val updateUserBodyJsonFormat = Json.format[UpdateUserBody]
