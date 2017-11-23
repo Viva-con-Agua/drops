@@ -208,7 +208,6 @@ class RestApi @Inject() (
 
   def deleteUser() = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
     val userId : UUID = request.request.body.id
-    println(userId)
     userDao.delete(userId).map(r => Ok(Json.toJson(r)))
   }}
 
