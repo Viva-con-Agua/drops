@@ -109,7 +109,6 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
-     password: String,
      profileImageUrl: Option[String]
   )
   object CreateUserBody{
