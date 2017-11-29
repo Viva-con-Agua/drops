@@ -1,23 +1,32 @@
 package controllers
 
+import java.net.URL
 import java.util.UUID
 import javax.inject.Inject
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
-import com.mohiva.play.silhouette.api.{Environment, Silhouette}
+import com.mohiva.play.silhouette.api.{Environment, LoginInfo, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.api.services.AvatarService
 import play.api._
 import play.api.libs.json._
+import play.api.libs.json.JsObject
+import play.api.libs.functional.syntax._
+import play.api.libs.json.{JsPath, Json, OWrites, Reads}
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import models.{AccessRight, OauthClient, PublicUser, Task, User}
+import models._
 import User._
 import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
+import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
+import com.mohiva.play.silhouette.api.util.PasswordHasher
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import daos.{CrewDao, OauthClientDao, UserDao}
 import daos.{AccessRightDao, TaskDao}
-import services.{TaskService, UserService}
+import services.{TaskService, UserService, UserTokenService}
+import utils.Mailer
 import utils.Query.{QueryAST, QueryLexer, QueryParser}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -36,6 +45,11 @@ class RestApi @Inject() (
   val taskService : TaskService,
   val ApiAction : ApiAction,
   val messagesApi: MessagesApi,
+  val avatarService: AvatarService,
+  val authInfoRepository: AuthInfoRepository,
+  val passwordHasher: PasswordHasher,
+  val userTokenService: UserTokenService,
+  val mailer: Mailer,
   val env:Environment[User,CookieAuthenticator]) extends Silhouette[User,CookieAuthenticator] {
 
   /** checks whether a json is validate or not
@@ -61,7 +75,7 @@ class RestApi @Inject() (
     Some(Future.successful(Unauthorized(Json.obj("error" -> Messages("error.profileUnauth")))))
   }
 
-  def users = ApiAction.async { implicit request => {
+  def getUsers = ApiAction.async { implicit request => {
     def body(query : JsObject, limit : Int, sort : JsObject) = userDao.ws.list(query, limit, sort).map(users => Ok(
       Json.toJson(users.map(PublicUser(_)))
     ))
@@ -75,8 +89,8 @@ class RestApi @Inject() (
     }
   }}
 
-  def user(id : String) = ApiAction.async { implicit request => {
-    def body(query: JsObject) = userDao.ws.find(UUID.fromString(id), query).map(_ match {
+  def getUser(id : UUID) = ApiAction.async { implicit request => {
+    def body(query: JsObject) = userDao.ws.find(id, query).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
@@ -87,6 +101,129 @@ class RestApi @Inject() (
       case None => body(Json.obj())
     }
 
+  }}
+
+  case class CreateUserBody(
+     email: String,
+     firstName : String,
+     lastName: String,
+     mobilePhone: String,
+     placeOfResidence: String,
+     birthday: Long,
+     sex: String,
+     profileImageUrl: Option[String]
+  )
+  object CreateUserBody{
+    implicit val createUserBodyJsonFormat = Json.format[CreateUserBody]
+  }
+
+  def createUser() = ApiAction.async(validateJson[CreateUserBody]) { implicit request => {
+    val signUpData = request.request.body
+
+    val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
+    userService.retrieve(loginInfo).flatMap{
+      case Some(_) =>
+        Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
+      case None =>{
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+        avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
+          userService.save(User(id = UUID.randomUUID(), profiles =
+            (signUpData.profileImageUrl, avatarUrl) match {
+              case (Some(url), Some(gravatarUrl))  => List(profile.copy(avatar = List(UrlProfileImage(url),GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
+              case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
+              case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
+              case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
+            })).map((user) => Ok(Json.toJson(user)))
+        })
+      }
+    }
+  }}
+
+  case class UpdateUserBody(
+                             email: String,
+                             firstName : Option[String],
+                             lastName: Option[String],
+                             mobilePhone: Option[String],
+                             placeOfResidence: Option[String],
+                             birthday: Option[Long],
+                             sex: Option[String]
+                           )
+  object UpdateUserBody {
+    implicit val updateUserBodyJsonFormat = Json.format[UpdateUserBody]
+  }
+
+  def updateUser(id : UUID) = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
+    val userData = request.request.body
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    userDao.find(loginInfo).flatMap(userObj => {
+      userObj match {
+        case Some(user) => user.id == id match{
+          case true => {
+            user.profileFor(loginInfo) match {
+              case Some(profile) => {
+                val supporter : Supporter = profile.supporter.copy(
+                  firstName = userData.firstName,
+                  lastName = userData.lastName,
+                  birthday = userData.birthday,
+                  mobilePhone = userData.mobilePhone,
+                  placeOfResidence = userData.placeOfResidence,
+                  sex = userData.sex
+                )
+                val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
+                userService.update(userObj.get.updateProfile(updatedProfile)).map((u) => Ok(Json.toJson(u)))
+              }
+              case None => Future(NotFound(Messages("error.profileError")))
+            }
+          }
+          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+        }
+        case None => Future(NotFound(Messages("error.noUser")))
+      }
+    })
+  }}
+
+  case class UpdateUserProfileImageBody(
+                                         email : String,
+                                         url : String
+                                       )
+
+  object UpdateUserProfileImageBody {
+    implicit val updateUserProfileImageBody = Json.format[UpdateUserProfileImageBody]
+  }
+
+  def updateUserProfileImage(id : UUID) = ApiAction.async(validateJson[UpdateUserProfileImageBody]){implicit request =>{
+    val userData = request.request.body
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    userDao.find(loginInfo).flatMap(userObj => {
+      userObj match {
+        case Some(user) => user.id == id match {
+          case true => user.profileFor(loginInfo) match {
+            case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
+            case None => Future(NotFound(Messages("error.profileError")))
+          }
+          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+        }
+        case None => Future(NotFound(Messages("error.noUser")))
+      }
+    })
+  }}
+
+  case class DeleteUserBody(email : String)
+  object DeleteUserBody {
+    implicit val deleteUserBodyJsonFormat = Json.format[DeleteUserBody]
+  }
+
+  def deleteUser(id: UUID) = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email)
+    userDao.find(loginInfo).flatMap(userObj => {
+      userObj match {
+        case Some(user) => user.id == id match {
+          case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
+          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+        }
+        case None => Future(NotFound(Messages("error.noUser")))
+      }
+    })
   }}
 
   def crews = ApiAction.async { implicit request => {

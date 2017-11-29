@@ -19,8 +19,13 @@ POST    /roles/update                                       controllers.Roles.up
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
-POST    /rest/users                                         controllers.RestApi.users
-POST    /rest/users/:id                                     controllers.RestApi.user(id : String)
+POST    /rest/users/create                                  controllers.RestApi.createUser
+PUT     /rest/users/:id/avatar                              controllers.RestApi.updateUserProfileImage(id : java.util.UUID)
+POST    /rest/users                                         controllers.RestApi.getUsers
+POST    /rest/users/:id                                     controllers.RestApi.getUser(id : java.util.UUID)
+PUT     /rest/users/:id                                     controllers.RestApi.updateUser(id : java.util.UUID)
+DELETE  /rest/users/:id                                     controllers.RestApi.deleteUser(id: java.util.UUID)
+
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
 POST    /rest/crews                                         controllers.RestApi.crews
