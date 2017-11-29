@@ -1,4 +1,4 @@
-package daos.mariaDB
+package daos.schema
 
 import java.util.UUID
 import slick.driver.MySQLDriver.api._

@@ -2,7 +2,7 @@ package daos
 
 import java.util.UUID
 
-import daos.mariaDB.{UserTaskTableDef, TaskTableDef}
+import daos.schema.{UserTaskTableDef, TaskTableDef}
 import models.Task
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider

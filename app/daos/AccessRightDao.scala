@@ -3,7 +3,7 @@ package daos
 import java.util.UUID
 import javax.inject.Inject
 
-import daos.mariaDB.{AccessRightTableDef, TaskAccessRightTableDef, TaskTableDef, UserTaskTableDef}
+import daos.schema.{AccessRightTableDef, TaskAccessRightTableDef, TaskTableDef, UserTaskTableDef}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

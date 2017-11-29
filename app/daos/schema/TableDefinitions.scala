@@ -1,4 +1,4 @@
-package daos.mariaDB
+package daos.schema
 
 import java.net.{URI, URISyntaxException}
 import java.sql.Timestamp
