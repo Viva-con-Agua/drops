@@ -124,7 +124,7 @@ class RestApi @Inject() (
       case Some(_) =>
         Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
       case None =>{
-        val profile = Profile(loginInfo, true, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
         avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
           userService.save(User(id = UUID.randomUUID(), profiles =
             (signUpData.profileImageUrl, avatarUrl) match {
