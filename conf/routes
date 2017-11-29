@@ -23,7 +23,7 @@ POST    /rest/users/create                                  controllers.RestApi.
 PUT     /rest/users/avatar                                  controllers.RestApi.updateUserProfileImage
 POST    /rest/users                                         controllers.RestApi.getUsers
 POST    /rest/users/:id                                     controllers.RestApi.getUser(id : java.util.UUID)
-PUT     /rest/users                                         controllers.RestApi.updateUser
+PUT     /rest/users/:id                                     controllers.RestApi.updateUser(id : java.util.UUID)
 DELETE  /rest/users/:id                                     controllers.RestApi.deleteUser(id: java.util.UUID)
 
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
