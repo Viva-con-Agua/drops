@@ -1,8 +1,6 @@
-package daos
-
+package daos.mariaDB
 
 import java.util.UUID
-
 import slick.driver.MySQLDriver.api._
 
 class TaskAccessRightTableDef(tag: Tag) extends Table[(Long, Long)](tag, "Task_AccessRight") {
