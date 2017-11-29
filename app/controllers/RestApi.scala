@@ -198,14 +198,22 @@ class RestApi @Inject() (
     })
   }}
 
-  case class DeleteUserBody(id : UUID)
+  case class DeleteUserBody(email : String)
   object DeleteUserBody {
     implicit val deleteUserBodyJsonFormat = Json.format[DeleteUserBody]
   }
 
-  def deleteUser() = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
-    val userId : UUID = request.request.body.id
-    userDao.delete(userId).map(r => Ok(Json.toJson(r)))
+  def deleteUser(id: UUID) = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email)
+    userDao.find(loginInfo).flatMap(userObj => {
+      userObj match {
+        case Some(user) => user.id == id match {
+          case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
+          case false => Future(BadRequest(Messages("error.valuesDontMatch")))
+        }
+        case None => Future(NotFound(Messages("error.noUser")))
+      }
+    })
   }}
 
   def crews = ApiAction.async { implicit request => {

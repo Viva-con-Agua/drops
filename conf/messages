@@ -105,6 +105,7 @@ error.notFound=Not found
 error.notFound.details=Requested: {0}
 error.userExists=User {0} is already registered
 error.passwordsDontMatch=Passwords don''t match
+error.valuesDontMatch=Defined Values dont''t match
 error.serverError=Server error
 error.noUser=The requested user can''t be found
 error.unregistered=The user {0} hasn''t finished the sign up process
@@ -118,6 +119,7 @@ error.profileUnauth=Can't access profile information: must authenticate first.
 error.sex.notAllowed=Given sexuality is unknown, please enter a known one (male, female, other).
 error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123456 or +176/123456
 error.profile.image.upload=Profile image has not been uploaded! Try again!
+
 
 success.profile.image.upload=Profile image was successfully uploaded!
 
