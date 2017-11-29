@@ -12,7 +12,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, TaskDao, UserDao}
-import models.{AccessRight, Profile, ProfileImage, User}
+import models.database.AccessRight
+import models.{Profile, ProfileImage, User}
 
 class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao) extends IdentityService[User] {
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)

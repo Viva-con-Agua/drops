@@ -2,8 +2,8 @@ package daos
 
 import java.util.UUID
 
-import daos.schema.{UserTaskTableDef, TaskTableDef}
-import models.Task
+import daos.schema.{TaskTableDef, UserTaskTableDef}
+import models.database.Task
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile

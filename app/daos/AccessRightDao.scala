@@ -4,6 +4,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 import daos.schema.{AccessRightTableDef, TaskAccessRightTableDef, TaskTableDef, UserTaskTableDef}
+import models.database.AccessRight
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -11,7 +12,6 @@ import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.driver.MySQLDriver.api._
-import models.AccessRight
 
 /**
   * Created bei jottmann on 29.08.2017

@@ -3,11 +3,10 @@ package services
 import javax.inject.Inject
 
 import daos.{AccessRightDao, TaskDao}
-import models.{AccessRight, Task}
+import models.database.Task
 import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class TaskService @Inject()(

@@ -17,6 +17,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
 import daos.{CrewDao, OauthClientDao, TaskDao}
+import models.database.Task
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
 import utils.{WithAlternativeRoles, WithRole}

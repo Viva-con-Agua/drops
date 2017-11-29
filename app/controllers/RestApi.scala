@@ -25,6 +25,7 @@ import com.mohiva.play.silhouette.api.util.PasswordHasher
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import daos.{CrewDao, OauthClientDao, UserDao}
 import daos.{AccessRightDao, TaskDao}
+import models.database.{AccessRight, Task}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
 import utils.Query.{QueryAST, QueryLexer, QueryParser}

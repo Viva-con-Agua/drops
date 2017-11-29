@@ -4,9 +4,10 @@ import java.net.{URI, URISyntaxException}
 import java.sql.Timestamp
 import java.util.Date
 
+import models.database.{AccessRight, HttpMethod, Task}
 import slick.driver.MySQLDriver.api._
-import models.{AccessRight, HttpMethod, Task}
-import models.HttpMethod.HttpMethod
+import models.database.HttpMethod
+import models.database.HttpMethod.HttpMethod
 
 class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight") {
   def id = column[Long]("id", O.PrimaryKey,O.AutoInc)

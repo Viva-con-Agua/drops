@@ -1,11 +1,10 @@
-package models
+package models.database
 
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Reads}
+import play.api.libs.json.{JsPath, Reads, _}
 
 case class Task(
                  id: Long,

@@ -1,8 +1,8 @@
-package models
+package models.database
 
 import java.net.URI
 
-import models.HttpMethod.HttpMethod
+import models.database.HttpMethod.HttpMethod
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 

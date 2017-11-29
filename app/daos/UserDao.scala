@@ -124,3 +124,4 @@ class MongoUserDao extends UserDao {
   }
   val ws = new MongoUserWS()
 }
+
