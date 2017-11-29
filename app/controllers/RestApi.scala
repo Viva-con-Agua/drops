@@ -154,18 +154,18 @@ class RestApi @Inject() (
   def updateUser() = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
     val userData = request.request.body
     val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
-    val supporter : Supporter = Supporter(userData.firstName, userData.lastName, userData.mobilePhone, userData.placeOfResidence, userData.birthday, userData.sex)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.profileFor(loginInfo) match {
-          case Some(profile) => {profile.supporter.copy(
-            firstName = userData.firstName,
-            lastName = userData.lastName,
-            birthday = userData.birthday,
-            mobilePhone = userData.mobilePhone,
-            placeOfResidence = userData.placeOfResidence,
-            sex = userData.sex
-          )
+          case Some(profile) => {
+            val supporter : Supporter = profile.supporter.copy(
+              firstName = userData.firstName,
+              lastName = userData.lastName,
+              birthday = userData.birthday,
+              mobilePhone = userData.mobilePhone,
+              placeOfResidence = userData.placeOfResidence,
+              sex = userData.sex
+            )
             val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
             userService.update(userObj.get.updateProfile(updatedProfile)).map((u) => Ok(Json.toJson(u)))
           }
