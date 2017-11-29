@@ -87,8 +87,8 @@ class RestApi @Inject() (
     }
   }}
 
-  def getUser(id : String) = ApiAction.async { implicit request => {
-    def body(query: JsObject) = userDao.ws.find(UUID.fromString(id), query).map(_ match {
+  def getUser(id : UUID) = ApiAction.async { implicit request => {
+    def body(query: JsObject) = userDao.ws.find(id, query).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
