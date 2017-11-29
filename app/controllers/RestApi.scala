@@ -189,14 +189,17 @@ class RestApi @Inject() (
     implicit val updateUserProfileImageBody = Json.format[UpdateUserProfileImageBody]
   }
 
-  def updateUserProfileImage() = ApiAction.async(validateJson[UpdateUserProfileImageBody]){implicit request =>{
+  def updateUserProfileImage(id : UUID) = ApiAction.async(validateJson[UpdateUserProfileImageBody]){implicit request =>{
     val userData = request.request.body
     val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
-        case Some(user) => user.profileFor(loginInfo) match {
-          case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
-          case None => Future(NotFound(Messages("error.profileError")))
+        case Some(user) => user.id == id match {
+          case true => user.profileFor(loginInfo) match {
+            case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
+            case None => Future(NotFound(Messages("error.profileError")))
+          }
+          case false => Future(BadRequest(Messages("error.valuesDontMatch")))
         }
         case None => Future(NotFound(Messages("error.noUser")))
       }
