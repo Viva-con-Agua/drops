@@ -132,9 +132,7 @@ class RestApi @Inject() (
               case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
               case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
               case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            })).flatMap((user) => {
-              authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password)).map(_ => Ok(Json.toJson(user)))
-          })
+            })).map((user) => Ok(Json.toJson(user)))
         })
       }
     }
