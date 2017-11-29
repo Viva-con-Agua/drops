@@ -173,7 +173,7 @@ class RestApi @Inject() (
               case None => Future(NotFound(Messages("error.profileError")))
             }
           }
-          case false => Future(BadRequest(Messages("error.valuesDontMatch")))
+          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
         }
         case None => Future(NotFound(Messages("error.noUser")))
       }
@@ -199,7 +199,7 @@ class RestApi @Inject() (
             case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
             case None => Future(NotFound(Messages("error.profileError")))
           }
-          case false => Future(BadRequest(Messages("error.valuesDontMatch")))
+          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
         }
         case None => Future(NotFound(Messages("error.noUser")))
       }
@@ -217,7 +217,7 @@ class RestApi @Inject() (
       userObj match {
         case Some(user) => user.id == id match {
           case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
-          case false => Future(BadRequest(Messages("error.valuesDontMatch")))
+          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
         }
         case None => Future(NotFound(Messages("error.noUser")))
       }
