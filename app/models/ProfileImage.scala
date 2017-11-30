@@ -60,7 +60,7 @@ case class UrlProfileImage(url: URL) extends ProfileImage{
 case class LocalProfileImage(uuid:UUID) extends ProfileImage {
   val t = ProfileImageType.Local
   /**
-    * @todo use width and height parameter!
+    * Todo use width and height parameter!
     *
     * @param width
     * @param height
@@ -73,7 +73,7 @@ case class LocalProfileImage(uuid:UUID) extends ProfileImage {
 class DefaultProfileImage extends ProfileImage {
   val t = ProfileImageType.Default
   /**
-    * @todo: Read from config!
+    * Todo: Read from config!
     */
   val url = routes.Assets.versioned("images/drop_quad.png")
 
@@ -91,7 +91,7 @@ object UrlProfileImage {
 
 object ProfileImage {
   /*
-    @todo Read this from config file!
+   * Todo Read this from config file!
    */
   val sizes = List(Map("width" -> 400, "height" -> 400), Map("width" -> 30, "height" -> 30))
 

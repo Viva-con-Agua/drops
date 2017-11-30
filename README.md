@@ -359,10 +359,11 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.19.10 (2017-11-29)
+## Version 0.19.11 (2017-11-29)
 * [[F] #102 - CRUD for Webservice](https://github.com/Viva-con-Agua/drops/issues/102)
 * [[I] #111 - Default redirect page after login](https://github.com/Viva-con-Agua/drops/issues/111)
 * [[F] #73 - RESTful interface to request access rights](https://github.com/Viva-con-Agua/drops/issues/73)
+* [[B] #98 - Comments run into error on publish](https://github.com/Viva-con-Agua/drops/issues/98)
 * [[I] #69 - Associate Access Rights to Microservices](https://github.com/Viva-con-Agua/drops/issues/69)
 * [[F] #71 - Relations between users and tasks](https://github.com/Viva-con-Agua/drops/issues/71)
 * [[F] #70 - Relations between Tasks and Access Rights](https://github.com/Viva-con-Agua/drops/issues/70)
