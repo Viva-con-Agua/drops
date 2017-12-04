@@ -1,0 +1,176 @@
+app.title=Pool
+
+date.format=dd.MM.YYYY
+
+navbar.brand.logo=Viva con Agua de St. Pauli Logo
+navbar.brand.appName=Pool²
+navbar.brand.organisation=Viva con Agua de St. Pauli
+navbar.toggle.nav=Menü ausklappen
+navbar.index=Start
+navbar.profile=Tropfenprofil
+navbar.task = Alle Todos
+navbar.oauth.register=OAuth2 Client eintragen
+navbar.roles=Rollen festlegen
+navbar.username={0}
+navbar.signout=Rausloggen
+navbar.signin=Reinloggen
+navbar.signup=Mitmachen
+navbar.none=Nichts
+navbar.menu.admin=Admin Power
+navbar.back=Zurück
+
+index.header=Moin bei Viva con Agua''s Pool²
+index.logged=Hey <span class="text-success">{0}</span>, du bist drin! Guck dir mal dein <a href="{1}">Tropfenprofil</a> an.
+index.signOut=Du könntest dich auch <a href="{0}">rausloggen</a>.
+index.notLogged=Du bist nicht drin, kannst dich aber <a href="{0}">reinloggen</a> oder <a href="{1}">anmelden</a>.
+index.resetPassword=Falls du dein Passwort vergessen hast, kannst du es <a href="{0}">zurücksetzen</a>.
+index.restProfile=Du kannst dein Tropfenprofil auch via Ajax abrufen (so ein Entwicklerkram ^^).
+index.fetchProfile=Tropfenprofil abrufen
+index.none=Nichts
+
+dialog.title=Dein Tropfenprofil
+dialog.email=Email
+dialog.firstName=Vorname
+dialog.lastName=Nachname
+dialog.fullName=Ganzer Name
+dialog.available=Du kannst dich auch mit Social Media Accounts einloggen
+dialog.none=Nichts
+
+profile.title=Tropfenprofil
+profile.firstName=Vorname
+profile.lastName=Nachname
+profile.fullName=Ganzer Name
+profile.email=Email
+profile.mobilePhone=Handynummer
+profile.placeOfResidence=Wohnort
+profile.birthday=Geburtstag
+profile.sex=Geschlecht
+profile.linked=Verlinkte Social Media Accounts
+profile.available=Verfügbare Social Media Accounts
+profile.none=Nichts
+profile.no.crew.selected=Du hast keine Crew ausgewählt
+profile.submit=Ändern
+profile.update.legend=Du kannst alle Infos über dich bearbeiten
+profile.upload.msg=Für Upload klicken
+profile.upload.hint=Bewege die Maus hier rüber, um das Bild zu ändern.
+
+task.title=Todo Übersicht
+
+signup.title=Mitmachen
+signup.legend=Selbstbeschreibung, um einen Account zu erstellen
+signup.email=Email
+signup.firstName=Vorname
+signup.lastName=Nachname
+signup.mobilePhone=Handynummer
+signup.placeOfResidence=Wohnort
+signup.birthday=Geburtstag
+signup.sex=Geschlecht
+signup.sex.male=Männlich
+signup.sex.female=Weiblich
+signup.sex.other=Weiteres
+signup.password=Passwort
+signup.verify=Bestätige Passwort
+signup.submit=Mich speichern
+signup.postForm=Bu bist bereits dabei? <a href="{0}">Reinloggen</a>
+
+finishSignUp.title=Account erstellen abschließen
+finishSignUp.thanks=Cool und vielen Dank {0}, dass du dabei bist!
+finishSignUp.instructions=Wir haben dir einen Email an {0} geschickt. Folge der Anleitung, um die Anmeldung abzuschließen.
+
+signin.title=Reinloggen
+signin.legend=Mit deinen Daten
+signin.email=Email
+signin.password=Passwort
+signin.submit=Rein!
+signin.rememberMe=An mich erinnern
+signin.signup=Du hast noch keinen Account? Du kannst jederzeit <a href="{0}">Mitmachen</a>.
+signin.resetPassword=Passwort vergessen? Das kannst du <a href="{0}">neu setzen</a>.
+signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
+
+reset.title=Passwort zurücksetzen
+reset.startLegend=Hast du dein Passwort vergessen??
+reset.email=Email
+reset.submit=Abschicken
+reset.instructions=Wir haben dir eine Email an {0} geschickt. Folge den Anweisungen in der Email, um dein Passwort zurückzusetzen.
+reset.legend=Passwort zurücksetzen
+reset.password=Passwort
+reset.verifyPassword=Bestätige Passwort
+reset.reset=Zurücksetzen
+reset.doneTitle=Neues Passwort
+reset.done=Dein password wurde erfolgreich neu gesetzt.
+reset.gotoIndex=Gehe auf die <a href={0}>Startseite</a>.
+
+error.accessDenied=Du musst dich reinloggen, um die aufgerufene Seite sehen zu können.
+error.notFound=Nicht gefunden!
+error.notFound.details=Aufgerufen: {0}
+error.userExists=Den Tropfen {0} kennen wir bereits.
+error.passwordsDontMatch=Die Passwörter passen nicht zusammen
+error.identifiersDontMatch=Die angegebenen Identifier passen nicht zusammen
+error.serverError=Server Fehler!
+error.noUser=Der angefragte Tropfen kann nicht gefunden werden.
+error.unregistered=Tropfen {0} hat den Registrierungsprozess nicht abgeschlossen.
+error.noProvider=Das soziale Medium ''{0}'' kennen wir nicht.
+error.invalidCredentials=Ooohh! Die angegebenen Anmeldedaten sind nicht valide.
+error.notAuthenticated=Das soziale Medium kann dich nicht authentifizieren.
+error.onlyHttpsAllowed=Zu deiner eigenen Sicherheit erlauben wir nur Anfragen über https.
+error.onlyHttpsAllowedMsg=Zu deiner eigenen Sicherheit erlauben wir nur Anfragen über https. Versuche mal <a href={0}>{0}</a>.
+error.profileError=Fehler beim Abrufen der Tropfenprofildaten
+error.profileUnauth=Auf das Tropfenprofil kann erst nach dem reinloggen zugegriffen werden.
+error.sex.notAllowed=Deine Sexualität kennt das System noch nicht. Gib bitte eine bekannte an (männlich, weiblich, weitere) und rege eine Diskussion im Kosmos an.
+error.telphone.wrongFormat=Formatfehler, erlaubt sind beispielsweise: 0167/123456 oder +176/123456
+error.profile.image.upload=Das neue Tropfenbild des Profils konnte nicht hochgeladen werden! Versuche es nochmal!
+
+
+success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!
+
+mail.welcome.subject=Willkommen im Boot
+mail.welcome.hi=Moin, {0}!
+mail.welcome.instructions=Danke, dass du dabei bist. Rufe nur noch den folgenden Link auf, um deinen Account zu aktivieren.
+
+mail.reset.subject=Passwort neu setzen
+mail.reset.hi=Moin, {0}!
+mail.reset.instructions=Du willst dein Passwort neu setzen? Klicke auf den folgenden Link!
+
+crew.legend=Crew
+crew.name=Crew Name
+crew.country=Land
+crew.city=Stadt
+crew.active=Aktives Mitglied der Crew?
+crew.submit=Speichern
+crew.update.noProfileForLogin=Ooohh!! Kein Tropfenprofil für den eingeloggten Nutzer gefunden!
+crew.select.one=Bitte wähle deine Crew aus
+
+oauth2server.clientId.notFound=Keinen OAuth 2 Client gefunden, der zu der angegebenen ID passt.
+oauth2server.clientId.missing=Keine OAuth 2 Client ID angegeben!
+
+oauth2.register.title=Registriere Oauth2 Client
+oauth2.register.legend=Registriere Oauth2 Client
+oauth2.register.id=Name / ID
+oauth2.register.secret=Secret
+oauth2.register.redirectUri=URI für Redirect
+oauth2.register.grantTypes.label=Grant types
+oauth2.register.grantTypes.placeholder=Nutze Kommas, um zu trennen.
+oauth2.register.submit=Speichere den neuen Client
+
+roles.title=Rollen
+roles.legend=Rollen bearbeiten
+roles.userId=Nutze ID
+roles.admin=Administrator
+roles.employee=Mitarbeiter
+roles.volunteerManager=Ansprechpartner
+roles.supporter=Supporter
+roles.submit=Speichern
+
+pillar.legend=Säulen von Viva con Agua
+pillar.submit=Auswahl speichern
+pillar.education=Bildung
+pillar.operation=Aktionen
+pillar.finance=Finanzen
+pillar.network=Netzwerk
+
+rest.api.noValidAPIRequest=Das ist kein valider API Request: {0}
+rest.api.noValidAPIClient=Das ist kein valider API Client
+rest.api.syntaxError=Die Anfrage hat einen syntaktischen Fehler
+rest.api.syntaxGrammar=Die Anfrage hat einen grammatikalischen Fehler
+rest.api.missingFilterValue=Für Teile der Filteranfrage ist kein Wert gesetzt
+rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage ist noch nicht implementiert.

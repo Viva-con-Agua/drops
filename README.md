@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.19.11 (2017-11-29)
+## Version 0.19.12 (2017-12-04)
+* [[I] #117 - Translation](https://github.com/Viva-con-Agua/drops/issues/117)
 * [[F] #102 - CRUD for Webservice](https://github.com/Viva-con-Agua/drops/issues/102)
 * [[I] #111 - Default redirect page after login](https://github.com/Viva-con-Agua/drops/issues/111)
 * [[F] #73 - RESTful interface to request access rights](https://github.com/Viva-con-Agua/drops/issues/73)
