@@ -4,7 +4,7 @@ date.format=dd.MM.YYYY
 
 navbar.brand.logo=Viva con Agua de St. Pauli Logo
 navbar.brand.appName=Pool²
-navbar.brand.organisation=Viva con Agua de St. Pauli
+navbar.brand.organisation=Viva con Agua
 navbar.toggle.nav=Menü ausklappen
 navbar.index=Start
 navbar.profile=Tropfenprofil
@@ -78,11 +78,11 @@ finishSignUp.thanks=Cool und vielen Dank {0}, dass du dabei bist!
 finishSignUp.instructions=Wir haben dir einen Email an {0} geschickt. Folge der Anleitung, um die Anmeldung abzuschließen.
 
 signin.title=Reinloggen
-signin.legend=Mit deinen Daten
+signin.legend=Reinloggen
 signin.email=Email
 signin.password=Passwort
 signin.submit=Rein!
-signin.rememberMe=An mich erinnern
+signin.rememberMe=Merke dir meine Daten!
 signin.signup=Du hast noch keinen Account? Du kannst jederzeit <a href="{0}">Mitmachen</a>.
 signin.resetPassword=Passwort vergessen? Das kannst du <a href="{0}">neu setzen</a>.
 signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
@@ -110,7 +110,7 @@ error.serverError=Server Fehler!
 error.noUser=Der angefragte Tropfen kann nicht gefunden werden.
 error.unregistered=Tropfen {0} hat den Registrierungsprozess nicht abgeschlossen.
 error.noProvider=Das soziale Medium ''{0}'' kennen wir nicht.
-error.invalidCredentials=Ooohh! Die angegebenen Anmeldedaten sind nicht valide.
+error.invalidCredentials=Ooohh! Es gibt keinen Nutzer mit den angegebenen Anmeldedaten.
 error.notAuthenticated=Das soziale Medium kann dich nicht authentifizieren.
 error.onlyHttpsAllowed=Zu deiner eigenen Sicherheit erlauben wir nur Anfragen über https.
 error.onlyHttpsAllowedMsg=Zu deiner eigenen Sicherheit erlauben wir nur Anfragen über https. Versuche mal <a href={0}>{0}</a>.
