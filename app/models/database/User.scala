@@ -25,12 +25,12 @@ object User{
   def apply(tuple: (Long, UUID)): User =
     User(tuple._1, tuple._2)
 
-  implicit val taskWrites : OWrites[User] = (
+  implicit val userWrites : OWrites[User] = (
     (JsPath \ "id").write[Long] and
       (JsPath \ "publicId").write[UUID]
     )(unlift(User.unapply))
 
-  implicit val taskReads : Reads[User] = (
+  implicit val userReads : Reads[User] = (
     (JsPath \ "id").readNullable[Long] and
       (JsPath \ "publicId").read[UUID]
     ).tupled.map((user) => if(user._1.isEmpty)

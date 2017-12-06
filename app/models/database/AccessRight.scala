@@ -11,7 +11,15 @@ import play.api.libs.json._
   */
 
 
-
+/**
+  * Definition of the database access right model
+  * @param id
+  * @param uri
+  * @param method
+  * @param name
+  * @param description
+  * @param service
+  */
 case class AccessRight (
                          id: Long,
                          uri: URI,
