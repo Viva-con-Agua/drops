@@ -2,9 +2,9 @@ package daos.schema
 
 import slick.driver.MySQLDriver.api._
 
-import models.database.Supporter
+import models.database.SupporterDB
 
-class SupporterTableDef(tag: Tag) extends Table[Supporter](tag, "Supporter") {
+class SupporterTableDef(tag: Tag) extends Table[SupporterDB](tag, "Supporter") {
   def id                = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def firstName         = column[String]("first_name")
   def lastName          = column[String]("last_name")
@@ -16,7 +16,7 @@ class SupporterTableDef(tag: Tag) extends Table[Supporter](tag, "Supporter") {
   def profileId         = column[Long]("profile_id")
 
   def * =
-    (id, firstName.?, lastName.?, fullName.?, mobilePhone.?, placeOfResidence.?, birthday.?, sex.?, profileId)<>((Supporter.mapperTo _).tupled, Supporter.unapply)
+    (id, firstName.?, lastName.?, fullName.?, mobilePhone.?, placeOfResidence.?, birthday.?, sex.?, profileId)<>((SupporterDB.mapperTo _).tupled, SupporterDB.unapply)
 
   def profileKey = foreignKey("profile_id", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 }

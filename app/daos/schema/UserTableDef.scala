@@ -3,13 +3,13 @@ package daos.schema
 import java.util.UUID
 
 import slick.driver.MySQLDriver.api._
-import models.database.User
+import models.database.UserDB
 
-class UserTableDef(tag: Tag) extends Table[User](tag, "User") {
+class UserTableDef(tag: Tag) extends Table[UserDB](tag, "User") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def publicId = column[UUID]("public_id")
 
-  def * = (id, publicId) <>((User.mapperTo _).tupled, User.unapply)
+  def * = (id, publicId) <>((UserDB.mapperTo _).tupled, UserDB.unapply)
 
   def pk = primaryKey("primaryKey", id)
 }

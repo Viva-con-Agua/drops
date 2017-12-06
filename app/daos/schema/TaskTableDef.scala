@@ -5,9 +5,9 @@ import java.util.Date
 
 import slick.driver.MySQLDriver.api._
 
-import models.database.Task
+import models.database.TaskDB
 
-class TaskTableDef(tag: Tag) extends Table[Task](tag, "Task") {
+class TaskTableDef(tag: Tag) extends Table[TaskDB](tag, "Task") {
   def id = column[Long]("id", O.PrimaryKey,O.AutoInc)
   def title = column[String]("title")
   def description= column[String]("description")
@@ -21,5 +21,5 @@ class TaskTableDef(tag: Tag) extends Table[Task](tag, "Task") {
     )
 
   def * =
-    (id, title, description.?, deadline.?, count_supporter.?) <>((Task.mapperTo _).tupled, Task.unapply)
+    (id, title, description.?, deadline.?, count_supporter.?) <>((TaskDB.mapperTo _).tupled, TaskDB.unapply)
 }

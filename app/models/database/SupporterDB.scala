@@ -15,7 +15,7 @@ import play.api.libs.json.{JsPath, Reads, _}
   * @param sex
   * @param profileId
   */
-case class Supporter (
+case class SupporterDB(
                 id: Long,
                 firstName: Option[String],
                 lastName: Option[String],
@@ -27,7 +27,7 @@ case class Supporter (
                 profileId: Long
                 )
 
-object Supporter{
+object SupporterDB{
 
   def mapperTo(
     id: Long, firstName: Option[String], lastName: Option[String], fullName: Option[String],
@@ -35,10 +35,10 @@ object Supporter{
     sex: Option[String], profileId: Long
   ) = apply(id, firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, profileId)
 
-  def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long)) : Supporter =
-    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
+  def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long)) : SupporterDB =
+    SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
-  implicit val supporterWrites : OWrites[Supporter] = (
+  implicit val supporterWrites : OWrites[SupporterDB] = (
     (JsPath \ "id").write[Long] and
       (JsPath \ "fistName").writeNullable[String] and
       (JsPath \ "lastName").writeNullable[String] and
@@ -48,9 +48,9 @@ object Supporter{
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
       (JsPath \ "profileId").write[Long]
-  )(unlift(Supporter.unapply))
+  )(unlift(SupporterDB.unapply))
 
-  implicit val supporterReads : Reads[Supporter] = (
+  implicit val supporterReads : Reads[SupporterDB] = (
     (JsPath \ "id").readNullable[Long] and
       (JsPath \ "fistName").readNullable[String] and
       (JsPath \ "lastName").readNullable[String] and
@@ -61,6 +61,6 @@ object Supporter{
       (JsPath \ "sex").readNullable[String] and
       (JsPath \ "profileId").read[Long]
     ).tupled.map((supporter) => if(supporter._1.isEmpty)
-    Supporter(0, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9)
-  else Supporter(supporter._1.get, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9))
+    SupporterDB(0, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9)
+  else SupporterDB(supporter._1.get, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9))
 }
