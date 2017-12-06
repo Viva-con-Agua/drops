@@ -1,12 +1,9 @@
 package daos.schema
 
 import java.net.{URI, URISyntaxException}
-import java.sql.Timestamp
-import java.util.Date
 
-import models.database.{AccessRight, HttpMethod, Task}
 import slick.driver.MySQLDriver.api._
-import models.database.HttpMethod
+import models.database.{AccessRight, HttpMethod}
 import models.database.HttpMethod.HttpMethod
 
 class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight") {
@@ -38,21 +35,4 @@ class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight
 
   def * =
     (id, uri, method, name.?, description.?, service) <>((AccessRight.mapperTo _).tupled, AccessRight.unapply)
-}
-
-class TaskTableDef(tag: Tag) extends Table[Task](tag, "Task") {
-  def id = column[Long]("id", O.PrimaryKey,O.AutoInc)
-  def title = column[String]("title")
-  def description= column[String]("description")
-  def deadline = column[Date]("deadline")
-  def count_supporter = column[Int]("count_supporter")
-
-  implicit val dateColumnType =
-    MappedColumnType .base[Date, Timestamp] (
-      d => new Timestamp(d.getTime),
-      d => new Date(d.getTime)
-    )
-
-  def * =
-    (id, title, description.?, deadline.?, count_supporter.?) <>((Task.mapperTo _).tupled, Task.unapply)
 }
