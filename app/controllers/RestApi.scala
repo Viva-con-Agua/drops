@@ -23,8 +23,7 @@ import api.query.{CrewRequest, RequestConfig, UserRequest}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.util.PasswordHasher
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
-import daos.{CrewDao, OauthClientDao, UserDao}
-import daos.{AccessRightDao, TaskDao}
+import daos._
 import models.database.{AccessRight, TaskDB}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
@@ -38,6 +37,7 @@ import scala.util.parsing.json.JSONArray
 
 class RestApi @Inject() (
   val userDao : UserDao,
+  val userMariaDao : MariadbUserDao,
   val crewDao: CrewDao,
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
@@ -91,17 +91,11 @@ class RestApi @Inject() (
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
-    def body(query: JsObject) = userDao.ws.find(id, query).map(_ match {
+
+    userMariaDao.find(id).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
-    implicit val u: UserDao = userDao
-    implicit val config : RequestConfig = UserRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) => body(ext._1))
-      case None => body(Json.obj())
-    }
-
   }}
 
   case class CreateUserBody(
