@@ -17,6 +17,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
+//ToDo: delete username from case class
 case class Supporter(
   firstName: Option[String],
   lastName: Option[String],
@@ -43,9 +44,14 @@ case class Supporter(
 }
 
 object Supporter {
+  def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
+    Supporter(firstName, lastName, fullName, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+  }
+
   def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
     Supporter(firstName, lastName, None, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
   }
+
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String): Supporter =
     Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
 
@@ -97,6 +103,9 @@ case class Profile(
 }
 
 object Profile {
+
+  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter) : Profile =
+    Profile(loginInfo, confirmed, Some(email), supporter, None, None, List[DefaultProfileImage]())
   def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, avatar: List[DefaultProfileImage]) :Profile =
     Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
 
