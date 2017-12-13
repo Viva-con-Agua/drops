@@ -1,5 +1,6 @@
 package models.database
 
+import models.Supporter
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -25,7 +26,9 @@ case class SupporterDB(
                 birthday: Option[Long],
                 sex: Option[String],
                 profileId: Long
-                )
+                ) {
+  def toSupporter: Supporter = Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex)
+}
 
 object SupporterDB{
 
@@ -37,6 +40,7 @@ object SupporterDB{
 
   def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long)) : SupporterDB =
     SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
+
 
   implicit val supporterWrites : OWrites[SupporterDB] = (
     (JsPath \ "id").write[Long] and

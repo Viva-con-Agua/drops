@@ -1,5 +1,6 @@
 package models.database
 
+import com.mohiva.play.silhouette.api.LoginInfo
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -15,7 +16,10 @@ case class LoginInfoDB(
                        providerId: String,
                        providerKey: String,
                        profileId: Long
-                     )
+                     ) {
+  def toLoginInfo: LoginInfo = LoginInfo(providerId, providerKey)
+
+}
 
 object LoginInfoDB{
   def mapperTo(
