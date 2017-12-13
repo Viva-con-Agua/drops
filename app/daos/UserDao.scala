@@ -3,16 +3,23 @@ package daos
 import java.util.UUID
 
 import scala.concurrent.Future
+import play.api.Play
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
+import play.api.db.slick.DatabaseConfigProvider
 import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import com.mohiva.play.silhouette.api.LoginInfo
+import daos.schema.{LoginInfoTableDef, ProfileTableDef, SupporterTableDef, UserTableDef}
 import models._
 import models.User._
+import models.database.ProfileDB
+import play.api.db.slick.DatabaseConfigProvider
 import reactivemongo.bson.BSONObjectID
+import slick.driver.JdbcProfile
+import slick.driver.MySQLDriver.api._
 
 trait UserDao extends ObjectIdResolver with CountResolver{
 //  def getObjectId(userId: UUID):Future[Option[ObjectIdWrapper]]
@@ -125,3 +132,71 @@ class MongoUserDao extends UserDao {
   val ws = new MongoUserWS()
 }
 
+class MariadbUserDao extends UserDao{
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+
+  val users = TableQuery[UserTableDef]
+  val profiles = TableQuery[ProfileTableDef]
+  val loginInfos = TableQuery[LoginInfoTableDef]
+  val supporters = TableQuery[SupporterTableDef]
+
+  override def find(loginInfo: LoginInfo): Future[Option[User]] = ???
+
+  override def find(userId: UUID): Future[Option[User]] = {
+    val action = for{
+      (((user, profile), supporter), loginInfo) <- (users.filter(u => u.publicId === userId)
+          join profiles on (_.id === _.userId) //user.id === profile.userId
+          join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
+          join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
+        )} yield(user, profile, supporter, loginInfo)
+
+    dbConfig.db.run(action.result).map(result => {
+        //foldLeft[Return Data Type](Init Value)(parameter) => function
+        val userList = result.seq.foldLeft[List[User]](Nil)((userList, dbEntry) =>{
+          val supporter : Supporter = dbEntry._3.toSupporter
+          val loginInfo : LoginInfo = dbEntry._4.toLoginInfo
+          val profile : Profile = Profile(loginInfo, dbEntry._2.confirmed, dbEntry._2.email, supporter)
+
+          if(userList.length != 0 && userList.last.id == dbEntry._1.id){
+            //tail = use all elements except the head element
+            //reverse.tail.reverse = erease last element from list
+            userList.reverse.tail.reverse ++ List(userList.last.copy(profiles = userList.last.profiles ++ List(profile)))
+          }else{
+            userList ++ List(User(dbEntry._1.publicId, List(profile), Set()))
+          }
+        })
+        userList.headOption
+    })
+  }
+
+  override def save(user: User): Future[User] = ???
+
+  override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = ???
+
+  override def replace(user: User): Future[User] = ???
+
+  override def confirm(loginInfo: LoginInfo): Future[User] = ???
+
+  override def link(user: User, profile: Profile): Future[User] = ???
+
+  override def update(profile: Profile): Future[User] = ???
+
+  override def list: Future[List[User]] = ???
+
+  override def listOfStubs: Future[List[UserStub]] = ???
+
+  override def delete(userId: UUID): Future[Boolean] = ???
+
+  override def getCount: Future[Int] = ???
+
+  override def getObjectId(id: UUID): Future[Option[ObjectIdWrapper]] = ???
+
+  override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = ???
+
+  class MongoUserWS extends UserWS {
+    override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] = ???
+
+    override def list(queryExtension: JsObject, limit : Int, sort: JsObject): Future[List[User]] = ???
+  }
+  val ws = new MongoUserWS()
+}
