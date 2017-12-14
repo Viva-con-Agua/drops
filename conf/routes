@@ -19,16 +19,16 @@ POST    /roles/update                                       controllers.Roles.up
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
-POST    /rest/users/create                                  controllers.RestApi.createUser
-PUT     /rest/users/:id/avatar                              controllers.RestApi.updateUserProfileImage(id : java.util.UUID)
-POST    /rest/users                                         controllers.RestApi.getUsers
-POST    /rest/users/:id                                     controllers.RestApi.getUser(id : java.util.UUID)
-PUT     /rest/users/:id                                     controllers.RestApi.updateUser(id : java.util.UUID)
-DELETE  /rest/users/:id                                     controllers.RestApi.deleteUser(id: java.util.UUID)
+POST    /rest/user/create                                  controllers.RestApi.createUser
+PUT     /rest/user/:id/avatar                              controllers.RestApi.updateUserProfileImage(id : java.util.UUID)
+POST    /rest/user                                         controllers.RestApi.getUsers
+POST    /rest/user/:id                                     controllers.RestApi.getUser(id : java.util.UUID)
+PUT     /rest/user/:id                                     controllers.RestApi.updateUser(id : java.util.UUID)
+DELETE  /rest/user/:id                                     controllers.RestApi.deleteUser(id: java.util.UUID)
 
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
-POST    /rest/crews                                         controllers.RestApi.crews
+POST    /rest/crew                                         controllers.RestApi.crews
 GET     /rest/task                                          controllers.RestApi.getTasks
 POST    /rest/task                                          controllers.RestApi.createTask
 GET     /rest/task/:id                                      controllers.RestApi.getTasksWithAccessRights(id: Long)
