@@ -158,7 +158,24 @@ class MariadbUserDao extends UserDao{
     userList
   }
 
-  override def find(loginInfo: LoginInfo): Future[Option[User]] = ???
+  /** Find a user object by loginInfo providerId and providerKey
+    *
+    * @param loginInfo
+    * @return
+    */
+  override def find(loginInfo: LoginInfo): Future[Option[User]] = {
+    val action = for{
+      (((user, profile), supporter), loginInfo) <- (users
+        join profiles on (_.id === _.userId) //user.id === profile.userId
+        join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
+        join loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)
+            on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
+        )} yield(user, profile, supporter, loginInfo)
+
+    dbConfig.db.run(action.result).map(result => {
+      buildUserListFromResult(result).headOption
+    })
+  }
 
   override def find(userId: UUID): Future[Option[User]] = {
     val action = for{
