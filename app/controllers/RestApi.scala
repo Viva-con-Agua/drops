@@ -210,10 +210,10 @@ class RestApi @Inject() (
 
   def deleteUser(id: UUID) = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
     val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email)
-    userDao.find(loginInfo).flatMap(userObj => {
+    userMariaDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match {
-          case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
+          case true => userMariaDao.delete(id).map(r => Ok(Json.toJson(r)))
           case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
         }
         case None => Future(NotFound(Messages("error.noUser")))

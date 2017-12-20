@@ -18,6 +18,7 @@ import models.User._
 import models.database.{LoginInfoDB, ProfileDB, SupporterDB, UserDB}
 import play.api.db.slick.DatabaseConfigProvider
 import reactivemongo.bson.BSONObjectID
+import slick.dbio.DBIOAction
 import slick.driver.JdbcProfile
 import slick.driver.MySQLDriver.api._
 
@@ -206,7 +207,19 @@ class MariadbUserDao extends UserDao{
 
   override def listOfStubs: Future[List[UserStub]] = ???
 
-  override def delete(userId: UUID): Future[Boolean] = ???
+  override def delete(userId: UUID): Future[Boolean] = {
+      val deleteUser = users.filter(u => u.publicId === userId)
+
+      val deleteProfile = profiles.filter(_.userId.in(deleteUser.map(_.id)))
+      val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
+      val deleteLoginInfo = loginInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
+      dbConfig.db.run((deleteLoginInfo.delete andThen deleteSupporter.delete andThen deleteProfile.delete andThen deleteUser.delete).transactionally).map(r => {
+        r match {
+          case 1 => true
+          case 0 => false
+        }
+      })
+  }
 
   override def getCount: Future[Int] = ???
 
