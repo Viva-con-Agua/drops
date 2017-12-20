@@ -187,7 +187,18 @@ class MariadbUserDao extends UserDao{
 
   override def update(profile: Profile): Future[User] = ???
 
-  override def list: Future[List[User]] = ???
+  override def list: Future[List[User]] = {
+    val action = for{
+      (((user, profile), supporter), loginInfo) <- (users
+        join profiles on (_.id === _.userId) //user.id === profile.userId
+        join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
+        join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
+        )} yield(user, profile, supporter, loginInfo)
+
+    dbConfig.db.run(action.result).map(result => {
+      UserConverter.buildUserListFromResult(result)
+    })
+  }
 
   override def listOfStubs: Future[List[UserStub]] = ???
 
