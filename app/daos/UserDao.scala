@@ -21,6 +21,8 @@ import reactivemongo.bson.BSONObjectID
 import slick.dbio.DBIOAction
 import slick.driver.JdbcProfile
 import slick.driver.MySQLDriver.api._
+import models.converter
+import models.converter.UserConverter
 
 trait UserDao extends ObjectIdResolver with CountResolver{
 //  def getObjectId(userId: UUID):Future[Option[ObjectIdWrapper]]
@@ -141,24 +143,6 @@ class MariadbUserDao extends UserDao{
   val loginInfos = TableQuery[LoginInfoTableDef]
   val supporters = TableQuery[SupporterTableDef]
 
-  def buildUserListFromResult(result: Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB)]) : List[User] = {
-    //foldLeft[Return Data Type](Init Value)(parameter) => function
-    val userList = result.seq.foldLeft[List[User]](Nil)((userList, dbEntry) =>{
-      val supporter : Supporter = dbEntry._3.toSupporter
-      val loginInfo : LoginInfo = dbEntry._4.toLoginInfo
-      val profile : Profile = Profile(loginInfo, dbEntry._2.confirmed, dbEntry._2.email, supporter)
-
-      if(userList.length != 0 && userList.last.id == dbEntry._1.id){
-        //tail = use all elements except the head element
-        //reverse.tail.reverse = erease last element from list
-        userList.reverse.tail.reverse ++ List(userList.last.copy(profiles = userList.last.profiles ++ List(profile)))
-      }else{
-        userList ++ List(User(dbEntry._1.publicId, List(profile), Set()))
-      }
-    })
-    userList
-  }
-
   /** Find a user object by loginInfo providerId and providerKey
     *
     * @param loginInfo
@@ -174,7 +158,7 @@ class MariadbUserDao extends UserDao{
         )} yield(user, profile, supporter, loginInfo)
 
     dbConfig.db.run(action.result).map(result => {
-      buildUserListFromResult(result).headOption
+      UserConverter.buildUserListFromResult(result).headOption
     })
   }
 
@@ -187,7 +171,7 @@ class MariadbUserDao extends UserDao{
         )} yield(user, profile, supporter, loginInfo)
 
     dbConfig.db.run(action.result).map(result => {
-        buildUserListFromResult(result).headOption
+      UserConverter.buildUserListFromResult(result).headOption
     })
   }
 
