@@ -16,7 +16,7 @@ trait PoolData[T] {
 
 object PoolData {
   /**
-    * Needed to use Plays [[request.post(data)]] for PoolData[T].
+    * Needed to use Plays `request.post(data)` for PoolData[T].
     *
     * @param codec the used codec
     * @tparam T the corresponding type of the [[PoolData]] instance
