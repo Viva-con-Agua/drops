@@ -8,7 +8,10 @@ import play.api.libs.json.{JsPath, JsValue, OWrites, Reads, Json}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait PoolData[T] {
-  def toPost : JsValue
+  val hash : String
+  val content: JsValue
+  val paramName : String
+  def toPost : Map[String, Seq[String]]
 }
 
 object PoolData {
@@ -20,7 +23,9 @@ object PoolData {
     * @return
     */
   implicit def writeable[T](implicit codec: Codec): Writeable[PoolData[T]] = {
-    Writeable(data => codec.encode(data.toPost.toString()))
+    Writeable(data => {
+      codec.encode("hash=" + data.hash + "&" + data.paramName + "=" + data.content)
+    })
   }
 
   implicit def contentType[T](implicit codec: Codec): ContentTypeOf[PoolData[T]] = {
@@ -29,7 +34,7 @@ object PoolData {
   }
 }
 
-case class PoolUserData(user: User) extends PoolData[User] {
+case class PoolUserData(override val hash: String, user: User) extends PoolData[User] {
   case class UserMeta(nickName: String, firstName: String, lastName: String, mobile: String, residence: String, birthday: Long, gender: String) {
     /**
       * Since Pool 1 has a special geographic management, we have to set the ID's of the Pool 1 database.
@@ -46,24 +51,36 @@ case class PoolUserData(user: User) extends PoolData[User] {
         UserMeta(nickName, firstName, lastName, mobile, residence, birthday, gender)
     }
 
+    def apply(meta: (String, String, String, String, String, Long, String, Int, Int, Int)) : UserMeta =
+      UserMeta(meta._1, meta._2, meta._3, meta._4, meta._5, meta._6, meta._7)
+
+    def unfold(m: UserMeta) : Option[(String, String, String, String, String, Long, String, Int, Int, Int)] =
+      Some((m.nickName, m.firstName, m.lastName, m.mobile, m.residence, m.birthday, m.gender, m.nation, m.city, m.region))
+
     implicit val userMetaWrites : OWrites[UserMeta] = (
-      (JsPath \ "nickName").write[String] and
-        (JsPath \ "firstName").write[String] and
-        (JsPath \ "lastName").write[String] and
+      (JsPath \ "nickname").write[String] and
+        (JsPath \ "first_name").write[String] and
+        (JsPath \ "last_name").write[String] and
         (JsPath \ "mobile").write[String] and
         (JsPath \ "residence").write[String] and
         (JsPath \ "birthday").write[Long] and
-        (JsPath \ "gender").write[String]
-      )(unlift(UserMeta.unapply))
+        (JsPath \ "gender").write[String] and
+        (JsPath \ "nation").write[Int] and
+        (JsPath \ "city").write[Int] and
+        (JsPath \ "region").write[Int]
+      )(unlift(UserMeta.unfold))
 
     implicit val userMetaReads : Reads[UserMeta] = (
-      (JsPath \ "nickName").read[String] and
-        (JsPath \ "firstName").read[String] and
-        (JsPath \ "lastName").read[String] and
+      (JsPath \ "nickname").read[String] and
+        (JsPath \ "first_name").read[String] and
+        (JsPath \ "last_name").read[String] and
         (JsPath \ "mobile").read[String] and
         (JsPath \ "residence").read[String] and
         (JsPath \ "birthday").read[Long] and
-        (JsPath \ "gender").read[String]
+        (JsPath \ "gender").read[String] and
+        (JsPath \ "nation").read[Int] and
+        (JsPath \ "city").read[Int] and
+        (JsPath \ "region").read[Int]
       ).tupled.map(UserMeta( _ ))
   }
 
@@ -76,21 +93,21 @@ case class PoolUserData(user: User) extends PoolData[User] {
     }
 
     implicit val containerWrites : OWrites[PoolUserDataContainer] = (
-      (JsPath \ "userLogin").write[String] and
-        (JsPath \ "userNiceName").write[String] and
-        (JsPath \ "email").write[String] and
-        (JsPath \ "displayName").write[String] and
+      (JsPath \ "user_login").write[String] and
+        (JsPath \ "user_nicename").write[String] and
+        (JsPath \ "user_email").write[String] and
+        (JsPath \ "display_name").write[String] and
         (JsPath \ "userName").write[String] and
-        (JsPath \ "meta").write[UserMeta]
+        (JsPath \ "usermeta").write[UserMeta]
       )(unlift(PoolUserDataContainer.unapply))
 
     implicit val containerReads : Reads[PoolUserDataContainer] = (
-      (JsPath \ "userLogin").read[String] and
-        (JsPath \ "userNiceName").read[String] and
-        (JsPath \ "email").read[String] and
-        (JsPath \ "displayName").read[String] and
+      (JsPath \ "user_login").read[String] and
+        (JsPath \ "user_nicename").read[String] and
+        (JsPath \ "user_email").read[String] and
+        (JsPath \ "display_name").read[String] and
         (JsPath \ "userName").read[String] and
-        (JsPath \ "meta").read[UserMeta]
+        (JsPath \ "usermeta").read[UserMeta]
       ).tupled.map(PoolUserDataContainer( _ ))
   }
 
@@ -98,7 +115,7 @@ case class PoolUserData(user: User) extends PoolData[User] {
     * Mapping between User and PoolUser
     */
   val container = PoolUserDataContainer(
-    userLogin = user.profiles.head.supporter.username.getOrElse(""),
+    userLogin = user.profiles.head.email.getOrElse(""),
     userNiceName = user.profiles.head.supporter.username.getOrElse(""),
     email = user.profiles.head.email.getOrElse(""),
     displayName = user.profiles.head.supporter.fullName.getOrElse(""),
@@ -113,5 +130,11 @@ case class PoolUserData(user: User) extends PoolData[User] {
       gender = user.profiles.head.supporter.sex.getOrElse("")
     )
   )
-  override def toPost: JsValue = Json.toJson(this.container)
+  override val content: JsValue = Json.toJson(this.container)
+  override val paramName : String = "user"
+
+  override def toPost : Map[String, Seq[String]] = Map(
+    "hash" -> Seq(hash),
+    "user" -> Seq(content.toString())
+  )
 }

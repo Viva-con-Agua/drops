@@ -15,10 +15,10 @@ trait PoolService {
 }
 
 class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) extends PoolService {
-  val poolLogger: Logger = Logger("Pool 1")
+  val poolLogger: Logger = Logger(this.getClass())
 
   override def save(user: User)(implicit messages: Messages): Future[Boolean] = PoolAction(false, user) { user => {
-    val container = PoolUserData(user)
+    val container = PoolUserData(configuration.getString("pool1.hash").getOrElse(""), user)
     api.create[User](container).map(_ match {
       case Left(v) => {
         Logger.debug(Messages("pool1.debug.export.success", v.toString))

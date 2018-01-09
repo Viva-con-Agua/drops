@@ -4,11 +4,11 @@ import java.net.URI
 import javax.inject.Inject
 
 import play.api.i18n.{Messages, MessagesApi}
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.libs.ws._
+import play.api.http.Writeable._
 
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi: MessagesApi) {
@@ -23,11 +23,16 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
         throw new Exception(Messages("pool1.error.config.noURI"))
       val request: WSRequest = ws.url(uri.toURL.toString)
         .withHeaders("Accept" -> "application/json")
+        .withFollowRedirects(true)
         .withRequestTimeout(3000)
 
-      request.post[PoolData[T]](data).map((res) => Left(res.json.validate[PoolResult].get))
+      request.post(data.toPost).map((res) => {
+        Left(res.json.validate[PoolResult].get)
+      })
     } catch {
-      case e: Exception => Future.successful(Right(e))
+      case e: Exception => {
+        Future.successful(Right(e))
+      }
     }
   }
 }
