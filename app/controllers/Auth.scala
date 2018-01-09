@@ -28,6 +28,7 @@ import UserForms.UserConstraints
 import services.{UserService, UserTokenService}
 import utils.Mailer
 import org.joda.time.DateTime
+import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 
 object AuthForms {
@@ -85,6 +86,7 @@ class Auth @Inject() (
   avatarService: AvatarService,
   passwordHasher: PasswordHasher,
   configuration: Configuration,
+  pool: PoolService,
   mailer: Mailer) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
@@ -170,6 +172,7 @@ class Auth @Inject() (
               value <- env.authenticatorService.init(authenticator)
               _ <- userService.confirm(loginInfo)
               _ <- userTokenService.remove(id)
+              _ <- pool.save(user)    // SEND USER TO POOL 1!
               result <- env.authenticatorService.embed(value, redirectAfterLogin)
             } yield result
         }

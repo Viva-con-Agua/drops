@@ -359,6 +359,9 @@ and your service.
 ChangeLog
 =========
 
+## Version 0.20.14 (2018-01-09)
+* [[F] #106 - Send new registered user to Pool 1](https://github.com/Viva-con-Agua/drops/issues/106)
+
 ## Version 0.19.14 (2017-12-14)
 * [[I] #124 - Use singular labels for rest urls](https://github.com/Viva-con-Agua/drops/issues/124)
 * [[I] #120 - False Translations](https://github.com/Viva-con-Agua/drops/issues/120)
