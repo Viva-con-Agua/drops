@@ -175,3 +175,8 @@ rest.api.syntaxError=The query has an syntax error
 rest.api.syntaxGrammar=The query has an grammar error
 rest.api.missingFilterValue=There is no filter value for one or more query parts
 rest.api.queryFunctionsNotImplementedYet=One or more query functions are not implemented yet
+
+pool1.error.config.noURI=No Pool 1 system configured (missing URL)
+pool1.debug.not.activated=Export not activated in configuration! Set `pool1.export=true` in your applications conf file.
+pool1.debug.export.success=Successful export!\n{0}
+pool1.debug.export.failure=Failure on export!\n{0}

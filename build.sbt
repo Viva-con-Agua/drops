@@ -63,3 +63,5 @@ maintainer in Docker := "Johann Sell"
 dockerExposedPorts := Seq(9000, 9443)
 
 dockerRepository := Some("vivaconagua")
+version in Docker := version.value
+
