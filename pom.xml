@@ -1,0 +1,5 @@
+<dependency>
+  <groupId>com.github.tyagihas</groupId>
+  <artifactId>scala_nats_2.11</artifactId>
+  <version>0.3.0</version>
+</dependency>

@@ -4,6 +4,9 @@ import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 import javax.inject.Inject
 
+import java.util.Properties
+import org.nats._
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
@@ -224,6 +227,13 @@ class Auth @Inject() (
   }
 
   def signOut = SecuredAction.async { implicit request =>
+    var opts : Properties = new Properties
+    var nats = configuration.getConfig("nats.ip")
+    opts.put("servers", nats)
+    var conn = Conn.connect(opts)
+    conn.publish("LOGOUT", request.identity.toString)
+    conn.close
+
     env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
   }
 
