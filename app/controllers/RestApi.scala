@@ -142,7 +142,7 @@ class RestApi @Inject() (
   def updateUser(id : UUID) = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
     val userData = request.request.body
     val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
-    userDao.find(loginInfo).flatMap(userObj => {
+    userMariaDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match{
           case true => {
