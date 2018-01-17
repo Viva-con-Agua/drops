@@ -175,7 +175,40 @@ class MariadbUserDao extends UserDao{
     })
   }
 
-  override def save(user: User): Future[User] = ???
+  private def find(id : Long):Future[Option[User]] = {
+    val action = for{
+      (((user, profile), supporter), loginInfo) <- (users.filter(u => u.id === id)
+        join profiles on (_.id === _.userId) //user.id === profile.userId
+        join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
+        join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
+        )} yield(user, profile, supporter, loginInfo)
+
+    dbConfig.db.run(action.result).map(result => {
+      UserConverter.buildUserListFromResult(result).headOption
+    })
+  }
+
+  /**
+    * Create a new user object in the database
+    * @param user
+    * @return
+    */
+  override def save(user: User): Future[User] = {
+    val userDBObj = UserDB(user)
+    //ToDo: Refactore - function should handle a list of profiles
+    val supporter: Supporter = user.profiles.head.supporter
+    val loginInfo: LoginInfo = user.profiles.head.loginInfo
+
+    //ToDo: Currently profiles are per default not confirmed. This magic value should defined in the config
+    val insertion = (for {
+      u <- (users returning users.map(_.id)) += userDBObj
+      p <- (profiles returning profiles.map(_.id)) += ProfileDB(0, false, user.profiles.head.email.get, u)
+      s <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+      l <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+    } yield u).transactionally
+
+    dbConfig.db.run(insertion).flatMap(userId => find(userId)).map(_.get)
+  }
 
   override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = ???
 
