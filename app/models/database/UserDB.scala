@@ -2,6 +2,7 @@ package models.database
 
 import java.util.UUID
 
+import models.User
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -24,6 +25,9 @@ object UserDB{
 
   def apply(tuple: (Long, UUID)): UserDB =
     UserDB(tuple._1, tuple._2)
+
+  def apply(user: User): UserDB=
+    UserDB(0, user.id)
 
   implicit val userWrites : OWrites[UserDB] = (
     (JsPath \ "id").write[Long] and

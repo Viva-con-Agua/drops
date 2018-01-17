@@ -22,6 +22,9 @@ case class LoginInfoDB(
 }
 
 object LoginInfoDB{
+  def apply(id: Long, loginInfo: LoginInfo, profileId: Long): LoginInfoDB =
+    LoginInfoDB(id, loginInfo.providerID, loginInfo.providerKey, profileId)
+
   def mapperTo(
               id: Long, providerId: String, providerKey: String, profileId: Long
               ) = apply(id, providerId, providerKey, profileId)

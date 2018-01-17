@@ -41,6 +41,8 @@ object SupporterDB{
   def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long)) : SupporterDB =
     SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
+  def apply(id: Long, supporter: Supporter, profileId: Long) : SupporterDB =
+    SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId)
 
   implicit val supporterWrites : OWrites[SupporterDB] = (
     (JsPath \ "id").write[Long] and
