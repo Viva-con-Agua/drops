@@ -21,8 +21,9 @@ import User._
 import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
-import com.mohiva.play.silhouette.api.util.PasswordHasher
+import com.mohiva.play.silhouette.api.util.{PasswordHasher, PasswordInfo}
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
+import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
 import models.database.{AccessRight, TaskDB}
 import services.{TaskService, UserService, UserTokenService}
@@ -98,6 +99,7 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
+     password: Option[String], //Password is optional, perhaps its necessary to set the pw on the first login
      profileImageUrl: Option[String]
   )
   object CreateUserBody{
@@ -112,7 +114,11 @@ class RestApi @Inject() (
       case Some(_) =>
         Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
       case None =>{
-        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+        var passwordInfo : Option[PasswordInfo] = None
+        if(!signUpData.password.isEmpty)
+          passwordInfo = Option(passwordHasher.hash(signUpData.password.get))
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo, List(new DefaultProfileImage))
+
         avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
           userService.save(User(id = UUID.randomUUID(), profiles =
             (signUpData.profileImageUrl, avatarUrl) match {
