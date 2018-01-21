@@ -12,10 +12,11 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import com.mohiva.play.silhouette.api.LoginInfo
-import daos.schema.{LoginInfoTableDef, ProfileTableDef, SupporterTableDef, UserTableDef}
+import com.mohiva.play.silhouette.api.util.PasswordInfo
+import daos.schema._
 import models._
 import models.User._
-import models.database.{LoginInfoDB, ProfileDB, SupporterDB, UserDB}
+import models.database._
 import play.api.db.slick.DatabaseConfigProvider
 import reactivemongo.bson.BSONObjectID
 import slick.dbio.DBIOAction
@@ -141,6 +142,7 @@ class MariadbUserDao extends UserDao{
   val users = TableQuery[UserTableDef]
   val profiles = TableQuery[ProfileTableDef]
   val loginInfos = TableQuery[LoginInfoTableDef]
+  val passwordInfos = TableQuery[PasswordInfoTableDef]
   val supporters = TableQuery[SupporterTableDef]
 
   /** Find a user object by loginInfo providerId and providerKey
@@ -193,7 +195,35 @@ class MariadbUserDao extends UserDao{
     * @param user
     * @return
     */
+  //ToDo: Refactore - Merge the three functions
   override def save(user: User): Future[User] = {
+    if(user.profiles.head.passwordInfo.isEmpty){
+      saveWithoutPassword(user)
+    }else{
+      saveWithPassowrd(user)
+    }
+  }
+
+  def saveWithPassowrd(user: User): Future[User]={
+    val userDBObj = UserDB(user)
+    //ToDo: Refactore - function should handle a list of profiles
+    val supporter: Supporter = user.profiles.head.supporter
+    val loginInfo: LoginInfo = user.profiles.head.loginInfo
+    val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
+
+    //ToDo: Currently profiles are per default not confirmed. This magic value should defined in the config
+    val insertion = (for {
+      u <- (users returning users.map(_.id)) += userDBObj
+      p <- (profiles returning profiles.map(_.id)) += ProfileDB(0, false, user.profiles.head.email.get, u)
+      _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+      _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+      _ <- (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+    } yield u).transactionally
+
+    dbConfig.db.run(insertion).flatMap(userId => find(userId)).map(_.get)
+  }
+
+  def saveWithoutPassword(user:User): Future[User]={
     val userDBObj = UserDB(user)
     //ToDo: Refactore - function should handle a list of profiles
     val supporter: Supporter = user.profiles.head.supporter
@@ -203,8 +233,8 @@ class MariadbUserDao extends UserDao{
     val insertion = (for {
       u <- (users returning users.map(_.id)) += userDBObj
       p <- (profiles returning profiles.map(_.id)) += ProfileDB(0, false, user.profiles.head.email.get, u)
-      s <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-      l <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+      _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+      _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
     } yield u).transactionally
 
     dbConfig.db.run(insertion).flatMap(userId => find(userId)).map(_.get)
