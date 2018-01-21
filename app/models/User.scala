@@ -106,8 +106,8 @@ object Profile {
 
   def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter) : Profile =
     Profile(loginInfo, confirmed, Some(email), supporter, None, None, List[DefaultProfileImage]())
-  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, avatar: List[DefaultProfileImage]) :Profile =
-    Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
+  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, passwordInfo: Option[PasswordInfo], avatar: List[DefaultProfileImage]) :Profile =
+    Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), passwordInfo, None, avatar)
 
   def apply(loginInfo: LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, avatar: List[DefaultProfileImage]) : Profile =
     Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
