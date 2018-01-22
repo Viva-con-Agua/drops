@@ -279,7 +279,9 @@ class MariadbUserDao extends UserDao{
       })
   }
 
-  override def getCount: Future[Int] = ???
+  override def getCount: Future[Int] = {
+    dbConfig.db.run(users.length.result)
+  }
 
   override def getObjectId(id: UUID): Future[Option[ObjectIdWrapper]] = ???
 
