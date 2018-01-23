@@ -29,7 +29,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import UserForms.UserConstraints
 import services.{UserService, UserTokenService}
-import utils.Mailer
+import utils.{Mailer, Nats}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -90,7 +90,8 @@ class Auth @Inject() (
   passwordHasher: PasswordHasher,
   configuration: Configuration,
   pool: PoolService,
-  mailer: Mailer) extends Silhouette[User,CookieAuthenticator] {
+  mailer: Mailer,
+  nats: Nats) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
 
@@ -227,13 +228,12 @@ class Auth @Inject() (
   }
 
   def signOut = SecuredAction.async { implicit request =>
-    var opts : Properties = new Properties
-    var nats = configuration.getConfig("nats.ip")
-    opts.put("servers", nats)
-    var conn = Conn.connect(opts)
-    conn.publish("LOGOUT", request.identity.toString)
-    conn.close
-
+    userService.retrieve(request.authenticator.loginInfo).flatMap {
+      case None => 
+        Future.successful(Redirect(routes.Auth.signOut()).flashing("error" -> Messages("error.noUser")))
+      case Some(user) => 
+        Future.successful(nats.publishLogout(user.id))
+    }
     env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
   }
 
