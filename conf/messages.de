@@ -141,7 +141,9 @@ crew.update.noProfileForLogin=Ooohh!! Kein Tropfenprofil für den eingeloggten N
 crew.select.one=Bitte wähle deine Crew aus
 
 oauth2server.clientId.notFound=Keinen OAuth 2 Client gefunden, der zu der angegebenen ID passt.
+oauth2server.clientSecret.missing=Kein OAuth 2 Client Secret angegeben!
 oauth2server.clientId.missing=Keine OAuth 2 Client ID angegeben!
+oauth2server.security.method.notImplemented=Konfigurierte Methode zur Absicherung der Webservices ''{0}'' ist bisher nicht implementiert. Bitte ändere den Wert der Variablen ''drops.ws.security'' in deiner application.conf.
 
 oauth2.register.title=Registriere Oauth2 Client
 oauth2.register.legend=Registriere Oauth2 Client

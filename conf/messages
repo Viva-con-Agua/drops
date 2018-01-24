@@ -141,7 +141,9 @@ crew.update.noProfileForLogin=Internal Server Error: Found no profile for the cu
 crew.select.one=Please, select a crew
 
 oauth2server.clientId.notFound=No client application is registered with the given client ID.
+oauth2server.clientSecret.missing=No client secret is given.
 oauth2server.clientId.missing=No client ID is given.
+oauth2server.security.method.notImplemented=Configured security method ''{0}'' is not implemented yet. Please change ''drops.ws.security'' in your application.conf.
 
 oauth2.register.title=Register Oauth2 Client
 oauth2.register.legend=Register Oauth2 Client
