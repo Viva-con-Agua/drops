@@ -176,3 +176,6 @@ rest.api.syntaxError=Die Anfrage hat einen syntaktischen Fehler
 rest.api.syntaxGrammar=Die Anfrage hat einen grammatikalischen Fehler
 rest.api.missingFilterValue=Für Teile der Filteranfrage ist kein Wert gesetzt
 rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage ist noch nicht implementiert.
+rest.api.givenClientNotFound=Es konnte der angebenen ID kein valider Client zugeordnet werden.
+rest.api.noClientSecretGiven=Methode zur Absicherung der Webservices ist momentan ''secret'', aber es wurde kein Client Secret angegeben.
+rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der Webservices ist derzeit nicht implementiert, bitte ändere ''drops.ws.security'' in deiner application.conf
