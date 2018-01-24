@@ -195,47 +195,30 @@ class MariadbUserDao extends UserDao{
     * @param user
     * @return
     */
-  //ToDo: Refactore - Merge the three functions
-  override def save(user: User): Future[User] = {
-    if(user.profiles.head.passwordInfo.isEmpty){
-      saveWithoutPassword(user)
-    }else{
-      saveWithPassowrd(user)
+  def save(user: User): Future[User]={
+    val userDBObj = UserDB(user)
+    //ToDo: Refactore - function should handle a list of profiles
+    val supporter: Supporter = user.profiles.head.supporter
+    val loginInfo: LoginInfo = user.profiles.head.loginInfo
+    val profile : Profile = user.profiles.head
+
+    val insertion = if(user.profiles.head.passwordInfo.isEmpty) {
+      val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
+      (for {
+        u <- (users returning users.map(_.id)) += userDBObj
+        p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, u)
+        _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+        _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+        _ <- (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+      } yield u).transactionally
     }
-  }
-
-  def saveWithPassowrd(user: User): Future[User]={
-    val userDBObj = UserDB(user)
-    //ToDo: Refactore - function should handle a list of profiles
-    val supporter: Supporter = user.profiles.head.supporter
-    val loginInfo: LoginInfo = user.profiles.head.loginInfo
-    val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
-
-    //ToDo: Currently profiles are per default not confirmed. This magic value should defined in the config
-    val insertion = (for {
-      u <- (users returning users.map(_.id)) += userDBObj
-      p <- (profiles returning profiles.map(_.id)) += ProfileDB(0, false, user.profiles.head.email.get, u)
-      _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-      _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
-      _ <- (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
-    } yield u).transactionally
-
-    dbConfig.db.run(insertion).flatMap(userId => find(userId)).map(_.get)
-  }
-
-  def saveWithoutPassword(user:User): Future[User]={
-    val userDBObj = UserDB(user)
-    //ToDo: Refactore - function should handle a list of profiles
-    val supporter: Supporter = user.profiles.head.supporter
-    val loginInfo: LoginInfo = user.profiles.head.loginInfo
-
-    //ToDo: Currently profiles are per default not confirmed. This magic value should defined in the config
-    val insertion = (for {
-      u <- (users returning users.map(_.id)) += userDBObj
-      p <- (profiles returning profiles.map(_.id)) += ProfileDB(0, false, user.profiles.head.email.get, u)
-      _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-      _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
-    } yield u).transactionally
+    else
+      (for {
+        u <- (users returning users.map(_.id)) += userDBObj
+        p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, u)
+        _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+        _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+      } yield u).transactionally
 
     dbConfig.db.run(insertion).flatMap(userId => find(userId)).map(_.get)
   }
