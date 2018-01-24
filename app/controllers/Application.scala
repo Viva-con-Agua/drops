@@ -19,7 +19,7 @@ import services.UserService
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
-import utils.{WithAlternativeRoles, WithRole}
+import utils.authorization.{Pool1Restriction, WithAlternativeRoles, WithRole}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -40,7 +40,7 @@ class Application @Inject() (
     Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
   }
 
-  def profile = SecuredAction.async { implicit request =>
+  def profile = SecuredAction(Pool1Restriction(true)).async { implicit request =>
     crewDao.list.map(l =>
       Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
     )
