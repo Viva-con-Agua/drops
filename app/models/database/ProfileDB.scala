@@ -1,5 +1,6 @@
 package models.database
 
+import models.Profile
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -26,6 +27,8 @@ object ProfileDB{
 
   def apply(tuple: (Long, Boolean, String, Long)): ProfileDB =
     ProfileDB(tuple._1, tuple._2, tuple._3, tuple._4)
+  def apply(profile:Profile, userId:Long): ProfileDB =
+    ProfileDB(0, profile.confirmed, profile.email.get, userId)
 
   implicit val profileWrites : OWrites[ProfileDB] = (
     (JsPath \ "id").write[Long] and
