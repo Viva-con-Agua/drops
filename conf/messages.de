@@ -141,7 +141,9 @@ crew.update.noProfileForLogin=Ooohh!! Kein Tropfenprofil für den eingeloggten N
 crew.select.one=Bitte wähle deine Crew aus
 
 oauth2server.clientId.notFound=Keinen OAuth 2 Client gefunden, der zu der angegebenen ID passt.
+oauth2server.clientSecret.missing=Kein OAuth 2 Client Secret angegeben!
 oauth2server.clientId.missing=Keine OAuth 2 Client ID angegeben!
+oauth2server.security.method.notImplemented=Konfigurierte Methode zur Absicherung der Webservices ''{0}'' ist bisher nicht implementiert. Bitte ändere den Wert der Variablen ''drops.ws.security'' in deiner application.conf.
 
 oauth2.register.title=Registriere Oauth2 Client
 oauth2.register.legend=Registriere Oauth2 Client
@@ -174,3 +176,6 @@ rest.api.syntaxError=Die Anfrage hat einen syntaktischen Fehler
 rest.api.syntaxGrammar=Die Anfrage hat einen grammatikalischen Fehler
 rest.api.missingFilterValue=Für Teile der Filteranfrage ist kein Wert gesetzt
 rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage ist noch nicht implementiert.
+rest.api.givenClientNotFound=Es konnte der angebenen ID kein valider Client zugeordnet werden.
+rest.api.noClientSecretGiven=Methode zur Absicherung der Webservices ist momentan ''secret'', aber es wurde kein Client Secret angegeben.
+rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der Webservices ist derzeit nicht implementiert, bitte ändere ''drops.ws.security'' in deiner application.conf
