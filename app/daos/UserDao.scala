@@ -270,10 +270,10 @@ class MariadbUserDao extends UserDao{
 
   override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = ???
 
-  class MongoUserWS extends UserWS {
+  class MariadbUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] = ???
 
     override def list(queryExtension: JsObject, limit : Int, sort: JsObject): Future[List[User]] = ???
   }
-  val ws = new MongoUserWS()
+  val ws = new MariadbUserWS()
 }
