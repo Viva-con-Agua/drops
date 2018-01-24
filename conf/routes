@@ -40,7 +40,7 @@ POST    /rest/access                                        controllers.RestApi.
 
 # OAuth2 Rest API
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
-GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String)
+GET     /oauth2/code/get/:clientId/:clientSecret            controllers.OAuth2Controller.getCode(clientId : String, clientSecret : String)
 
 # Authentication
 GET     /auth/init                                          controllers.Auth.init

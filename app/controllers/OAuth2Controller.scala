@@ -38,8 +38,8 @@ class OAuth2Controller @Inject() (
     issueAccessToken(oauthDataHandler)
   }
 
-  def getCode(clientId : String) = SecuredAction.async { implicit request =>
-    oauthClientDao.find(clientId, None, "authorization_code").flatMap(_ match {
+  def getCode(clientId : String, clientSecret : String) = SecuredAction.async { implicit request =>
+    oauthClientDao.find(clientId, Some(clientSecret), "authorization_code").flatMap(_ match {
       case Some(client) => oauthCodeDao.save(OauthCode(request.identity, client)).map(
         code => code.client.redirectUri.map( (uri) => Redirect( uri + code.code)).getOrElse(
           BadRequest(Messages("oauth2server.clientHasNoRedirectURI"))
