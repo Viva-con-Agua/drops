@@ -36,17 +36,19 @@ class Application @Inject() (
   configuration: Configuration,
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
-  def index = SecuredAction.async { implicit request =>
+  val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
+
+  def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
   }
 
-  def profile = SecuredAction(Pool1Restriction(true)).async { implicit request =>
+  def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     crewDao.list.map(l =>
       Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
     )
   }
 
-  def updateBase = SecuredAction.async { implicit request =>
+  def updateBase = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     UserForms.userForm.bindFromRequest.fold(
       bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define))),
       userData => request.identity.profileFor(request.authenticator.loginInfo) match {
@@ -67,7 +69,7 @@ class Application @Inject() (
     )
   }
 
-  def updateCrew = SecuredAction.async { implicit request =>
+  def updateCrew = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
       bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define))),
       crewData => {
@@ -90,7 +92,7 @@ class Application @Inject() (
     )
   }
 
-  def updatePillar = SecuredAction.async { implicit request =>
+  def updatePillar = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     PillarForms.define.bindFromRequest.fold(
       bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm))),
       pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
@@ -108,12 +110,12 @@ class Application @Inject() (
     )
   }
 
-  def task = SecuredAction{ implicit request =>
+  def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
     val resultingTasks: Future[Seq[Task]] = taskDao.all()
     Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
   }
 
-  def initCrews = Action.async { request =>
+  def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
     configuration.getConfigList("crews").map(_.toList.map(c =>
       crewDao.find(c.getString("name").get).map(_ match {
         case Some(crew) => crew
@@ -125,7 +127,7 @@ class Application @Inject() (
     Future.successful(Redirect("/"))
   }
 
-  def fixCrewsID = SecuredAction.async { request =>
+  def fixCrewsID = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
     val crews = crewDao.listOfStubs.flatMap(l => Future.sequence(l.map(oldCrew => crewDao.update(oldCrew.toCrew))))
     val users = crews.flatMap(l => userService.listOfStubs.flatMap(ul => Future.sequence(ul.map(user => {
       val profiles = user.profiles.map(profile => {
@@ -141,7 +143,7 @@ class Application @Inject() (
     res.map(pair => Ok(Json.arr(Json.toJson(pair._1), Json.toJson(pair._2))))
   }
 
-  def initUsers(number: Int, specialRoleUsers : Int = 1) = SecuredAction(WithRole(RoleAdmin)).async { request => {
+  def initUsers(number: Int, specialRoleUsers : Int = 1) = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request => {
     val wsRequest = ws.url("https://randomuser.me/api/")
       .withHeaders("Accept" -> "application/json")
       .withRequestTimeout(10000)
@@ -173,11 +175,11 @@ class Application @Inject() (
     )
   }}
 
-  def registration = SecuredAction(WithAlternativeRoles(RoleAdmin, RoleEmployee)) { implicit request =>
+  def registration = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)) { implicit request =>
     Ok(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register))
   }
 
-  def registerOAuth2Client = SecuredAction(WithAlternativeRoles(RoleAdmin, RoleEmployee)).async { implicit request =>
+  def registerOAuth2Client = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)).async { implicit request =>
     OAuth2ClientForms.register.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm))),
       registerData => {
