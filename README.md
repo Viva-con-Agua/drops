@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.21.14 (2018-01-24)
+## Version 0.21.15 (2018-01-25)
+* [[I] #183 - Accessibility of views bases on Pool 1 connection](https://github.com/Viva-con-Agua/drops/issues/183)
 * [[F] #180 - Allow webservice secrets](https://github.com/Viva-con-Agua/drops/issues/180)
 * [[F] #106 - Send new registered user to Pool 1](https://github.com/Viva-con-Agua/drops/issues/106)
 
