@@ -13,7 +13,7 @@ import models._
 import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
-import utils.WithRole
+import utils.authorization.{Pool1Restriction, WithRole}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 /**
@@ -22,13 +22,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Roles @Inject() (
   userService: UserService,
   val messagesApi: MessagesApi,
+  configuration: Configuration,
   val env:Environment[User,CookieAuthenticator]) extends Silhouette[User,CookieAuthenticator] {
 
-  def index = SecuredAction(WithRole(RoleAdmin)).async { request =>
+  val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
+
+  def index = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
     userService.list.map(users => Ok(views.html.roles.index(request.identity, request.authenticator.loginInfo, RolesForms.setUsers(users))(request, messagesApi.preferred(request)))) //RolesForms.setUsers(users)
   }
 
-  def update = SecuredAction(WithRole(RoleAdmin)).async { request =>
+  def update = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
     RolesForms.set.bindFromRequest()(request).fold(
       bogusForm => Future.successful(BadRequest(
         views.html.roles.index(request.identity, request.authenticator.loginInfo, bogusForm)(request, messagesApi.preferred(request))

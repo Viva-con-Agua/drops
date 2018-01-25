@@ -17,6 +17,7 @@ import models._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import services.UserService
 import reactivemongo.api.gridfs.{DefaultFileToSave, FileToSave, GridFS, ReadFile}
+import utils.authorization.Pool1Restriction
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -31,6 +32,9 @@ class Files @Inject() (
                           configuration: Configuration,
                           val reactiveMongoApi: ReactiveMongoApi
                         ) extends Silhouette[User,CookieAuthenticator] with MongoController with ReactiveMongoComponents {
+
+  val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
+
   // gridFSBodyParser from `MongoController`
   import MongoController.readFileReads
 
@@ -47,7 +51,7 @@ class Files @Inject() (
 
   val files = reactiveMongoApi.db.collection[JSONCollection]("fs.files")
 
-  def uploadProfileImage = SecuredAction.async(fsParser) { implicit request =>
+  def uploadProfileImage = SecuredAction(Pool1Restriction(pool1Export)).async(fsParser) { implicit request =>
     val futureFile: Future[ReadFile[JSONSerializationPack.type, JsValue]] =
       request.body.files.head.ref
 
