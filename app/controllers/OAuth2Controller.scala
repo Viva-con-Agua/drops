@@ -51,9 +51,9 @@ class OAuth2Controller @Inject() (
     * @param clientSecret secures the communication, if this method is configured.
     * @return
     */
-  def getCode(clientId : String, clientSecret : String) = SecuredAction.async { implicit request => {
+  def getCode(clientId : String) = SecuredAction.async { implicit request => {
 
-    def bodyWithSecret(secret : Option[String]) = oauthClientDao.find(clientId, secret, "authorization_code").flatMap(_ match {
+    oauthClientDao.find(clientId, None, "authorization_code").flatMap(_ match {
       case Some(client) => oauthCodeDao.save(OauthCode(request.identity, client)).map(
         code => code.client.redirectUri.map((uri) => Redirect(uri + code.code)).getOrElse(
           BadRequest(Messages("oauth2server.clientHasNoRedirectURI"))
@@ -61,16 +61,5 @@ class OAuth2Controller @Inject() (
       )
       case _ => Future.successful(BadRequest(Messages("oauth2server.clientId.notFound")))
     })
-
-    configuration.getString("drops.ws.security").getOrElse("secret") match {
-      case "none" => bodyWithSecret(None)
-      case "secret" if clientSecret != "" => bodyWithSecret(Some(clientSecret))
-      case "sluice" => {
-        // TODO: Implement integration for using sluice in intra-microservice communication
-        Future.successful(BadRequest(Messages("oauth2server.security.method.notImplemented", "sluice")))
-      }
-      case _ => Future.successful(BadRequest(Messages("oauth2server.clientSecret.missing")))
-    }
-
   }}
 }
