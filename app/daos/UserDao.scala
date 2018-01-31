@@ -165,16 +165,7 @@ class MariadbUserDao extends UserDao{
   }
 
   override def find(userId: UUID): Future[Option[User]] = {
-    val action = for{
-      (((user, profile), supporter), loginInfo) <- (users.filter(u => u.publicId === userId)
-          join profiles on (_.id === _.userId) //user.id === profile.userId
-          join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
-          join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
-        )} yield(user, profile, supporter, loginInfo)
-
-    dbConfig.db.run(action.result).map(result => {
-      UserConverter.buildUserListFromResult(result).headOption
-    })
+    findDBModels(userId).map(r => UserConverter.buildUserListFromResult(r).headOption)
   }
 
   private def find(id : Long):Future[Option[User]] = {
@@ -191,17 +182,40 @@ class MariadbUserDao extends UserDao{
   }
 
   /**
+    * Function to find an user by user id and return the database models
+    * @param userId
+    * @return
+    */
+  private def findDBModels(userId: UUID) : Future[Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB)]] = {
+    val action = for{
+      (((user, profile), supporter), loginInfo) <- (users.filter(u => u.publicId === userId)
+        join profiles on (_.id === _.userId) //user.id === profile.userId
+        join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
+        join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
+        )} yield(user, profile, supporter, loginInfo)
+
+    dbConfig.db.run(action.result).map(result => {
+      result
+    })
+  }
+
+  private def findDBUserModel(userId : UUID) : Future[UserDB] = {
+    dbConfig.db.run(users.filter(_.publicId === userId).result).map(r => r.head)
+  }
+
+  /**
     * Create a new user object in the database
     * @param user
     * @return
     */
-  def save(user: User): Future[User]={
+  override def save(user: User): Future[User]={
     val userDBObj = UserDB(user)
     //ToDo: Refactore - function should handle a list of profiles
     val supporter: Supporter = user.profiles.head.supporter
     val loginInfo: LoginInfo = user.profiles.head.loginInfo
     val profile : Profile = user.profiles.head
 
+    //ToDo: Refactroe - use addProfiles function - this will also resolve the todo above
     val insertion = if(user.profiles.head.passwordInfo.isEmpty) {
       val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
       (for {
@@ -225,13 +239,97 @@ class MariadbUserDao extends UserDao{
 
   override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = ???
 
-  override def replace(user: User): Future[User] = ???
+  override def replace(updatedUser: User): Future[User] = {
+    findDBUserModel(updatedUser.id).flatMap(user => {
+      //Delete Profiles
+      val deleteProfile = profiles.filter(_.userId === user.id)
+      val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
+      val deleteLoginInfo = loginInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
+      val deletePasswordInfo = passwordInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
+      dbConfig.db.run((deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteSupporter.delete andThen deleteProfile.delete).transactionally)
 
-  override def confirm(loginInfo: LoginInfo): Future[User] = ???
+      //Add new profiles for the user
+      addProfiles(user, updatedUser.profiles)
+    })
+  }
 
-  override def link(user: User, profile: Profile): Future[User] = ???
+  //ToDo: Export Profile DB Operations to ProfileDAO. This has to be protected, becaus it should not used outside the DAO Package
+  /**
+    * internal function to add a list of profiles for one user to the database
+    *
+    * @param userDB
+    * @param profileObjects
+    * @return
+    */
+  private def addProfiles(userDB : UserDB, profileObjects: List[Profile]) : Future[User] = {
 
-  override def update(profile: Profile): Future[User] = ???
+    profileObjects.foreach(profile => {
+      val supporter: Supporter = profile.supporter
+      val loginInfo: LoginInfo = profile.loginInfo
+
+      val insertion = if(profile.passwordInfo.isEmpty) {
+        val passwordInfo: PasswordInfo = profile.passwordInfo.get
+        (for {
+          p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userDB.id)
+          _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+          _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+          _ <- (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+        } yield p).transactionally
+      }
+      else
+        (for {
+          p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userDB.id)
+          _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
+          _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
+        } yield p).transactionally
+      dbConfig.db.run(insertion)
+    })
+
+    find(userDB.id).map(_.get)
+  }
+
+  override def confirm(loginInfo: LoginInfo): Future[User] = {
+    val action = for{
+      (profile, _) <- (profiles
+        join loginInfos.filter(_.providerKey === loginInfo.providerID) on (_.id === _.profileId)
+      )} yield(profile.confirmed)
+
+    dbConfig.db.run(action.update(true)).flatMap(_ => find(loginInfo)).map(_.get)
+  }
+
+  /**
+    * add a new profile
+    * @param user
+    * @param profile
+    * @return
+    */
+  override def link(user: User, profile: Profile): Future[User] = {
+    find(profile.loginInfo).flatMap(user => {
+      findDBUserModel(user.get.id).flatMap(userDB => {
+        addProfiles(userDB, List(profile))
+      })
+    })
+  }
+
+  /**
+    * replace a profile
+    * @param profile
+    * @return
+    */
+  override def update(profile: Profile): Future[User] = {
+    find(profile.loginInfo).flatMap(user => {
+      findDBUserModel(user.get.id).flatMap(userDB => {
+        //Delete Profile
+        val deleteLoginInfo = loginInfos.filter(_.providerId === profile.loginInfo.providerKey)
+        val deleteProfile = profiles.filter(_.id in (deleteLoginInfo.map(_.profileId)))
+        val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
+        val deletePasswordInfo = passwordInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
+        dbConfig.db.run((deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteSupporter.delete andThen deleteProfile.delete).transactionally)
+
+        addProfiles(userDB, List(profile))
+      })
+    })
+  }
 
   override def list: Future[List[User]] = {
     val action = for{
