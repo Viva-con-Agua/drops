@@ -78,11 +78,11 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
         )} yield(passwordInfo)
 
     //ToDo: Validate the functionality of this impl
-    dbConfig.db.run(action.result).map(r => r.headOption.map(pInfo => PasswordInfo(pInfo.hasher, pInfo.password, None)))
+    dbConfig.db.run(action.result).map(r => r.headOption.map(pInfo => PasswordInfo(pInfo.hasher, pInfo.password)))
   }
 
   def find(id: Long) : Future[PasswordInfo] = {
-    dbConfig.db.run(passwordInfos.filter(_.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password, None))
+    dbConfig.db.run(passwordInfos.filter(_.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
   }
 
   override def add(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = {
