@@ -75,6 +75,7 @@ object AuthForms {
   ).verifying(Messages("error.passwordsDontMatch"), password => password._1 == password._2))
 }
 
+
 class Auth @Inject() (
   val messagesApi: MessagesApi, 
   val env:Environment[User,CookieAuthenticator],
@@ -182,6 +183,11 @@ class Auth @Inject() (
         userTokenService.remove(id).map {_ => NotFound(views.html.errors.notFound(request))}
     }
   }
+  
+  /** Pool1 function
+  def pool1SignIn = Action.async { implicit request =>
+  }*/
+
 
   def signIn = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
@@ -195,7 +201,12 @@ class Auth @Inject() (
       bogusForm => Future.successful(BadRequest(views.html.auth.signIn(bogusForm, socialProviderRegistry))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
-        credentialsProvider.authenticate(credentials).flatMap { loginInfo => 
+        credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
+          //Pool1 user check --->
+          userService.pool1user(loginInfo.email).flatMap{
+            case Some(poo1user) => 
+            case None =>
+          
           userService.retrieve(loginInfo).flatMap {
             case None => 
               Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.noUser")))
@@ -219,6 +230,8 @@ class Auth @Inject() (
         }.recover {
           case e:ProviderException => Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.invalidCredentials"))
         }
+        //Pool1 User
+        }
       }
     )
   }
@@ -229,6 +242,11 @@ class Auth @Inject() (
 
   def startResetPassword = Action { implicit request =>
     Ok(views.html.auth.startResetPassword(emailForm))
+  }
+  
+  
+  def handlePoo1StartResetPassword = Action.async { implicit request =>
+    
   }
 
   def handleStartResetPassword = Action.async { implicit request =>
