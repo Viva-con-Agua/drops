@@ -25,7 +25,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import UserForms.UserConstraints
-import services.{UserService, UserTokenService}
+import services.{UserService, UserTokenService, Pool1Service}
 import utils.Mailer
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
@@ -83,6 +83,7 @@ class Auth @Inject() (
   authInfoRepository: AuthInfoRepository,
   credentialsProvider: CredentialsProvider,
   userService: UserService,
+  pool1Service: Pool1Service,
   userTokenService: UserTokenService,
   avatarService: AvatarService,
   passwordHasher: PasswordHasher,
@@ -203,8 +204,8 @@ class Auth @Inject() (
         val credentials = Credentials(signInData.email, signInData.password)
         credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
           //Pool1 user check --->
-          userService.pool1user(loginInfo.email).flatMap{
-            case Some(poo1user) => handlePoo1StartResetPassword(signInData.email)
+          pool1Service.pool1user(signInData.email).flatMap{
+            case Some(poo1user) => Future.successful(Ok(handlePoo1StartResetPassword(signInData.email))
             case None =>
           
           userService.retrieve(loginInfo).flatMap {
@@ -244,8 +245,8 @@ class Auth @Inject() (
     Ok(views.html.auth.startResetPassword(emailForm))
   }
 
-  def handlePoo1StartResetPassword(email: Sting) = Action.async { implicit request =>
-    email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
+  def handlePoo1StartResetPassword(email: String) = Action.async { implicit request =>
+    userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
         case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
         case Some(user) => for {
           token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))

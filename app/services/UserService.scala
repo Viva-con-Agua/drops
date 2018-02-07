@@ -42,7 +42,6 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
   }
   /** Return a Pool1 User for first SignIn 
    */
-  def pool1user(email: String) : Future[Option[Pool1User]] = pool1UserDAO.find(email)
 
 //  def accessRightsForService(userId : UUID, service: String) : Future[Seq[AccessRight]] = {
 //    taskDao.idsForUser(userId).flatMap(taskIds => accessRightDao.forTaskListAndService(taskIds, service))
