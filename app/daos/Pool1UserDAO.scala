@@ -14,12 +14,12 @@ import models._
 import models.Pool1User
 import reactivemongo.bson.BSONObjectID
 
-trait Pool1UserDAO {
+trait Pool1UserDao {
   def find(email: String): Future[Option[Pool1User]]
   def save(user: Pool1User): Future[Pool1User]
 }
 
-class MongoPool1UserDAO extends Pool1UserDAO {
+class MongoPool1UserDao extends Pool1UserDao {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   val pool1users = reactiveMongoApi.db.collection[JSONCollection]("pool1users")
   
