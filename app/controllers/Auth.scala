@@ -204,7 +204,7 @@ class Auth @Inject() (
         credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
           //Pool1 user check --->
           userService.pool1user(loginInfo.email).flatMap{
-            case Some(poo1user) => 
+            case Some(poo1user) => handlePoo1StartResetPassword(signInData.email)
             case None =>
           
           userService.retrieve(loginInfo).flatMap {
@@ -243,10 +243,17 @@ class Auth @Inject() (
   def startResetPassword = Action { implicit request =>
     Ok(views.html.auth.startResetPassword(emailForm))
   }
-  
-  
-  def handlePoo1StartResetPassword = Action.async { implicit request =>
-    
+
+  def handlePoo1StartResetPassword(email: Sting) = Action.async { implicit request =>
+    email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
+        case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
+        case Some(user) => for {
+          token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
+        } yield {
+          mailer.resetPassword(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
+          Ok(views.html.auth.resetPasswordInstructions(email))
+        }
+      }
   }
 
   def handleStartResetPassword = Action.async { implicit request =>
