@@ -22,5 +22,10 @@ trait Pool1UserDAO {
 class MongoPool1UserDAO extends Pool1UserDAO {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   val pool1users = reactiveMongoApi.db.collection[JSONCollection]("pool1users")
-
+  
+  def find(email: String):Future[Option[Pool1User]] = 
+    pool1users.find(Json.obj("email" -> email)).one[Pool1User]
+  
+  def save(user: Pool1User): Future[Pool1User] = 
+    pool1users.insert(user).map(_ => user)
 }

@@ -205,33 +205,35 @@ class Auth @Inject() (
         credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
           //Pool1 user check --->
           pool1Service.pool1user(signInData.email).flatMap{
-            case Some(poo1user) => Future.successful(Ok(handlePoo1StartResetPassword(signInData.email))
-            case None =>
-          
-          userService.retrieve(loginInfo).flatMap {
-            case None => 
-              Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.noUser")))
-            case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) => 
-              Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.unregistered", signInData.email)))
-            case Some(_) => for {
-              authenticator <- env.authenticatorService.create(loginInfo).map { 
-                case authenticator if signInData.rememberMe =>
-                  val c = configuration.underlying
-                  authenticator.copy(
-                    expirationDateTime = new DateTime() + c.as[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorExpiry"),
-                    idleTimeout = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorIdleTimeout"),
-                    cookieMaxAge = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.cookieMaxAge")
-                  )
-                case authenticator => authenticator
+            case Some(poo1user) => {
+              handlePoo1StartResetPassword(signInData.email)
+              Future.successful(Ok("new user"))
+            }
+            case None => {
+              userService.retrieve(loginInfo).flatMap {
+                case None => 
+                  Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.noUser")))
+                case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) => 
+                  Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.unregistered", signInData.email)))
+                case Some(_) => for {
+                  authenticator <- env.authenticatorService.create(loginInfo).map { 
+                    case authenticator if signInData.rememberMe =>
+                      val c = configuration.underlying
+                      authenticator.copy(
+                        expirationDateTime = new DateTime() + c.as[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorExpiry"),
+                        idleTimeout = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.authenticatorIdleTimeout"),
+                        cookieMaxAge = c.getAs[FiniteDuration]("silhouette.authenticator.rememberMe.cookieMaxAge")
+                      )
+                    case authenticator => authenticator
+                  }
+                  value <- env.authenticatorService.init(authenticator)
+                  result <- env.authenticatorService.embed(value, redirectAfterLogin)
+                } yield result
+              }.recover {
+                case e:ProviderException => Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.invalidCredentials"))
               }
-              value <- env.authenticatorService.init(authenticator)
-              result <- env.authenticatorService.embed(value, redirectAfterLogin)
-            } yield result
+            }
           }
-        }.recover {
-          case e:ProviderException => Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.invalidCredentials"))
-        }
-        //Pool1 User
         }
       }
     )
