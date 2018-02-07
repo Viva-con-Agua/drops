@@ -197,6 +197,7 @@ class Auth @Inject() (
     })
   }
 
+
   def authenticate = Action.async { implicit request =>
     signInForm.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.auth.signIn(bogusForm, socialProviderRegistry))),
@@ -209,8 +210,7 @@ class Auth @Inject() (
             case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) =>
               pool1Service.pool1user(signInData.email).flatMap {
                 case Some(pooluser) => {
-                  handlePoo1StartResetPassword(signInData.email)
-                  Future.successful(Ok("pool1"))
+                  Future.successful(Redirect(routes.Auth.handlePool1StartResetPassword(signInData.email)).flashing("error" -> Messages("error.pool1userinit")))
                 }
                 case None =>
                   Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.unregistered", signInData.email)))
@@ -245,7 +245,7 @@ class Auth @Inject() (
     Ok(views.html.auth.startResetPassword(emailForm))
   }
 
-  def handlePoo1StartResetPassword(email: String) = Action.async { implicit request =>
+  def handlePool1StartResetPassword(email: String) = Action.async { implicit request =>
     userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
         case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
         case Some(user) => for {

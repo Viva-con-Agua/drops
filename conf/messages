@@ -119,7 +119,7 @@ error.profileUnauth=Can't access profile information: must authenticate first.
 error.sex.notAllowed=Given sexuality is unknown, please enter a known one (male, female, other).
 error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123456 or +176/123456
 error.profile.image.upload=Profile image has not been uploaded! Try again!
-
+error.pool1userinit=We send a mail for rest your passwort.
 
 success.profile.image.upload=Profile image was successfully uploaded!
 

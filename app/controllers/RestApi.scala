@@ -329,7 +329,7 @@ class RestApi @Inject() (
     accessRightDao.delete(id).map(count => if (count == 0) NotFound else Ok)
   }}
 
-  def createPool1User() = Action.async(validateJson[Pool1User]) { implicit request => 
+  def createPool1User() = Action.async(validateJson[Pool1User]) { request => 
     pool1UserDao.save(request.body).map{user => Ok(Json.toJson(user))}
   }
 }

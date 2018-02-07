@@ -58,6 +58,7 @@ GET     /auth/signout                                       controllers.Auth.sig
 
 GET     /auth/reset                                         controllers.Auth.startResetPassword
 POST    /auth/reset                                         controllers.Auth.handleStartResetPassword
+POST  	/auth/reset/:email																	controllers.Auth.handlePool1StartResetPassword(email:String)
 GET     /auth/reset/:token                                  controllers.Auth.resetPassword(token:String)
 POST    /auth/reset/:token                                  controllers.Auth.handleResetPassword(token:String)
 
