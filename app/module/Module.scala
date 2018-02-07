@@ -42,6 +42,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[OauthTokenDao].to[MongoOauthTokenDao]
     bind[PoolService].to[PoolServiceImpl]
     bind[OauthCodeDao].to[MongoOauthCodeDao]
+    bind[Pool1UserDao].to[MongoPool1UserDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[PasswordInfoDao]
     bind[DelegableAuthInfoDAO[OAuth1Info]].to[OAuth1InfoDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
