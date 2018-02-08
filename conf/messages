@@ -92,6 +92,8 @@ reset.startLegend=Have you forgot your password?
 reset.email=Email
 reset.submit=Submit
 reset.instructions=We''ve sent you an email to {0} with instructions to reset your password.
+reset.pool1instructions=We noticed that you already have an old pool account and log in for the first time on the new one. For reasons of password security, we have sent you a link to {0} with which you can reset your password.
+ 
 reset.legend=Reset your password
 reset.password=Password
 reset.verifyPassword=Verify password
