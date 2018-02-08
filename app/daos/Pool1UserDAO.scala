@@ -17,6 +17,7 @@ import reactivemongo.bson.BSONObjectID
 trait Pool1UserDao {
   def find(email: String): Future[Option[Pool1User]]
   def save(user: Pool1User): Future[Pool1User]
+  def confirm(email: String): Future[Pool1User]
 }
 
 class MongoPool1UserDao extends Pool1UserDao {
@@ -28,4 +29,9 @@ class MongoPool1UserDao extends Pool1UserDao {
   
   def save(user: Pool1User): Future[Pool1User] = 
     pool1users.insert(user).map(_ => user)
+
+  def confirm(email: String):Future[Pool1User] = for {
+    _ <- pool1users.update(Json.obj("email" -> email), Json.obj("$set" -> Json.obj("confirmed" -> true)))
+    user <- find(email)
+  } yield user.get
 }

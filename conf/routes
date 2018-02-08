@@ -56,9 +56,10 @@ GET     /auth/signin                                        controllers.Auth.sig
 POST    /auth/authenticate                                  controllers.Auth.authenticate
 GET     /auth/signout                                       controllers.Auth.signOut
 
+
 GET     /auth/reset                                         controllers.Auth.startResetPassword
 POST    /auth/reset                                         controllers.Auth.handleStartResetPassword
-POST  	/auth/reset/:email																	controllers.Auth.handlePool1StartResetPassword(email:String)
+GET  	  /auth/pool1/:email																	controllers.Auth.handlePool1StartResetPassword(email:String)
 GET     /auth/reset/:token                                  controllers.Auth.resetPassword(token:String)
 POST    /auth/reset/:token                                  controllers.Auth.handleResetPassword(token:String)
 
