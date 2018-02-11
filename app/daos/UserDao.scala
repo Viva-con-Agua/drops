@@ -267,7 +267,7 @@ class MariadbUserDao extends UserDao{
       val supporter: Supporter = profile.supporter
       val loginInfo: LoginInfo = profile.loginInfo
 
-      val insertion = if(profile.passwordInfo.isEmpty) {
+      val insertion = if(profile.passwordInfo.isDefined) {
         val passwordInfo: PasswordInfo = profile.passwordInfo.get
         (for {
           p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userDB.id)
