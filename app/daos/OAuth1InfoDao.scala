@@ -16,7 +16,15 @@ import play.modules.reactivemongo.json.collection.JSONCollection
 
 import models.User, User._
 
-class OAuth1InfoDao extends DelegableAuthInfoDAO[OAuth1Info] {
+trait OAuth1InfoDao extends DelegableAuthInfoDAO[OAuth1Info] {
+  def find(loginInfo:LoginInfo):Future[Option[OAuth1Info]]
+  def add(loginInfo:LoginInfo, authInfo:OAuth1Info):Future[OAuth1Info]
+  def update(loginInfo:LoginInfo, authInfo:OAuth1Info):Future[OAuth1Info]
+  def save(loginInfo:LoginInfo, authInfo:OAuth1Info):Future[OAuth1Info]
+  def remove(loginInfo:LoginInfo):Future[Unit]
+}
+
+class MongoOAuth1InfoDao extends OAuth1InfoDao {
   lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
   val users = reactiveMongoApi.db.collection[JSONCollection]("users")
 
