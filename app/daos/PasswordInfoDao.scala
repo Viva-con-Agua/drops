@@ -76,8 +76,7 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
         join loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)
         on (_._1.id === _.profileId) //profiles.id === loginInfo.profileId
         )} yield(passwordInfo)
-
-    //ToDo: Validate the functionality of this impl
+    
     dbConfig.db.run(action.result).map(r => r.headOption.map(pInfo => PasswordInfo(pInfo.hasher, pInfo.password)))
   }
 
