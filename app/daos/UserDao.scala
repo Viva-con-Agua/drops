@@ -289,12 +289,10 @@ class MariadbUserDao extends UserDao{
   }
 
   override def confirm(loginInfo: LoginInfo): Future[User] = {
-    val action = for{
-      (profile, _) <- (profiles
-        join loginInfos.filter(_.providerKey === loginInfo.providerID) on (_.id === _.profileId)
-      )} yield(profile.confirmed)
+    val getLoginInfo = loginInfos.filter(_.providerKey === loginInfo.providerKey)
+    val updateProfile = for{p <- profiles.filter(_.id in getLoginInfo.map(_.profileId))} yield p.confirmed
 
-    dbConfig.db.run(action.update(true)).flatMap(_ => find(loginInfo)).map(_.get)
+    dbConfig.db.run((getLoginInfo.result andThen updateProfile.update(true)).transactionally).flatMap(_ => find(loginInfo)).map(_.get)
   }
 
   /**
