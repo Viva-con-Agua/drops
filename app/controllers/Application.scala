@@ -55,6 +55,7 @@ class Application @Inject() (
           val supporter = profile.supporter.copy(
             firstName = Some(userData.firstName),
             lastName = Some(userData.lastName),
+            fullName = Some(s"${userData.firstName} ${userData.lastName}"),
             birthday = Some(userData.birthday.getTime),
             mobilePhone = Some(userData.mobilePhone),
             placeOfResidence = Some(userData.placeOfResidence),
