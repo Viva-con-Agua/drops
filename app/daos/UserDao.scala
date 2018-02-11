@@ -216,7 +216,7 @@ class MariadbUserDao extends UserDao{
     val profile : Profile = user.profiles.head
 
     //ToDo: Refactroe - use addProfiles function - this will also resolve the todo above
-    val insertion = if(user.profiles.head.passwordInfo.isEmpty) {
+    val insertion = if(user.profiles.head.passwordInfo.isDefined) {
       val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
       (for {
         u <- (users returning users.map(_.id)) += userDBObj
