@@ -102,11 +102,6 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
     val profileId = loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)
     val deletePasswordInfo = passwordInfos.filter(_.profileId.in(profileId.map(_.profileId)))
 
-    dbConfig.db.run((profileId.result andThen deletePasswordInfo.delete).transactionally).map(r => {
-      r match {
-        case 1 => true
-        case 0 => false
-      }
-    })
+    dbConfig.db.run((profileId.result andThen deletePasswordInfo.delete).transactionally).map(_ => ())
   }
 }
