@@ -255,8 +255,8 @@ class Auth @Inject() (
         case Some(user) => for {
           token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
         } yield {
-          mailer.resetPassword(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
-          Ok(views.html.auth.resetPasswordInstructions(email))
+          mailer.resetPasswordPool1(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
+          Ok(views.html.auth.resetPasswordInstructionsPool1(email))
         }
       }
   }
