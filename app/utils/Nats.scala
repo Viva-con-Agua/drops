@@ -23,6 +23,13 @@ class Nats @Inject() (
     conn.publish("LOGOUT", publicId.toString)
     conn.close
   }
+
+  def publishDeleteUser(publicId : UUID){
+    val conn = Conn.connect(opts)
+    val msg = "USER " + publicId.toString
+    conn.publish("DELETE", msg)
+    conn.close
+  }
   
   /*def subscribeLogout(publicId : UUID) {
     val conn = Conn.connect(opts)
