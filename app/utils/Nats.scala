@@ -17,17 +17,15 @@ class Nats @Inject() (
   opts.put("server", server)
 
   def publishLogout(publicId : UUID){
-    //val opts: Properties = new Properties
-    //opts.put("server", server)
     val conn = Conn.connect(opts)
     conn.publish("LOGOUT", publicId.toString)
     conn.close
   }
-  
-  /*def subscribeLogout(publicId : UUID) {
+
+  def publishUpdateUser(publicId : UUID){
     val conn = Conn.connect(opts)
-    conn.subscribe("LOGOUT", (msg:Msg) => {
-      println("User logout : " + msg.body)
-    })
-  }*/
+    val msg = "USER " + publicId.toString
+    conn.publish("UPDATE", msg)
+    conn.close
+  }
 }
