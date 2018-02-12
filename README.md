@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.21.16 (2018-01-26)
+## Version 0.22.16 (2018-02-12)
+* [[F] #38 - logout event](https://github.com/Viva-con-Agua/drops/issues/38)
 * [[B] #186 - the oauth handshake contains the client_secret](https://github.com/Viva-con-Agua/drops/issues/186)
 * [[I] #183 - Accessibility of views bases on Pool 1 connection](https://github.com/Viva-con-Agua/drops/issues/183)
 * [[F] #180 - Allow webservice secrets](https://github.com/Viva-con-Agua/drops/issues/180)
