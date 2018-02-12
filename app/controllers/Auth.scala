@@ -1,6 +1,7 @@
 package controllers
 
 import java.text.SimpleDateFormat
+
 import java.util.{Date, UUID}
 import javax.inject.Inject
 
@@ -12,6 +13,7 @@ import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
 import com.mohiva.play.silhouette.api.Authenticator.Implicits._
 import com.mohiva.play.silhouette.api.{Environment, LoginInfo, Silhouette}
+import com.mohiva.play.silhouette.api.util.{Base64}
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.services.AvatarService
@@ -28,12 +30,12 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import UserForms.UserConstraints
-import services.{UserService, UserTokenService}
+import services.{UserService, UserTokenService, Pool1Service}
 import utils.{Mailer, Nats}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-
+import java.util.Base64
 object AuthForms {
 
   // Sign up
@@ -78,6 +80,7 @@ object AuthForms {
   ).verifying(Messages("error.passwordsDontMatch"), password => password._1 == password._2))
 }
 
+
 class Auth @Inject() (
   val messagesApi: MessagesApi, 
   val env:Environment[User,CookieAuthenticator],
@@ -85,6 +88,7 @@ class Auth @Inject() (
   authInfoRepository: AuthInfoRepository,
   credentialsProvider: CredentialsProvider,
   userService: UserService,
+  pool1Service: Pool1Service,
   userTokenService: UserTokenService,
   avatarService: AvatarService,
   passwordHasher: PasswordHasher,
@@ -186,6 +190,11 @@ class Auth @Inject() (
         userTokenService.remove(id).map {_ => NotFound(views.html.errors.notFound(request))}
     }
   }
+  
+  /** Pool1 function
+  def pool1SignIn = Action.async { implicit request =>
+  }*/
+
 
   def signIn = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
@@ -194,16 +203,21 @@ class Auth @Inject() (
     })
   }
 
+
   def authenticate = Action.async { implicit request =>
     signInForm.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.auth.signIn(bogusForm, socialProviderRegistry))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
-        credentialsProvider.authenticate(credentials).flatMap { loginInfo => 
+        pool1Service.pool1user(signInData.email).flatMap {
+          case Some(pooluser) if !pooluser.confirmed =>
+            Future.successful(Redirect(routes.Auth.handlePool1StartResetPassword(java.util.Base64.getEncoder.encodeToString(signInData.email.getBytes("UTF-8")))).flashing("error" -> Messages("error.pool1userinit")))
+          case (_) => {
+        credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
           userService.retrieve(loginInfo).flatMap {
             case None => 
               Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.noUser")))
-            case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) => 
+            case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) =>
               Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.unregistered", signInData.email)))
             case Some(_) => for {
               authenticator <- env.authenticatorService.create(loginInfo).map { 
@@ -219,9 +233,12 @@ class Auth @Inject() (
               value <- env.authenticatorService.init(authenticator)
               result <- env.authenticatorService.embed(value, redirectAfterLogin)
             } yield result
+          }.recover {
+            case e:ProviderException =>
+              Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.invalidCredentials"))
+            }
+        }
           }
-        }.recover {
-          case e:ProviderException => Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.invalidCredentials"))
         }
       }
     )
@@ -239,6 +256,19 @@ class Auth @Inject() (
 
   def startResetPassword = Action { implicit request =>
     Ok(views.html.auth.startResetPassword(emailForm))
+  }
+
+  def handlePool1StartResetPassword(email64: String) = Action.async { implicit request =>
+    val email = new String(java.util.Base64.getDecoder.decode(email64), "UTF-8")
+    userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
+        case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
+        case Some(user) => for {
+          token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
+        } yield {
+          mailer.resetPasswordPool1(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
+          Ok(views.html.auth.resetPasswordInstructionsPool1(email))
+        }
+      }
   }
 
   def handleStartResetPassword = Action.async { implicit request =>
@@ -284,6 +314,9 @@ class Auth @Inject() (
               authenticator <- env.authenticatorService.create(loginInfo)
               value <- env.authenticatorService.init(authenticator)
               _ <- userTokenService.remove(id)
+              //pool1 user
+              _ <- pool1Service.confirmed(token.email)
+              _ <- userService.confirm(loginInfo)
               result <- env.authenticatorService.embed(value, Ok(views.html.auth.resetPasswordDone()))
             } yield result
         }
