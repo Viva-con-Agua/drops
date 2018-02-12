@@ -359,7 +359,10 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.20.14 (2018-01-09)
+## Version 0.21.16 (2018-01-26)
+* [[B] #186 - the oauth handshake contains the client_secret](https://github.com/Viva-con-Agua/drops/issues/186)
+* [[I] #183 - Accessibility of views bases on Pool 1 connection](https://github.com/Viva-con-Agua/drops/issues/183)
+* [[F] #180 - Allow webservice secrets](https://github.com/Viva-con-Agua/drops/issues/180)
 * [[F] #106 - Send new registered user to Pool 1](https://github.com/Viva-con-Agua/drops/issues/106)
 
 ## Version 0.19.14 (2017-12-14)
