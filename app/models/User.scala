@@ -104,8 +104,8 @@ case class Profile(
 
 object Profile {
 
-  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter) : Profile =
-    Profile(loginInfo, confirmed, Some(email), supporter, None, None, List[DefaultProfileImage]())
+  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter, passwordInfo: Option[PasswordInfo]) : Profile =
+    Profile(loginInfo, confirmed, Some(email), supporter, passwordInfo, None, List[DefaultProfileImage]())
   def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, passwordInfo: Option[PasswordInfo], avatar: List[DefaultProfileImage]) :Profile =
     Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), passwordInfo, None, avatar)
 
