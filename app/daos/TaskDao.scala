@@ -2,7 +2,7 @@ package daos
 
 import java.util.UUID
 
-import daos.schema.{TaskTableDef, UserTaskTableDef}
+import daos.schema.{TaskTableDef, UserTableDef, UserTaskTableDef}
 import models.database.TaskDB
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
@@ -33,6 +33,7 @@ class MariadbTaskDao extends TaskDao {
 
   val tasks = TableQuery[TaskTableDef]
   val userTasks = TableQuery[UserTaskTableDef]
+  val users = TableQuery[UserTableDef]
 
   def all(): Future[Seq[TaskDB]] = dbConfig.db.run(tasks.result)
 
@@ -45,13 +46,17 @@ class MariadbTaskDao extends TaskDao {
   def delete(id: Long): Future[Int] = dbConfig.db.run(tasks.filter(t => t.id === id).delete)
 
   def forUser(userId : UUID) : Future[Seq[TaskDB]] = {
-    val action = for{
-      (t, _) <- (tasks join userTasks.filter(ut => ut.userId === userId) on (_.id === _.taskId))
-    } yield(t)
-    dbConfig.db.run(action.result)
+    dbConfig.db.run(users.filter(u => u.publicId === userId).result).flatMap(user => {
+      val action = for{
+        (t, _) <- (tasks join userTasks.filter(ut => ut.userId === user.head.id) on (_.id === _.taskId))
+      } yield(t)
+      dbConfig.db.run(action.result)
+    })
   }
 
   def idsForUser(userId : UUID) : Future[Seq[Long]] = {
-    dbConfig.db.run(userTasks.filter(ut => ut.userId === userId).map(_.taskId).result)
+    dbConfig.db.run(users.filter(u => u.publicId === userId).result).flatMap(user => {
+      dbConfig.db.run(userTasks.filter(ut => ut.userId === user.head.id).map(_.taskId).result)
+    })
   }
 }
