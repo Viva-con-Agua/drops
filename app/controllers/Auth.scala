@@ -5,6 +5,9 @@ import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
 import javax.inject.Inject
 
+import java.util.Properties
+import org.nats._
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
@@ -28,7 +31,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import UserForms.UserConstraints
 import services.{UserService, UserTokenService, Pool1Service}
-import utils.Mailer
+import utils.{Mailer, Nats}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -91,7 +94,8 @@ class Auth @Inject() (
   passwordHasher: PasswordHasher,
   configuration: Configuration,
   pool: PoolService,
-  mailer: Mailer) extends Silhouette[User,CookieAuthenticator] {
+  mailer: Mailer,
+  nats: Nats) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
 
@@ -241,6 +245,12 @@ class Auth @Inject() (
   }
 
   def signOut = SecuredAction.async { implicit request =>
+    userService.retrieve(request.authenticator.loginInfo).flatMap {
+      case None => 
+        Future.successful(Redirect(routes.Auth.signOut()).flashing("error" -> Messages("error.noUser")))
+      case Some(user) => 
+        Future.successful(nats.publishLogout(user.id))
+    }
     env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
   }
 
