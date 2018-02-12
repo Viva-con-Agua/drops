@@ -32,6 +32,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % "1.1.1",
   "com.typesafe.play" %% "play-slick-evolutions" % "1.1.1",
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
+	"com.github.tyagihas" % "scala_nats_2.11" % "0.3.0",
   specs2 % Test
 )
 
