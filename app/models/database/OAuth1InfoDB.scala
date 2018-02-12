@@ -10,7 +10,8 @@ case class OAuth1InfoDB  (
                     )
 
 object OAuth1InfoDB{
-  def apply(authInfo: OAuth1Info, profileId: Long): OAuth1InfoDB = ???
+  def apply(authInfo: OAuth1Info, profileId: Long): OAuth1InfoDB =
+    OAuth1InfoDB(0, authInfo.token, authInfo.secret, profileId)
 
   def apply(tuple: (Long, String, String, Long)): OAuth1InfoDB =
     OAuth1InfoDB(tuple._1, tuple._2, tuple._3, tuple._4)
