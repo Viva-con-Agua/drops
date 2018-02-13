@@ -13,12 +13,16 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, TaskDao, UserDao}
 import models.{AccessRight, Profile, ProfileImage, User}
+import utils.Nats
 
-class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao) extends IdentityService[User] {
+class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao, nats: Nats) extends IdentityService[User] {
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = userDao.save(user)
   def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
-  def update(updatedUser: User) = userDao.replace(updatedUser)
+  def update(updatedUser: User) = {
+    nats.publishUpdate("USER", updatedUser.id) 
+    userDao.replace(updatedUser)
+  }
   def find(id:UUID) = userDao.find(id)
   def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)
   def link(user:User, socialProfile:CommonSocialProfile) = {
@@ -39,6 +43,10 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
 
   def accessRights(userId: UUID) : Future[Seq[AccessRight]] = {
     taskDao.idsForUser(userId).flatMap(taskIds => accessRightDao.forTaskList(taskIds))
+  }
+  //todo
+  def delete(userId: UUID) = {
+    nats.publishDelete("USER", userId)
   }
 
 //  def accessRightsForService(userId : UUID, service: String) : Future[Seq[AccessRight]] = {
