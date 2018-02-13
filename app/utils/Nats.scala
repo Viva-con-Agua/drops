@@ -23,11 +23,27 @@ class Nats @Inject() (
     conn.publish("LOGOUT", publicId.toString)
     conn.close
   }
-  
-  /*def subscribeLogout(publicId : UUID) {
+
+  def publishCreate(model: String, publicId: UUID) {
     val conn = Conn.connect(opts)
-    conn.subscribe("LOGOUT", (msg:Msg) => {
-      println("User logout : " + msg.body)
-    })
-  }*/
+    val msg = model + " " + publicId.toString
+    conn.publish("CREATE", msg)
+    conn.close
+  }
+
+  def publishUpdate(model: String, publicId: UUID) {
+    val conn = Conn.connect(opts)
+    val msg = model + " " + publicId.toString
+    conn.publish("UPDATE", msg)
+    conn.close
+  }
+
+  def publishDelete(model: String, publicId: UUID) {
+    val conn = Conn.connect(opts)
+    val msg = model + " " + publicId.toString
+    conn.publish("DELETE", msg)
+    conn.close
+  }
+
+ 
 }
