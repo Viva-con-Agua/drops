@@ -1,21 +1,8 @@
-@(title: String, navbarContent: Html = Html(""))(content: Html)(implicit messages:Messages)
-
+@(title: String, navbarContent: Html = Html(""), template : TemplateHtml = TemplateHtml(""))(content: Html)(implicit messages:Messages)
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@title</title>
-    <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/drop.png")">
-    <link rel="stylesheet" media="screen" href="@routes.WebJarAssets.at(WebJarAssets.locate("bootstrap.min.css"))">
-    <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/vca.css")">
-    <script
-    src="https://code.jquery.com/jquery-3.2.1.min.js"
-    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-    crossorigin="anonymous"></script>
-    <script src="@routes.Assets.versioned("javascript/dropzone.js")"></script>
-    <script src="@routes.Assets.versioned("javascript/config.js")"></script>
+					@template.getHtml("testSuperHeaderShit")
   </head>
   <body>
     <div class="navbar navbar-vca navbar-default navbar-fixed-top"> <!-- navbar-default -->
