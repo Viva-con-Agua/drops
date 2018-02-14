@@ -46,4 +46,12 @@ class Mailer @Inject() (configuration:Configuration, mailer:MailerClient) {
       bodyText = Some(views.html.mails.resetPasswordText(email, link).toString)
     )
   }
+  def resetPasswordPool1(email:String, link:String)(implicit messages:Messages) = {
+    sendEmailAsync(email)(
+      subject = Messages("mail.reset.subject"), 
+      bodyHtml = Some(views.html.mails.resetPasswordPool1(email, link).toString),
+      bodyText = Some(views.html.mails.resetPasswordTextPool1(email, link).toString)
+    )
+  }
+
 }

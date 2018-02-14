@@ -48,10 +48,20 @@ case class GravatarProfileImage(url: URL) extends ProfileImage {
   }
 }
 
+case class UrlProfileImage(url: URL) extends ProfileImage{
+  val t = ProfileImageType.Url
+
+  override def toString: String = this.url.toURI.toASCIIString
+
+  override def getImage(width: Int, height: Int): Future[Option[String]] =
+    Future.successful(Some(url.toString))
+}
+
 case class LocalProfileImage(uuid:UUID) extends ProfileImage {
   val t = ProfileImageType.Local
   /**
     * todo use width and height parameter!
+
     *
     * @param width
     * @param height
@@ -64,7 +74,7 @@ case class LocalProfileImage(uuid:UUID) extends ProfileImage {
 class DefaultProfileImage extends ProfileImage {
   val t = ProfileImageType.Default
   /**
-    * todo: Read from config!
+    * Todo: Read from config!
     */
   val url = routes.Assets.versioned("images/drop_quad.png")
 
@@ -76,9 +86,14 @@ object GravatarProfileImage {
   def apply(url: String) : GravatarProfileImage = GravatarProfileImage(java.net.URI.create(url).toURL)
 }
 
+object UrlProfileImage {
+  def apply(url: String): UrlProfileImage = UrlProfileImage(java.net.URI.create(url).toURL)
+}
+
 object ProfileImage {
   /*
-    todo Read this from config file!
+   * Todo Read this from config file!
+
    */
   val sizes = List(Map("width" -> 400, "height" -> 400), Map("width" -> 30, "height" -> 30))
 
@@ -87,6 +102,7 @@ object ProfileImage {
   object JSONProfileImage {
     def apply(pi : ProfileImage) : JSONProfileImage = pi match {
       case gpi : GravatarProfileImage => JSONProfileImage(ProfileImageType.typeToString(gpi.t), None, Some(gpi.url))
+      case upi : UrlProfileImage => JSONProfileImage(ProfileImageType.typeToString(upi.t), None, Some(upi.url))
       case lpi : LocalProfileImage => JSONProfileImage(ProfileImageType.typeToString(lpi.t), Some(lpi.uuid), None)
       case dpi : DefaultProfileImage => JSONProfileImage(ProfileImageType.typeToString(dpi.t), None, None)
     }
@@ -116,6 +132,8 @@ object ProfileImage {
           jsonPI.id.map((id) => JsSuccess[ProfileImage](LocalProfileImage(id))).get
         case "default" =>
           JsSuccess[ProfileImage](new DefaultProfileImage)
+        case "url" =>
+          jsonPI.url.map((url) => JsSuccess[ProfileImage](UrlProfileImage(url))).get
       })
     }
     def writes(pi: ProfileImage) = Json.toJson(JSONProfileImage(pi)).as[JsObject]
@@ -124,11 +142,12 @@ object ProfileImage {
 
 object ProfileImageType extends Enumeration {
   type ProfileImageType = Value
-  val Local, Gravatar, Default = Value
+  val Local, Gravatar, Default, Url = Value
 
   def typeToString(t : ProfileImageType.Value) : String = t match {
     case ProfileImageType.Gravatar => "gravatar"
     case ProfileImageType.Local => "local"
+    case ProfileImageType.Url => "url"
     case ProfileImageType.Default => "default"
   }
 }

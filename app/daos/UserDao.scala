@@ -26,6 +26,8 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def update(profile:Profile):Future[User]
   def list : Future[List[User]]
   def listOfStubs : Future[List[UserStub]]
+  def delete (userId:UUID):Future[Boolean]
+
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -99,6 +101,13 @@ class MongoUserDao extends UserDao {
     ))
     user <- find(profile.loginInfo)
   } yield user.get
+
+  def delete(userId: UUID):Future[Boolean] =
+    users.remove(Json.obj("id" -> userId)).map(x => x.n match {
+      case 0 => false
+      case 1 => true
+    })
+
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 

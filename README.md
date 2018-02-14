@@ -80,6 +80,18 @@ mail server.
 After the default Play 2 App production deployment, the system requires the call of the route <code>/auth/init</code>. This call creates a default admin account using a configured Email and Password. Both can be changed inside the admin.conf.
 Additionally the same can be done for crews. The route that should be used is <code>/crews/init</code>.
 
+OAuth 2 Handshake
+-----------------
+You can add a specific URL to the configuration that will be used for redirect after login. By default <code>routes.Application.index</code> is used, but you can add:
+
+```
+login.flow {
+  ms.switch=true
+  ms.url=/pool/
+}
+```
+to your <code>application.conf</code>. <code>ms.url</code> can hold every valid URL (absolute and relative).
+
 Dummy Data
 ==========
 Using an admin account test users can be generated. For generating the following 
@@ -347,7 +359,22 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.17.9 (2017-09-21)
+## Version 0.23.16 (2018-02-12)
+* [[F] #107 - User import from external tools](https://github.com/Viva-con-Agua/drops/issues/107)
+* [[F] #38 - logout event](https://github.com/Viva-con-Agua/drops/issues/38)
+* [[B] #186 - the oauth handshake contains the client_secret](https://github.com/Viva-con-Agua/drops/issues/186)
+* [[I] #183 - Accessibility of views bases on Pool 1 connection](https://github.com/Viva-con-Agua/drops/issues/183)
+* [[F] #180 - Allow webservice secrets](https://github.com/Viva-con-Agua/drops/issues/180)
+* [[F] #106 - Send new registered user to Pool 1](https://github.com/Viva-con-Agua/drops/issues/106)
+
+## Version 0.19.14 (2017-12-14)
+* [[I] #124 - Use singular labels for rest urls](https://github.com/Viva-con-Agua/drops/issues/124)
+* [[I] #120 - False Translations](https://github.com/Viva-con-Agua/drops/issues/120)
+* [[I] #117 - Translation](https://github.com/Viva-con-Agua/drops/issues/117)
+* [[F] #102 - CRUD for Webservice](https://github.com/Viva-con-Agua/drops/issues/102)
+* [[I] #111 - Default redirect page after login](https://github.com/Viva-con-Agua/drops/issues/111)
+* [[F] #73 - RESTful interface to request access rights](https://github.com/Viva-con-Agua/drops/issues/73)
+* [[B] #98 - Comments run into error on publish](https://github.com/Viva-con-Agua/drops/issues/98)
 * [[I] #69 - Associate Access Rights to Microservices](https://github.com/Viva-con-Agua/drops/issues/69)
 * [[F] #71 - Relations between users and tasks](https://github.com/Viva-con-Agua/drops/issues/71)
 * [[F] #70 - Relations between Tasks and Access Rights](https://github.com/Viva-con-Agua/drops/issues/70)

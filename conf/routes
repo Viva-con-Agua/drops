@@ -19,19 +19,27 @@ POST    /roles/update                                       controllers.Roles.up
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
-POST    /rest/users                                         controllers.RestApi.users
-POST    /rest/users/:id                                     controllers.RestApi.user(id : String)
+POST    /rest/user/create                                  controllers.RestApi.createUser
+PUT     /rest/user/:id/avatar                              controllers.RestApi.updateUserProfileImage(id : java.util.UUID)
+POST    /rest/user                                         controllers.RestApi.getUsers
+POST    /rest/user/:id                                     controllers.RestApi.getUser(id : java.util.UUID)
+PUT     /rest/user/:id                                     controllers.RestApi.updateUser(id : java.util.UUID)
+DELETE  /rest/user/:id                                     controllers.RestApi.deleteUser(id: java.util.UUID)
+
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
-POST    /rest/crews                                         controllers.RestApi.crews
+POST    /rest/crew                                         controllers.RestApi.crews
 GET     /rest/task                                          controllers.RestApi.getTasks
 POST    /rest/task                                          controllers.RestApi.createTask
 GET     /rest/task/:id                                      controllers.RestApi.getTasksWithAccessRights(id: Long)
 DELETE  /rest/task/:id                                      controllers.RestApi.deleteTask(id: Long)
-GET     /rest/ac                                            controllers.RestApi.getAccessRights
-GET     /rest/ac/:id                                        controllers.RestApi.findAccessRight(id: Long)
-DELETE  /rest/ac/:id                                        controllers.RestApi.deleteAccessRight(id: Long)
-POST    /rest/ac                                            controllers.RestApi.createAccessRight
+GET     /rest/access                                        controllers.RestApi.getAccessRights(q: String, f: String)
+GET     /rest/access/:id                                    controllers.RestApi.findAccessRight(id: Long)
+DELETE  /rest/access/:id                                    controllers.RestApi.deleteAccessRight(id: Long)
+POST    /rest/access                                        controllers.RestApi.createAccessRight
+
+#Pool1User Rest API
+POST 		/rest/pool1user/create															controllers.RestApi.createPool1User	
 
 # OAuth2 Rest API
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
@@ -48,8 +56,10 @@ GET     /auth/signin                                        controllers.Auth.sig
 POST    /auth/authenticate                                  controllers.Auth.authenticate
 GET     /auth/signout                                       controllers.Auth.signOut
 
+
 GET     /auth/reset                                         controllers.Auth.startResetPassword
 POST    /auth/reset                                         controllers.Auth.handleStartResetPassword
+GET  	  /auth/pool1/:email																	controllers.Auth.handlePool1StartResetPassword(email:String)
 GET     /auth/reset/:token                                  controllers.Auth.resetPassword(token:String)
 POST    /auth/reset/:token                                  controllers.Auth.handleResetPassword(token:String)
 

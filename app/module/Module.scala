@@ -23,6 +23,7 @@ import play.api.libs.mailer.MailerClient
 import play.api.libs.ws.WSClient
 import daos._
 import models.User
+import persistence.pool1.{PoolService, PoolServiceImpl}
 import play.api.libs.json.JsObject
 import services.{UserService, UserTokenService}
 import utils.Mailer
@@ -39,7 +40,9 @@ class Module extends AbstractModule with ScalaModule {
     bind[AccessRightDao].to[MariadbAccessRightDao]
     bind[OauthClientDao].to[MongoOauthClientDao]
     bind[OauthTokenDao].to[MongoOauthTokenDao]
+    bind[PoolService].to[PoolServiceImpl]
     bind[OauthCodeDao].to[MongoOauthCodeDao]
+    bind[Pool1UserDao].to[MongoPool1UserDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[PasswordInfoDao]
     bind[DelegableAuthInfoDAO[OAuth1Info]].to[OAuth1InfoDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())

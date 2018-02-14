@@ -1,8 +1,8 @@
 package daos
 
-import java.sql.Timestamp
-import java.util.{Date, UUID}
+import java.util.UUID
 
+import daos.mariaDB.{UserTaskTableDef, TaskTableDef}
 import models.Task
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
@@ -25,22 +25,7 @@ trait TaskDao{
   def idsForUser(userId : UUID) : Future[Seq[Long]]
 }
 
-class TaskTableDef(tag: Tag) extends Table[Task](tag, "Task") {
-  def id = column[Long]("id", O.PrimaryKey,O.AutoInc)
-  def title = column[String]("title")
-  def description= column[String]("description")
-  def deadline = column[Date]("deadline")
-  def count_supporter = column[Int]("count_supporter")
 
-  implicit val dateColumnType =
-    MappedColumnType .base[Date, Timestamp] (
-      d => new Timestamp(d.getTime),
-      d => new Date(d.getTime)
-    )
-
-  def * =
-    (id, title, description.?, deadline.?, count_supporter.?) <>((Task.mapperTo _).tupled, Task.unapply)
-}
 
 class MariadbTaskDao extends TaskDao {
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
