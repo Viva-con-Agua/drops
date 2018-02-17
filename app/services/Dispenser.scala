@@ -1,5 +1,6 @@
-package service
+package services
 
+import play.api.Logger
 import play.api.mvc._
 import play.api.Configuration
 import play.api.libs.ws._
@@ -21,7 +22,7 @@ class DispenserService @Inject() (
   ws: WSClient
 ) extends Controller {
   
-  val dispenserUrl = configuration.getConfig("dispenser.ip") 
+  val dispenserUrl = configuration.getString("dispenser.ip").get 
 
   def connect(url: String, json: JsValue): Future[WSResponse] = {
     ws.url(url)
@@ -40,7 +41,8 @@ class DispenserService @Inject() (
 
   def getSimpleTemplate(template: Template):String = {
     val json = Json.toJson(template)
-    val url = dispenserUrl + "template/simple/"
+    val url = dispenserUrl + "template/simple"
+    Logger.debug(url)
     Await.result(connect(url, json).map {response =>
       response.body
     }, 10 second)

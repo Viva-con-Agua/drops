@@ -30,7 +30,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import UserForms.UserConstraints
-import services.{UserService, UserTokenService, Pool1Service}
+import services.{UserService, UserTokenService, Pool1Service, DispenserService}
 import utils.{Mailer, Nats}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
@@ -95,6 +95,7 @@ class Auth @Inject() (
   configuration: Configuration,
   pool: PoolService,
   mailer: Mailer,
+  dispenserService: DispenserService,
   nats: Nats) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
@@ -199,7 +200,10 @@ class Auth @Inject() (
   def signIn = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
       case Some(user) => Redirect(routes.Application.index())
-      case None => Ok(views.html.auth.signIn(signInForm,socialProviderRegistry))
+      case None => {
+        val template: Template = dispenserService.buildTemplate(NavigationData("no-SignIn", "SIGN IN", None), TemplateData("SignIn", java.util.Base64.getEncoder.encodeToString(views.html.auth.signIn(signInForm, socialProviderRegistry).toString.getBytes("UTF-8"))))
+        Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))
+      }
     })
   }
 
