@@ -34,7 +34,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[IdentityService[User]].to[UserService]
     bind[UserDao].to[MariadbUserDao]
 //    bind[UserApiQueryDao[JsObject]].to[MongoUserApiQueryDao]
-    bind[CrewDao].to[MongoCrewDao]
+    bind[CrewDao].to[MariadbCrewDao]
     bind[UserTokenDao].to[MariadbUserTokenDao]
     bind[TaskDao].to[MariadbTaskDao]
     bind[PasswordInfoDao].to[MariadbPasswordInfoDao]
