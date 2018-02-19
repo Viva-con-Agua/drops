@@ -25,7 +25,8 @@ case class SupporterDB(
                 placeOfResidence: Option[String],
                 birthday: Option[Long],
                 sex: Option[String],
-                profileId: Long
+                profileId: Long,
+                crewId: Option[Long]
                 ) {
   def toSupporter: Supporter = Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex)
 }
@@ -35,14 +36,14 @@ object SupporterDB{
   def mapperTo(
     id: Long, firstName: Option[String], lastName: Option[String], fullName: Option[String],
     mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long],
-    sex: Option[String], profileId: Long
-  ) = apply(id, firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, profileId)
+    sex: Option[String], profileId: Long, crewId : Option[Long]
+  ) = apply(id, firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, profileId, crewId)
 
-  def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long)) : SupporterDB =
-    SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
+  def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long, Option[Long])) : SupporterDB =
+    SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
 
   def apply(id: Long, supporter: Supporter, profileId: Long) : SupporterDB =
-    SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId)
+    SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId, None)
 
   implicit val supporterWrites : OWrites[SupporterDB] = (
     (JsPath \ "id").write[Long] and
@@ -53,7 +54,8 @@ object SupporterDB{
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
-      (JsPath \ "profileId").write[Long]
+      (JsPath \ "profileId").write[Long] and
+      (JsPath \ "crewId").writeNullable[Long]
   )(unlift(SupporterDB.unapply))
 
   implicit val supporterReads : Reads[SupporterDB] = (
@@ -65,8 +67,9 @@ object SupporterDB{
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
-      (JsPath \ "profileId").read[Long]
+      (JsPath \ "profileId").read[Long] and
+      (JsPath \ "crewId").readNullable[Long]
     ).tupled.map((supporter) => if(supporter._1.isEmpty)
-    SupporterDB(0, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9)
-  else SupporterDB(supporter._1.get, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9))
+    SupporterDB(0, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9, supporter._10)
+  else SupporterDB(supporter._1.get, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9, supporter._10))
 }
