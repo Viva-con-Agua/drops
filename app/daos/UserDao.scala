@@ -221,7 +221,6 @@ class MariadbUserDao extends UserDao{
     //ToDo: Refactroe - use addProfiles function - this will also resolve the todo above
     println(user.profiles.head.passwordInfo.isDefined);
     val insertion = if(user.profiles.head.passwordInfo.isDefined) {
-      println("With password");
       val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
       (for {
         u <- (users returning users.map(_.id)) += userDBObj
@@ -232,7 +231,6 @@ class MariadbUserDao extends UserDao{
       } yield u).transactionally
     }
     else {
-      println("Without password");
       (for {
         u <- (users returning users.map(_.id)) += userDBObj
         p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, u)
@@ -247,22 +245,6 @@ class MariadbUserDao extends UserDao{
 
   override def replace(updatedUser: User): Future[User] = {
     findDBUserModel(updatedUser.id).flatMap(user => {
-      //ToDo: Problem! At this point, the form from the ui has no password info included. so after an update, its not possible to sign in
-      //Workaround
-      /*val passwordInfo : Option[PasswordInfo] = if(updatedUser.profiles.head.passwordInfo.isDefined){
-        updatedUser.profiles.head.passwordInfo
-      }else{
-        val action = for{
-          (_, passwordInfo) <- (profiles.filter(p => p.userId === user.id)
-            join passwordInfos on (_.id === _.profileId) //user.id === profile.userId
-            )} yield(passwordInfo)
-
-        dbConfig.db.run(action.result).map(result => {
-          Option(result.head.toPasswordInfo)
-        })
-      }
-
-      updatedUser.profiles.head.passwordInfo = passwordInfo*/
       //Delete Profiles
       val deleteProfile = profiles.filter(_.userId === user.id)
       val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
