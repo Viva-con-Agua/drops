@@ -22,7 +22,6 @@ case class Supporter(
   firstName: Option[String],
   lastName: Option[String],
   fullName: Option[String],
-  username: Option[String],
   mobilePhone: Option[String],
   placeOfResidence: Option[String],
   birthday: Option[Long],
@@ -45,30 +44,29 @@ case class Supporter(
 
 object Supporter {
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
-    Supporter(firstName, lastName, fullName, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, None, Set())
   }
 
   def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
-    Supporter(firstName, lastName, None, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+    Supporter(firstName, lastName, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
   }
 
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String): Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
 
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
-    Supporter(firstName, lastName, fullName, None, None, None, None, None, None, Set())
+    Supporter(firstName, lastName, fullName, None, None, None, None, None, Set())
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Pillar])) : Supporter =
-    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
+  def apply(tuple: (Option[String],  Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Pillar])) : Supporter =
+    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
   implicit val supporterWrites : OWrites[Supporter] = (
     (JsPath \ "firstName").writeNullable[String] and
       (JsPath \ "lastName").writeNullable[String] and
       (JsPath \ "fullName").writeNullable[String] and
-      (JsPath \ "username").writeNullable[String] and
       (JsPath \ "mobilePhone").writeNullable[String] and
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
@@ -80,7 +78,6 @@ object Supporter {
       (JsPath \ "firstName").readNullable[String] and
       (JsPath \ "lastName").readNullable[String] and
       (JsPath \ "fullName").readNullable[String] and
-      (JsPath \ "username").readNullable[String] and
       (JsPath \ "mobilePhone").readNullable[String] and
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and

@@ -21,7 +21,6 @@ object DummyUser {
       firstName = Some((json \ "name" \ "first").as[String].capitalize),
       lastName = Some((json \ "name" \ "last").as[String].capitalize),
       fullName = Some((json \ "name" \ "first").as[String].capitalize + " " + (json \ "name" \ "last").as[String].capitalize),
-      username = Some((json \ "login" \ "username").as[String]),
       mobilePhone = Some((json \ "cell").as[String]),
       placeOfResidence = Some((json \ "location" \ "city").as[String].capitalize),
       birthday = {
