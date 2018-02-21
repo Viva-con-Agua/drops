@@ -142,7 +142,11 @@ class MariadbCrewDao extends CrewDao {
         .map(c => c.get)
   }
 
-  override def listOfStubs: Future[List[CrewStub]] = ???
+  override def listOfStubs: Future[List[CrewStub]] = {
+    list.map(crewList => {
+      CrewConverter.buildCrewStubListFromCrewList(crewList)
+    })
+  }
 
   override def list: Future[List[Crew]] = {
     val action = for {
