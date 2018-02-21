@@ -1,5 +1,6 @@
 package models
 
+import models.database.OauthClientDB
 import play.api.libs.json.Json
 
 /**
@@ -11,6 +12,9 @@ case class OauthClient(id: String, secret: String, redirectUri: Option[String], 
     case other : OauthClient => other.id == this.id
     case _ => false
   }
+
+  def toOauthClientDB : OauthClientDB =
+    OauthClientDB(id, secret, redirectUri, grantTypes.mkString(","))
 }
 
 object OauthClient {
