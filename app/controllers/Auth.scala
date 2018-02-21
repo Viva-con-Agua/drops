@@ -133,8 +133,13 @@ class Auth @Inject() (
   def startSignUp = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
       case Some(user) => redirectAfterLogin
-      case None => Ok(views.html.auth.startSignUp(signUpForm))
-    })
+      case None => {
+        val template: Template = dispenserService.buildTemplate(
+          NavigationData("no-SignIn", "SIGN UP", None), 
+          TemplateData("SignIn", java.util.Base64.getEncoder.encodeToString(views.html.auth.startSignUp(signUpForm).toString.getBytes("UTF-8")))
+        )
+        Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))
+    }})
   }
 
   def handleStartSignUp = Action.async { implicit request =>
