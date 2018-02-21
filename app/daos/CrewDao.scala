@@ -11,7 +11,7 @@ import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import com.mohiva.play.silhouette.api.LoginInfo
 import daos.schema.{CityTableDef, CrewTableDef}
-import models.{Crew, CrewStub, ObjectIdWrapper}
+import models.{Crew, CrewStub, ObjectId, ObjectIdWrapper}
 import models.Crew._
 import models.converter.CrewConverter
 import models.database.{CityDB, CrewDB}
@@ -119,6 +119,10 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
   }
 
+  def findDBCrewModel(crewId : UUID) : Future[CrewDB] = {
+    dbConfig.db.run(crews.filter(_.publicId === crewId).result).map(r => r.head)
+  }
+
   override def save(crew: Crew): Future[Crew] = {
     dbConfig.db.run((crews returning crews.map(_.id)) += CrewDB(crew))
     .flatMap(id =>{
@@ -157,9 +161,13 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewListFromResult(_))
   }
 
-  override def getObjectId(id: UUID) = ???
+  override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
+    findDBCrewModel(id).map(c => {
+      Option(ObjectIdWrapper(ObjectId(c.id.toString)))
+    })
+  }
 
-  override def getObjectId(name: String) = ???
+  override def getObjectId(name: String) : Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))
 
   override def getCount : Future[Int] = dbConfig.db.run(crews.length.result)
 

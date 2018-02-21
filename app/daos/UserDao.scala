@@ -371,9 +371,13 @@ class MariadbUserDao extends UserDao{
 
 
   //Return the db id for the user
-  override def getObjectId(id: UUID): Future[Option[ObjectIdWrapper]] = ???
+  override def getObjectId(id: UUID): Future[Option[ObjectIdWrapper]] = {
+    findDBUserModel(id).map(u => {
+      Option(ObjectIdWrapper(ObjectId(u.id.toString)))
+    })
+  }
 
-  override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = ???
+  override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))
 
 
   //Wenn er private ist kann ich ihn nutzen. Ansonsten muss ich schauen wo er verwendet wird
