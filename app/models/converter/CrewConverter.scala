@@ -1,6 +1,6 @@
 package models.converter
 
-import models.Crew
+import models.{Crew, CrewStub}
 import models.database.{CityDB, CrewDB}
 
 object CrewConverter {
@@ -39,5 +39,14 @@ object CrewConverter {
       }
     })
     crewList
+  }
+
+  def buildCrewStubListFromCrewList(crewList : List[Crew]) : List[CrewStub] = {
+    val crewStubList : List[CrewStub] = List[CrewStub]()
+    crewList.foreach(crew => {
+      crewStubList ++ List(crew.toCrewStub())
+    })
+
+    crewStubList
   }
 }
