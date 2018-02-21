@@ -15,7 +15,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models._
 import play.api.data.Form
 import play.api.data.Forms._
-import services.UserService
+import services.{UserService, DispenserService}
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
@@ -34,18 +34,27 @@ class Application @Inject() (
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator],
   configuration: Configuration,
+  dispenserService: DispenserService,
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
 
   def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
+    val template: Template = dispenserService.buildTemplate(
+      NavigationData("GlobalNav", "", None),
+      TemplateData("Drops", java.util.Base64.getEncoder.encodeToString(views.html.index(request.identity, request.authenticator.loginInfo).toString.getBytes("UTF-8")))
+      )
+    Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
   }
 
   def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    crewDao.list.map(l =>
-      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
-    )
+    crewDao.list.map(l => {
+      val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        TemplateData("Drops", java.util.Base64.getEncoder.encodeToString(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define).toString.getBytes("UTF-8")))
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
+    })
   }
 
   def updateBase = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
