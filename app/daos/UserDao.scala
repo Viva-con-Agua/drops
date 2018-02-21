@@ -345,7 +345,11 @@ class MariadbUserDao extends UserDao{
     })
   }
 
-  override def listOfStubs: Future[List[UserStub]] = ???
+  override def listOfStubs: Future[List[UserStub]] = {
+    list.map(userList => {
+      UserConverter.buildUserStubListFromUserList(userList)
+    })
+  }
 
   override def delete(userId: UUID): Future[Boolean] = {
       val deleteUser = users.filter(u => u.publicId === userId)
