@@ -33,6 +33,9 @@ case class Crew(
     case s: Supporter => s.crew.map(_ == this).getOrElse(false)
     case _ => false
   })
+
+  def toCrewStub() : CrewStub =
+    CrewStub(name, country, cities)
 }
 
 object Crew {
