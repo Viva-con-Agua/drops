@@ -37,9 +37,14 @@ class Application @Inject() (
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
+  val pool1Url = configuration.getString("pool1.url").get
 
-  def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
+  def index = SecuredAction.async { implicit request =>
+    if (!pool1Export) {
+      Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
+    }else{
+      Future.successful(Redirect(pool1Url))
+    }
   }
 
   def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
