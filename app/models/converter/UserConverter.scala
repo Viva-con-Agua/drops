@@ -2,7 +2,7 @@ package models.converter
 
 import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.util.PasswordInfo
-import models.{Profile, Supporter, User}
+import models._
 import models.database._
 
 object UserConverter {
@@ -28,5 +28,14 @@ object UserConverter {
       }
     })
     userList
+  }
+  
+  def buildUserStubListFromUserList(userList : List[User]) : List[UserStub] = {
+    val userStubList : List[UserStub] = List[UserStub]()
+    userList.foreach(user => {
+      userStubList ++ List(user.toUserStub)
+    })
+
+    userStubList
   }
 }
