@@ -15,7 +15,6 @@ import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
-import slick.lifted.StringColumnExtensionMethods
 import slick.driver.MySQLDriver.api._
 import play.api.db.slick.DatabaseConfigProvider
 
