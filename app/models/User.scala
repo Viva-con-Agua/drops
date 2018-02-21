@@ -40,6 +40,9 @@ case class Supporter(
   }
 
   def name : Option[String] = this.firstName.flatMap(fn => lastName.map(fn + " " + _))
+
+  def toSupporterStub() : SupporterStub =
+    SupporterStub(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, (if(crew.isDefined) Option(crew.get.toCrewStub()) else None), Set())
 }
 
 object Supporter {
@@ -97,6 +100,10 @@ case class Profile(
   avatar: List[ProfileImage]) {
 
   def getAvatar = avatar.headOption
+
+  //ToDo: add avatar url
+  def toProfileStub : ProfileStub =
+    ProfileStub(loginInfo, confirmed, email, supporter.toSupporterStub(), passwordInfo, oauth1Info, None)
 }
 
 object Profile {
@@ -189,6 +196,15 @@ case class User(id: UUID, profiles: List[Profile], roles: Set[Role] = Set(RoleSu
   def fullName(loginInfo:LoginInfo) = profileFor(loginInfo).flatMap(_.supporter.fullName)
   def setRoles(roles : Set[Role]) = this.copy(roles = roles)
   def hasRole(role: Role) = this.roles.contains(role)
+
+  def toUserStub : UserStub = {
+    val profileStubList : List[ProfileStub] = List[ProfileStub]()
+    profiles.foreach(profile => {
+      profileStubList ++ List(profile.toProfileStub)
+    })
+    UserStub(id, profileStubList, roles)
+  }
+
 }
 
 object User {
