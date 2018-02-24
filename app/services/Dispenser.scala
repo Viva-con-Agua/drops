@@ -31,12 +31,21 @@ class DispenserService @Inject() (
       .post(json)
   }
   
-  def buildTemplate(navigationData: NavigationData, templateData: TemplateData):Template = {
+  def buildTemplate(navigationData: NavigationData, contentName: String, content: String):Template = {
     Template(
       MetaData("Drops", "simple", None),
       navigationData,
-      templateData
+      TemplateData(contentName, java.util.Base64.getEncoder.encodeToString(content.getBytes("UTF-8")))
     ) 
+  }
+
+  def getErrorTemplate(title: String, content: String): String = {
+    val templateData = TemplateData(title, java.util.Base64.getEncoder.encodeToString(content.getBytes("UTF-8")))
+    val json = Json.toJson(templateData)
+    val url = dispenserUrl + "template/error"
+    Await.result(connect(url, json).map { response =>
+      response.body
+    }, 10 second )
   }
 
   def getSimpleTemplate(template: Template):String = {

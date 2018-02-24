@@ -11,6 +11,8 @@ import play.api.mvc.{Result,RequestHeader}
 import play.api.routing.Router
 import play.api.{OptionalSourceMapper,Configuration}
 
+import services.DispenserService
+
 import scala.concurrent.Future
 
 import controllers.routes
@@ -20,6 +22,7 @@ class ErrorHandler @Inject() (
   env: play.api.Environment,
   config: Configuration,
   sourceMapper: OptionalSourceMapper,
+  dispenserService: DispenserService,
   router: javax.inject.Provider[Router])
   extends DefaultHttpErrorHandler(env, config, sourceMapper, router)
   with SecuredErrorHandler with I18nSupport {
@@ -31,8 +34,8 @@ class ErrorHandler @Inject() (
     Some(Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.accessDenied")(messages))))
 
   override def onNotFound(request: RequestHeader, message: String): Future[Result] = 
-    Future.successful(Ok(views.html.errors.notFound(request)))
+    Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onNotFound", views.html.errors.notFound(request).toString))))
 
   override def onServerError(request:RequestHeader, exception:Throwable):Future[Result] = 
-    Future.successful(Ok(views.html.errors.serverError(request, exception)))
+    Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onServerError", views.html.errors.serverError(request, exception).toString))))
 }

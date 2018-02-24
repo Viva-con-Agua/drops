@@ -136,7 +136,7 @@ class Auth @Inject() (
       case None => {
         val template: Template = dispenserService.buildTemplate(
           NavigationData("no-SignIn", "SIGN UP", None), 
-          TemplateData("SignIn", java.util.Base64.getEncoder.encodeToString(views.html.auth.startSignUp(signUpForm).toString.getBytes("UTF-8")))
+          "SignIn", views.html.auth.startSignUp(signUpForm).toString
         )
         Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))
     }})
@@ -208,7 +208,7 @@ class Auth @Inject() (
       case None => {
         val template: Template = dispenserService.buildTemplate(
           NavigationData("no-SignIn", "SIGN IN", None), 
-          TemplateData("SignIn", java.util.Base64.getEncoder.encodeToString(views.html.auth.signIn(signInForm, socialProviderRegistry).toString.getBytes("UTF-8")))
+          "SignIn", views.html.auth.signIn(signInForm, socialProviderRegistry).toString
         )
         Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))
       }

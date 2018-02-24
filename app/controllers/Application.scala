@@ -42,7 +42,7 @@ class Application @Inject() (
   def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     val template: Template = dispenserService.buildTemplate(
       NavigationData("GlobalNav", "", None),
-      TemplateData("Drops", java.util.Base64.getEncoder.encodeToString(views.html.index(request.identity, request.authenticator.loginInfo).toString.getBytes("UTF-8")))
+      "Drops", views.html.index(request.identity, request.authenticator.loginInfo).toString
       )
     Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
   }
@@ -51,7 +51,7 @@ class Application @Inject() (
     crewDao.list.map(l => {
       val template: Template = dispenserService.buildTemplate(
         NavigationData("GlobalNav", "", None),
-        TemplateData("Drops", java.util.Base64.getEncoder.encodeToString(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define).toString.getBytes("UTF-8")))
+        "Drops", views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define).toString
       )
       Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
     })
@@ -121,7 +121,11 @@ class Application @Inject() (
 
   def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
     val resultingTasks: Future[Seq[Task]] = taskDao.all()
-    Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
+    val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        "Drops", views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks).toString
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
   }
 
   def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
@@ -185,7 +189,11 @@ class Application @Inject() (
   }}
 
   def registration = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)) { implicit request =>
-    Ok(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register))
+    val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        "Drops", views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register).toString
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
   }
 
   def registerOAuth2Client = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)).async { implicit request =>
