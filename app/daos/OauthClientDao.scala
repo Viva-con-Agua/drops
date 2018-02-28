@@ -70,19 +70,24 @@ class MariadbOauthClientDao extends OauthClientDao {
 
   override def find(id: String) : Future[Option[OauthClient]] = {
     dbConfig.db.run(oauthClients.filter(_.id === id).result).map(oauthClient => {
-        Option(oauthClient.head.toOauthClient)
+      oauthClient.headOption.map(_.toOauthClient)
     })
   }
 
   override def find(id: String, secret: String) : Future[Option[OauthClient]] = {
     dbConfig.db.run(oauthClients.filter(oC => oC.id === id && oC.secret === secret).result).map(oauthClient => {
-      Option(oauthClient.head.toOauthClient)
+      oauthClient.headOption.map(_.toOauthClient)
     })
   }
 
   override def find(id: String, secret: Option[String], grantType: String) : Future[Option[OauthClient]] = {
-    dbConfig.db.run(oauthClients.filter(oC => oC.id === id && oC.secret === secret && oC.grantTypes.like(grantType)).result).map(oauthClient => {
-      Option(oauthClient.head.toOauthClient)
+    var action = secret.isDefined match{
+      case true => oauthClients.filter(oC => oC.id === id && oC.secret === secret && oC.grantTypes.like(grantType)).result
+      case false => oauthClients.filter(oC => oC.id === id && oC.grantTypes.like(grantType)).result
+    }
+
+    dbConfig.db.run(action).map(oauthClient => {
+      oauthClient.headOption.map(_.toOauthClient)
     })
   }
 
