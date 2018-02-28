@@ -10,7 +10,6 @@ case class TaskDB(
                  id: Long,
                  title: String,
                  description: Option[String],
-               //ToDo Yoda Date?
                  deadline: Option[Date],
                  count_supporter: Option[Int]
                )
