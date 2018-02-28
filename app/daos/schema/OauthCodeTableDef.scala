@@ -20,8 +20,8 @@ class OauthCodeTableDef(tag: Tag) extends Table[OauthCodeDB](tag, "OauthCode") {
 
   def pk = primaryKey("primaryKey", (userId, clientId))
 
-  def uK = foreignKey("userId", userId, TableQuery[UserTableDef])(_.publicId, onUpdate = ForeignKeyAction.Cascade)
-  def cK = foreignKey("clientId", clientId, TableQuery[OauthClientTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
+  def uK = foreignKey("user_id", userId, TableQuery[UserTableDef])(_.publicId, onUpdate = ForeignKeyAction.Cascade)
+  def cK = foreignKey("client_id", clientId, TableQuery[OauthClientTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 
   def * =
     (code, userId, clientId, created) <>((OauthCodeDB.mapperTo _).tupled, OauthCodeDB.unapply)
