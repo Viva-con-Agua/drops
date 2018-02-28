@@ -114,7 +114,7 @@ class RestApi @Inject() (
         Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
       case None =>{
         var passwordInfo : Option[PasswordInfo] = None
-        if(!signUpData.password.isEmpty)
+        if(signUpData.password.isDefined)
           passwordInfo = Option(passwordHasher.hash(signUpData.password.get))
         val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo, List(new DefaultProfileImage))
 
