@@ -13,31 +13,39 @@ import play.api.libs.json.{JsPath, Reads, _}
   */
 case class UserDB(
   id: Long,
-  publicId: UUID
+  publicId: UUID,
+  roles: String
                 )
 
 
 object UserDB{
 
   def mapperTo(
-                id: Long, publicId: UUID
-              ) = apply(id, publicId)
+                id: Long, publicId: UUID, roles: String
+              ) = apply(id, publicId, roles)
 
-  def apply(tuple: (Long, UUID)): UserDB =
-    UserDB(tuple._1, tuple._2)
+  def apply(tuple: (Long, UUID, String)): UserDB =
+    UserDB(tuple._1, tuple._2, tuple._3)
 
-  def apply(user: User): UserDB=
-    UserDB(0, user.id)
+  def apply(user: User): UserDB={
+    var roles = Set[String]()
+    user.roles.foreach(role =>
+      roles += role.name
+    )
+    UserDB(0, user.id, roles.mkString(","))
+  }
 
   implicit val userWrites : OWrites[UserDB] = (
     (JsPath \ "id").write[Long] and
-      (JsPath \ "publicId").write[UUID]
+      (JsPath \ "publicId").write[UUID] and
+      (JsPath \ "roles").write[String]
     )(unlift(UserDB.unapply))
 
   implicit val userReads : Reads[UserDB] = (
     (JsPath \ "id").readNullable[Long] and
-      (JsPath \ "publicId").read[UUID]
+      (JsPath \ "publicId").read[UUID] and
+      (JsPath \ "roles").read[String]
     ).tupled.map((user) => if(user._1.isEmpty)
-    UserDB(0, user._2)
-  else UserDB(user._1.get, user._2))
+    UserDB(0, user._2, user._3)
+  else UserDB(user._1.get, user._2, user._3))
 }
