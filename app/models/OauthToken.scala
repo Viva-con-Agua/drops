@@ -2,6 +2,7 @@ package models
 
 import java.util.{Date, UUID}
 
+import models.database.OauthTokenDB
 import play.api.libs.Crypto
 import play.api.libs.json.Json
 
@@ -10,7 +11,17 @@ import scalaoauth2.provider.{AccessToken, AuthInfo}
 /**
   * Created by johann on 25.11.16.
   */
-case class OauthToken(accessToken: AccessToken, client: OauthClient, userId: UUID)
+case class OauthToken(accessToken: AccessToken, client: OauthClient, userId: UUID){
+  def toOauthTokenDB : OauthTokenDB = OauthTokenDB(
+    0, accessToken.token, accessToken.refreshToken, accessToken.scope, accessToken.lifeSeconds,
+    accessToken.createdAt, userId, client.id
+  )
+
+  def toOauthTokenDBWithId(id : Long) = OauthTokenDB(
+    id, accessToken.token, accessToken.refreshToken, accessToken.scope, accessToken.lifeSeconds,
+    accessToken.createdAt, userId, client.id
+  )
+}
 
 object OauthToken {
 
