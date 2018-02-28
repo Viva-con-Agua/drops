@@ -39,10 +39,10 @@ class Module extends AbstractModule with ScalaModule {
     bind[TaskDao].to[MariadbTaskDao]
     bind[PasswordInfoDao].to[MariadbPasswordInfoDao]
     bind[AccessRightDao].to[MariadbAccessRightDao]
-    bind[OauthClientDao].to[MongoOauthClientDao]
-    bind[OauthTokenDao].to[MongoOauthTokenDao]
+    bind[OauthClientDao].to[MariadbOauthClientDao]
+    bind[OauthTokenDao].to[MariadbOauthTokenDao]
     bind[PoolService].to[PoolServiceImpl]
-    bind[OauthCodeDao].to[MongoOauthCodeDao]
+    bind[OauthCodeDao].to[MariadbOauthCodeDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[MariadbPasswordInfoDao]
     bind[DelegableAuthInfoDAO[OAuth1Info]].to[MariadbOAuth1InfoDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())

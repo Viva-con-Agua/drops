@@ -38,7 +38,6 @@ import scala.util.parsing.json.JSONArray
 
 class RestApi @Inject() (
   val userDao : UserDao,
-  val userMariaDao : MariadbUserDao,
   val crewDao: CrewDao,
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
@@ -78,14 +77,14 @@ class RestApi @Inject() (
   }
 
   def getUsers = ApiAction.async { implicit request => {
-    userMariaDao.list.map( userList => {
+    userDao.list.map( userList => {
       Ok(Json.toJson(userList.map(PublicUser(_))))
     })
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
 
-    userMariaDao.find(id).map(_ match {
+    userDao.find(id).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
@@ -148,7 +147,7 @@ class RestApi @Inject() (
   def updateUser(id : UUID) = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
     val userData = request.request.body
     val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
-    userMariaDao.find(loginInfo).flatMap(userObj => {
+    userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match{
           case true => {
@@ -208,10 +207,10 @@ class RestApi @Inject() (
 
   def deleteUser(id: UUID) = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
     val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email)
-    userMariaDao.find(loginInfo).flatMap(userObj => {
+    userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match {
-          case true => userMariaDao.delete(id).map(r => Ok(Json.toJson(r)))
+          case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
           case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
         }
         case None => Future(NotFound(Messages("error.noUser")))

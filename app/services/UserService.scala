@@ -16,12 +16,12 @@ import models.database.AccessRight
 import models.{Profile, ProfileImage, User}
 
 //ToDo: Refactore - inject only  mariaDbUserDao via userDao trait 
-class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao, mariadbUserDao:MariadbUserDao) extends IdentityService[User] {
-  def retrieve(loginInfo:LoginInfo):Future[Option[User]] = mariadbUserDao.find(loginInfo)
-  def save(user:User) = mariadbUserDao.save(user)
+class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao) extends IdentityService[User] {
+  def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
+  def save(user:User) = userDao.save(user)
   def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
   def update(updatedUser: User) = userDao.replace(updatedUser)
-  def find(id:UUID) = mariadbUserDao.find(id)
+  def find(id:UUID) = userDao.find(id)
   def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)
   def link(user:User, socialProfile:CommonSocialProfile) = {
     val profile = Profile(socialProfile)
