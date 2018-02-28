@@ -4,7 +4,7 @@ import com.mohiva.play.silhouette.api.LoginInfo
 import com.mohiva.play.silhouette.api.util.PasswordInfo
 import models._
 import models.database._
-q
+
 object UserConverter {
   def buildUserListFromResult(result: Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB])]) : List[User] = {
     //foldLeft[Return Data Type](Init Value)(parameter) => function
