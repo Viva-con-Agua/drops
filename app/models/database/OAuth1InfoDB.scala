@@ -10,7 +10,10 @@ case class OAuth1InfoDB  (
                       token: String,
                       secret: String,
                       profileId: Long
-                    )
+                    ){
+  def toOAuth1Info : OAuth1Info =
+    OAuth1Info(token, secret)
+}
 
 object OAuth1InfoDB{
   def apply(authInfo: OAuth1Info, profileId: Long): OAuth1InfoDB =

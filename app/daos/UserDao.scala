@@ -144,6 +144,7 @@ class MariadbUserDao extends UserDao{
   val loginInfos = TableQuery[LoginInfoTableDef]
   val passwordInfos = TableQuery[PasswordInfoTableDef]
   val supporters = TableQuery[SupporterTableDef]
+  val oauth1Infos = TableQuery[OAuth1InfoTableDef]
 
   /** Find a user object by loginInfo providerId and providerKey
     *
@@ -152,13 +153,14 @@ class MariadbUserDao extends UserDao{
     */
   override def find(loginInfo: LoginInfo): Future[Option[User]] = {
     val action = for{
-      ((((user, profile), supporter), loginInfo), passwordInfo) <- (users
+      (((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info) <- (users
         join profiles on (_.id === _.userId) //user.id === profile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
         join loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)
             on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
-        joinLeft passwordInfos on(_._1._2.id ===   _.profileId)
-        )} yield(user, profile, supporter, loginInfo, passwordInfo)
+        joinLeft passwordInfos on(_._1._1._2.id ===   _.profileId)
+        joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
+        )} yield(user, profile, supporter, loginInfo, passwordInfo, oauth1Info)
 
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildUserListFromResult(result).headOption
@@ -171,12 +173,13 @@ class MariadbUserDao extends UserDao{
 
   private def find(id : Long):Future[Option[User]] = {
     val action = for{
-      ((((user, profile), supporter), loginInfo), passwordInfo) <- (users.filter(u => u.id === id)
+      (((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info) <- (users.filter(u => u.id === id)
         join profiles on (_.id === _.userId) //user.id === profile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
         join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
-        joinLeft passwordInfos on(_._1._2.id === _.profileId)
-        )} yield(user, profile, supporter, loginInfo, passwordInfo)
+        joinLeft passwordInfos on(_._1._1._2.id === _.profileId)
+        joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
+        )} yield(user, profile, supporter, loginInfo, passwordInfo, oauth1Info)
 
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildUserListFromResult(result).headOption
@@ -188,14 +191,15 @@ class MariadbUserDao extends UserDao{
     * @param userId
     * @return
     */
-  private def findDBModels(userId: UUID) : Future[Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB])]] = {
+  private def findDBModels(userId: UUID) : Future[Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB])]] = {
     val action = for{
-      ((((user, profile), supporter), loginInfo), passwordInfo) <- (users.filter(u => u.publicId === userId)
+      (((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info) <- (users.filter(u => u.publicId === userId)
         join profiles on (_.id === _.userId) //user.id === profile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
         join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
-        joinLeft passwordInfos on (_._1._2.id === _.profileId)
-        )} yield(user, profile, supporter, loginInfo, passwordInfo)
+        joinLeft passwordInfos on (_._1._1._2.id === _.profileId)
+        joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
+        )} yield(user, profile, supporter, loginInfo, passwordInfo, oauth1Info)
 
     dbConfig.db.run(action.result).map(result => {
       result
@@ -206,6 +210,10 @@ class MariadbUserDao extends UserDao{
     dbConfig.db.run(users.filter(_.publicId === userId).result).map(r => r.head)
   }
 
+  private def findDBUserModel(id : Long) : Future[UserDB] = {
+    dbConfig.db.run(users.filter(_.id === id).result).map(r => r.head)
+  }
+
   /**
     * Create a new user object in the database
     * @param user
@@ -213,32 +221,12 @@ class MariadbUserDao extends UserDao{
     */
   override def save(user: User): Future[User]={
     val userDBObj = UserDB(user)
-    //ToDo: Refactore - function should handle a list of profiles
-    val supporter: Supporter = user.profiles.head.supporter
-    val loginInfo: LoginInfo = user.profiles.head.loginInfo
-    val profile : Profile = user.profiles.head
 
-    //ToDo: Refactroe - use addProfiles function - this will also resolve the todo above
-    println(user.profiles.head.passwordInfo.isDefined);
-    val insertion = if(user.profiles.head.passwordInfo.isDefined) {
-      val passwordInfo: PasswordInfo = user.profiles.head.passwordInfo.get
-      (for {
-        u <- (users returning users.map(_.id)) += userDBObj
-        p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, u)
-        _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-        _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
-        _ <- (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
-      } yield u).transactionally
-    }
-    else {
-      (for {
-        u <- (users returning users.map(_.id)) += userDBObj
-        p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, u)
-        _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-        _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
-      } yield u).transactionally
-    }
-    dbConfig.db.run(insertion).flatMap(userId => find(userId)).map(_.get)
+    dbConfig.db.run((users returning users.map(_.id)) += userDBObj).flatMap(id => {
+      findDBUserModel(id)
+    }).flatMap(userObj => {
+      addProfiles(userObj, user.profiles)
+    })
   }
 
   override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = ???
@@ -267,26 +255,24 @@ class MariadbUserDao extends UserDao{
     profileObjects.foreach(profile => {
       val supporter: Supporter = profile.supporter
       val loginInfo: LoginInfo = profile.loginInfo
-      //TODO: Add OAuthInfo
 
-      val insertion = if(profile.passwordInfo.isDefined) {
-        val passwordInfo: PasswordInfo = profile.passwordInfo.get
-        (for {
+      val insertion = (for {
           p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userDB.id)
           _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
           _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
-          _ <- (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+          _ <- (profile.passwordInfo match {
+            case Some(passwordInfo) => (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+            case None => DBIO.successful(false)
+          })
+          _ <- (profile.oauth1Info match {
+            case Some(oAuth1Info) => (oauth1Infos returning oauth1Infos.map(_.id)) += OAuth1InfoDB(oAuth1Info, p)
+            case None => DBIO.successful(false)
+          })
         } yield p).transactionally
-      }
-      else
-        (for {
-          p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userDB.id)
-          _ <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-          _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
-        } yield p).transactionally
+
       dbConfig.db.run(insertion)
     })
-
+    
     find(userDB.id).map(_.get)
   }
 
@@ -333,12 +319,13 @@ class MariadbUserDao extends UserDao{
 
   override def list: Future[List[User]] = {
     val action = for{
-      ((((user, profile), supporter), loginInfo),passwordInfo) <- (users
+      (((((user, profile), supporter), loginInfo),passwordInfo), oauth1Info) <- (users
         join profiles on (_.id === _.userId) //user.id === profile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
         join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
         joinLeft passwordInfos on(_._1._2.id === _.profileId)
-        )} yield(user, profile, supporter, loginInfo, passwordInfo)
+        joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
+        )} yield(user, profile, supporter, loginInfo, passwordInfo, oauth1Info)
 
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildUserListFromResult(result)

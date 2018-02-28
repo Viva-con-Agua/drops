@@ -17,7 +17,6 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
-//ToDo: delete username from case class
 case class Supporter(
   firstName: Option[String],
   lastName: Option[String],
@@ -108,8 +107,8 @@ case class Profile(
 
 object Profile {
 
-  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter, passwordInfo: Option[PasswordInfo]) : Profile =
-    Profile(loginInfo, confirmed, Some(email), supporter, passwordInfo, None, List[DefaultProfileImage]())
+  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter, passwordInfo: Option[PasswordInfo], oauth1Info: Option[OAuth1Info]) : Profile =
+    Profile(loginInfo, confirmed, Some(email), supporter, passwordInfo, oauth1Info, List[DefaultProfileImage]())
   def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, passwordInfo: Option[PasswordInfo], avatar: List[DefaultProfileImage]) :Profile =
     Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), passwordInfo, None, avatar)
 
