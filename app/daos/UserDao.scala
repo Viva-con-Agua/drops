@@ -229,7 +229,14 @@ class MariadbUserDao extends UserDao{
     })
   }
 
-  override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = ???
+  override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = {
+    val oldAvatar = profile.avatar.filter(_ match {
+      case pi: LocalProfileImage => false
+      case _ => true
+    })
+    val newProfile = profile.copy(avatar = avatar +: oldAvatar)
+    this.update(newProfile)
+  }
 
   override def replace(updatedUser: User): Future[User] = {
     findDBUserModel(updatedUser.id).flatMap(user => {
@@ -272,7 +279,7 @@ class MariadbUserDao extends UserDao{
 
       dbConfig.db.run(insertion)
     })
-    
+
     find(userDB.id).map(_.get)
   }
 
