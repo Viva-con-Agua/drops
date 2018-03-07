@@ -3,13 +3,12 @@ package daos.schema
 import java.net.{URI, URISyntaxException}
 
 import slick.driver.MySQLDriver.api._
-import models.database.{AccessRight, HttpMethod}
-import models.database.HttpMethod.HttpMethod
+import models.database.AccessRightDB
 
-class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight") {
+class AccessRightTableDef(tag: Tag) extends Table[AccessRightDB](tag, "AccessRight") {
   def id = column[Long]("id", O.PrimaryKey,O.AutoInc)
   def uri = column[URI]("uri")
-  def method = column[HttpMethod]("method")
+  def method = column[String]("method")
   def name = column[String]("name")
   def description = column[String]("description")
   def service = column[String]("service")
@@ -25,14 +24,6 @@ class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight
     }
   )
 
-  implicit val httpMethodColumnType = MappedColumnType.base[HttpMethod, String](
-    {httpMethod => httpMethod.toString},
-    {
-      case "POST" => HttpMethod.POST
-      case "GET" => HttpMethod.GET
-    }
-  )
-
   def * =
-    (id, uri, method, name.?, description.?, service) <>(AccessRight.tupled, AccessRight.unapply)
+    (id, uri, method, name.?, description.?, service) <>(AccessRightDB.tupled, AccessRightDB.unapply)
 }
