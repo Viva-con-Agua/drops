@@ -3,6 +3,7 @@ package daos
 import java.util.UUID
 
 import daos.schema.{TaskTableDef, UserTableDef, UserTaskTableDef}
+import models.Task
 import models.database.TaskDB
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
@@ -18,11 +19,11 @@ import scala.concurrent.Future
 
 //ToDo: DAOs should always return business models
 trait TaskDao{
-  def all(): Future[Seq[TaskDB]]
-  def create(task:TaskDB): Future[Option[TaskDB]]
-  def find(id:Long): Future[Option[TaskDB]]
+  def all(): Future[Seq[Task]]
+  def create(task:Task): Future[Option[Task]]
+  def find(id:Long): Future[Option[Task]]
   def delete(id:Long): Future[Int]
-  def forUser(userId: UUID): Future[Seq[TaskDB]]
+  def forUser(userId: UUID): Future[Seq[Task]]
   def idsForUser(userId : UUID) : Future[Seq[Long]]
 }
 
@@ -35,22 +36,23 @@ class MariadbTaskDao extends TaskDao {
   val userTasks = TableQuery[UserTaskTableDef]
   val users = TableQuery[UserTableDef]
 
-  def all(): Future[Seq[TaskDB]] = dbConfig.db.run(tasks.result)
+  def all(): Future[Seq[Task]] = dbConfig.db.run(tasks.result).map(tasks => tasks.map(task => task.toTask))
 
-  def find(id: Long): Future[Option[TaskDB]] = dbConfig.db.run(tasks.filter(t => t.id === id).result).map(_.headOption)
 
-  def create(task: TaskDB): Future[Option[TaskDB]] = {
-    dbConfig.db.run((tasks returning tasks.map(_.id)) += task).flatMap((id) => find(id))
+  def find(id: Long): Future[Option[Task]] = dbConfig.db.run(tasks.filter(t => t.id === id).result).map(_.headOption.map(_.toTask))
+
+  def create(task: Task): Future[Option[Task]] = {
+    dbConfig.db.run((tasks returning tasks.map(_.id)) += TaskDB(task)).flatMap((id) => find(id))
   }
 
   def delete(id: Long): Future[Int] = dbConfig.db.run(tasks.filter(t => t.id === id).delete)
 
-  def forUser(userId : UUID) : Future[Seq[TaskDB]] = {
+  def forUser(userId : UUID) : Future[Seq[Task]] = {
     dbConfig.db.run(users.filter(u => u.publicId === userId).result).flatMap(user => {
       val action = for{
         (t, _) <- (tasks join userTasks.filter(ut => ut.userId === user.head.id) on (_.id === _.taskId))
       } yield(t)
-      dbConfig.db.run(action.result)
+      dbConfig.db.run(action.result).map(tasks => tasks.map(task => task.toTask))
     })
   }
 

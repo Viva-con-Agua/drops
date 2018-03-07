@@ -17,7 +17,6 @@ import play.api.data.Form
 import play.api.data.Forms._
 import services.UserService
 import daos.{CrewDao, OauthClientDao, TaskDao}
-import models.database.TaskDB
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
 import utils.authorization.{Pool1Restriction, WithAlternativeRoles, WithRole}
@@ -118,7 +117,7 @@ class Application @Inject() (
   }
 
   def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
-    val resultingTasks: Future[Seq[TaskDB]] = taskDao.all()
+    val resultingTasks: Future[Seq[Task]] = taskDao.all()
 
     Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
   }
