@@ -25,7 +25,7 @@ import com.mohiva.play.silhouette.api.util.{PasswordHasher, PasswordInfo}
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
-import models.database.{AccessRight, TaskDB}
+import models.database.AccessRight
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
 import utils.Query.{QueryAST, QueryLexer, QueryParser}
@@ -253,7 +253,7 @@ class RestApi @Inject() (
     taskDao.find(id).map(task => Ok(Json.toJson(task)))
   }}
 
-  def createTask() = Action.async(validateJson[TaskDB]) { implicit request => {
+  def createTask() = Action.async(validateJson[Task]) { implicit request => {
     taskDao.create(request.body).map{task => Ok(Json.toJson(task))}
   }}
 
