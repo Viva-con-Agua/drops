@@ -27,6 +27,6 @@ class OauthTokenTableDef(tag: Tag) extends Table[OauthTokenDB](tag, "OauthToken"
   def cK = foreignKey("client_id", clientId, TableQuery[OauthClientTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 
   def * =
-    (id, token, refreshToken.?, scope.?, lifeSeconds.?, createdAt, userId, clientId)<>((OauthTokenDB.mapperTo _).tupled, OauthTokenDB.unapply)
+    (id, token, refreshToken.?, scope.?, lifeSeconds.?, createdAt, userId, clientId)<>(OauthTokenDB.tupled, OauthTokenDB.unapply)
 
 }

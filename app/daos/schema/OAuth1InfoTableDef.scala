@@ -12,7 +12,7 @@ class OAuth1InfoTableDef (tag: Tag) extends Table[OAuth1InfoDB](tag, "OAuth1Info
   def secret =  column[String]("secret")
   def profileId = column[Long]("profile_id")
   def * =
-    (id, token, secret, profileId) <> ((OAuth1InfoDB.mapperTo _).tupled, OAuth1InfoDB.unapply)
+    (id, token, secret, profileId) <> (OAuth1InfoDB.tupled, OAuth1InfoDB.unapply)
 
   def profileKey = foreignKey("profile_id", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 }

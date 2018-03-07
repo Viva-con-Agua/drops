@@ -6,8 +6,6 @@ case class CityDB(
                    crewId: Long
                  )
 
-object CityDB{
-  def mapperTo(
-              id: Long, name: String, crewId:Long
-              ) = apply(id, name, crewId)
+object CityDB extends ((Long, String, Long) => CityDB ){
+
 }

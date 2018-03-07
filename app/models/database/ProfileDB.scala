@@ -19,12 +19,7 @@ case class ProfileDB(
                 )
 
 
-object ProfileDB{
-
-  def mapperTo(
-                id: Long, confirmed: Boolean, email: String, userId: Long
-              ) = apply(id, confirmed, email, userId)
-
+object ProfileDB extends ((Long, Boolean , String, Long) => ProfileDB ){
   def apply(tuple: (Long, Boolean, String, Long)): ProfileDB =
     ProfileDB(tuple._1, tuple._2, tuple._3, tuple._4)
   def apply(profile:Profile, userId:Long): ProfileDB =

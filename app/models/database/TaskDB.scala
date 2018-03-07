@@ -14,13 +14,7 @@ case class TaskDB(
                  count_supporter: Option[Int]
                )
 
-object TaskDB{
-
-  def mapperTo(
-                id: Long, title: String,
-                description: Option[String], deadline: Option[Date], count_supporter: Option[Int]
-              ) = apply(id, title, description, deadline, count_supporter)
-
+object TaskDB extends ((Long, String, Option[String], Option[Date], Option[Int]) => TaskDB ){
   def apply(tuple: (Long, String, Option[String], Option[Date], Option[Int])): TaskDB =
     TaskDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
 

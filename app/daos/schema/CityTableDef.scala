@@ -10,7 +10,7 @@ class CityTableDef(tag: Tag) extends Table[CityDB](tag, "City") {
   def crewId = column[Long]("crew_id")
 
   def * =
-    (id, name, crewId) <>((CityDB.mapperTo _).tupled, CityDB.unapply)
+    (id, name, crewId) <>(CityDB.tupled, CityDB.unapply)
 
   def crewKey = foreignKey("crew_id", crewId, TableQuery[CrewTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 }

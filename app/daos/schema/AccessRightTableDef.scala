@@ -34,5 +34,5 @@ class AccessRightTableDef(tag: Tag) extends Table[AccessRight](tag, "AccessRight
   )
 
   def * =
-    (id, uri, method, name.?, description.?, service) <>((AccessRight.mapperTo _).tupled, AccessRight.unapply)
+    (id, uri, method, name.?, description.?, service) <>(AccessRight.tupled, AccessRight.unapply)
 }

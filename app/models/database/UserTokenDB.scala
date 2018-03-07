@@ -16,16 +16,12 @@ case class UserTokenDB(
                       ){
   def toUserToken: UserToken = UserToken(id, userId, email, expirationTime, isSignUp)
 }
-object UserTokenDB{
+object UserTokenDB extends ((UUID, UUID, String, DateTime, Boolean) => UserTokenDB ){
   def apply(token: UserToken):UserTokenDB =
     UserTokenDB(token.id, token.userId, token.email, token.expirationTime, token.isSignUp)
 
   def apply(tuple: (UUID, UUID, String, DateTime, Boolean)): UserTokenDB =
     UserTokenDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
-
-  def mapperTo(
-              id: UUID, userId: UUID, email: String, expirationTime: DateTime, isSignUp: Boolean
-              ) = apply(id, userId, email, expirationTime, isSignUp)
 
   implicit val userTokenWrites : OWrites[UserTokenDB] = (
     (JsPath \ "id").write[UUID] and

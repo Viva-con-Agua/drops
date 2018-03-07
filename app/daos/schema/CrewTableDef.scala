@@ -13,5 +13,5 @@ class CrewTableDef(tag: Tag) extends Table[CrewDB](tag, "Crew") {
   def country =  column[String]("country")
 
   def * =
-    (id, publicId, name, country) <>((CrewDB.mapperTo _).tupled, CrewDB.unapply)
+    (id, publicId, name, country) <>(CrewDB.tupled, CrewDB.unapply)
 }

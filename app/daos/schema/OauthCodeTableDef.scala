@@ -24,6 +24,6 @@ class OauthCodeTableDef(tag: Tag) extends Table[OauthCodeDB](tag, "OauthCode") {
   def cK = foreignKey("client_id", clientId, TableQuery[OauthClientTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 
   def * =
-    (code, userId, clientId, created) <>((OauthCodeDB.mapperTo _).tupled, OauthCodeDB.unapply)
+    (code, userId, clientId, created) <>(OauthCodeDB.tupled, OauthCodeDB.unapply)
 
 }

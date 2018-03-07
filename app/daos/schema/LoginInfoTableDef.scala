@@ -11,7 +11,7 @@ class LoginInfoTableDef(tag: Tag) extends Table[LoginInfoDB](tag, "LoginInfo") {
   def profileId = column[Long]("profile_id")
 
   def * =
-    (id, providerId, providerKey, profileId) <> ((LoginInfoDB.mapperTo _).tupled, LoginInfoDB.unapply)
+    (id, providerId, providerKey, profileId) <> (LoginInfoDB.tupled, LoginInfoDB.unapply)
 
   def profileKey = foreignKey("profile_id", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 

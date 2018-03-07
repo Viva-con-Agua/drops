@@ -13,9 +13,5 @@ case class OauthTokenDB (
     clientId: String
   )
 
-object OauthTokenDB{
-  def mapperTo(
-              id: Long, token: String, refreshToken: Option[String], scope: Option[String],
-              lifeSeconds: Option[Long], createdAt: Date, userId: UUID, clientId: String
-              ) = apply(id, token, refreshToken, scope, lifeSeconds, createdAt, userId, clientId)
+object OauthTokenDB extends ((Long, String, Option[String], Option[String], Option[Long], Date, UUID, String) => OauthTokenDB ){
 }

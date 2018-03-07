@@ -17,7 +17,7 @@ class SupporterTableDef(tag: Tag) extends Table[SupporterDB](tag, "Supporter") {
   def crewId            = column[Long]("crew_id")
 
   def * =
-    (id, firstName.?, lastName.?, fullName.?, mobilePhone.?, placeOfResidence.?, birthday.?, sex.?, profileId, crewId.?)<>((SupporterDB.mapperTo _).tupled, SupporterDB.unapply)
+    (id, firstName.?, lastName.?, fullName.?, mobilePhone.?, placeOfResidence.?, birthday.?, sex.?, profileId, crewId.?)<>(SupporterDB.tupled, SupporterDB.unapply)
 
   def profileKey = foreignKey("profile_id", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
   def crewKey = foreignKey("crew_id", crewId, TableQuery[CrewTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)

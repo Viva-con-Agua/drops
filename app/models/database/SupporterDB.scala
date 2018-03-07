@@ -31,14 +31,7 @@ case class SupporterDB(
   def toSupporter: Supporter = Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex)
 }
 
-object SupporterDB{
-
-  def mapperTo(
-    id: Long, firstName: Option[String], lastName: Option[String], fullName: Option[String],
-    mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long],
-    sex: Option[String], profileId: Long, crewId : Option[Long]
-  ) = apply(id, firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, profileId, crewId)
-
+object SupporterDB extends ((Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long, Option[Long]) => SupporterDB ){
   def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long, Option[Long])) : SupporterDB =
     SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
 

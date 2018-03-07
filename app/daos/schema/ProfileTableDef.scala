@@ -11,7 +11,7 @@ class ProfileTableDef(tag: Tag) extends Table[ProfileDB](tag, "Profile") {
   def userId = column[Long]("user_id")
 
   def * =
-    (id, confirmed, email, userId)<>((ProfileDB.mapperTo _).tupled, ProfileDB.unapply)
+    (id, confirmed, email, userId)<>(ProfileDB.tupled, ProfileDB.unapply)
 
   def userKey = foreignKey("user_id", userId, TableQuery[UserTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 

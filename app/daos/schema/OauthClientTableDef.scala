@@ -10,5 +10,5 @@ class OauthClientTableDef(tag: Tag) extends Table[OauthClientDB](tag, "OauthClie
   def grantTypes = column[String]("grantTypes")
 
   def * =
-    (id, secret, redirectUri.?, grantTypes) <>((OauthClientDB.mapperTo _).tupled, OauthClientDB.unapply)
+    (id, secret, redirectUri.?, grantTypes) <>(OauthClientDB.tupled, OauthClientDB.unapply)
 }

@@ -21,5 +21,5 @@ class TaskTableDef(tag: Tag) extends Table[TaskDB](tag, "Task") {
     )
 
   def * =
-    (id, title, description.?, deadline.?, count_supporter.?) <>((TaskDB.mapperTo _).tupled, TaskDB.unapply)
+    (id, title, description.?, deadline.?, count_supporter.?) <>(TaskDB.tupled, TaskDB.unapply)
 }

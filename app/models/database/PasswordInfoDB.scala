@@ -20,13 +20,9 @@ case class PasswordInfoDB (
   def toPasswordInfo : PasswordInfo = PasswordInfo(hasher, password)
 }
 
-object PasswordInfoDB{
+object PasswordInfoDB extends ((Long, String, String, Long) => PasswordInfoDB ){
   def apply(id: Long, passwordInfo: PasswordInfo, profileId: Long): PasswordInfoDB =
     PasswordInfoDB(id, passwordInfo.hasher, passwordInfo.password, profileId)
-
-  def mapperTo(
-                id: Long, hasher: String, password: String, profileId: Long
-              ) = apply(id, hasher, password, profileId)
 
   def apply(tuple: (Long, String, String, Long)): PasswordInfoDB =
     PasswordInfoDB(tuple._1, tuple._2, tuple._3, tuple._4)

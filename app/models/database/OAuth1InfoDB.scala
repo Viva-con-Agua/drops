@@ -15,18 +15,14 @@ case class OAuth1InfoDB  (
     OAuth1Info(token, secret)
 }
 
-object OAuth1InfoDB{
+object OAuth1InfoDB extends ((Long, String, String, Long) => OAuth1InfoDB ){
   def apply(authInfo: OAuth1Info, profileId: Long): OAuth1InfoDB =
     OAuth1InfoDB(0, authInfo.token, authInfo.secret, profileId)
 
   def apply(tuple: (Long, String, String, Long)): OAuth1InfoDB =
     OAuth1InfoDB(tuple._1, tuple._2, tuple._3, tuple._4)
 
-  def mapperTo(
-                id: Long, token: String, secret: String, profileId: Long
-              ) = apply(id, token, secret, profileId)
-
-  implicit val oAuth1InfoDBWrites : OWrites[OAuth1InfoDB] = (
+ implicit val oAuth1InfoDBWrites : OWrites[OAuth1InfoDB] = (
     (JsPath \ "id").write[Long]and
       (JsPath \ "token").write[String] and
       (JsPath \ "secret").write[String] and

@@ -22,5 +22,5 @@ class UserTokenTableDef(tag: Tag) extends Table[UserTokenDB](tag, "UserToken") {
 
 
   def * =
-    (id, userId, email, expirationTime, isSignUp)<>((UserTokenDB.mapperTo _).tupled, UserTokenDB.unapply)
+    (id, userId, email, expirationTime, isSignUp)<>(UserTokenDB.tupled, UserTokenDB.unapply)
 }

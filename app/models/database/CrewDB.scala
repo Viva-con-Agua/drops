@@ -14,11 +14,7 @@ case class CrewDB(
 
 }
 
-object CrewDB{
-  def mapperTo(
-              id: Long, publicId: UUID, name: String, country: String
-              ) = apply(id, publicId, name, country)
-
+object CrewDB extends((Long, UUID, String, String) => CrewDB ){
   def apply (crew: Crew): CrewDB = CrewDB(0, crew.id, crew.name, crew.country)
 }
 

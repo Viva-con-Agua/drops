@@ -18,12 +18,7 @@ case class UserDB(
                 )
 
 
-object UserDB{
-
-  def mapperTo(
-                id: Long, publicId: UUID, roles: String
-              ) = apply(id, publicId, roles)
-
+object UserDB extends ((Long, UUID, String) => UserDB ){
   def apply(tuple: (Long, UUID, String)): UserDB =
     UserDB(tuple._1, tuple._2, tuple._3)
 

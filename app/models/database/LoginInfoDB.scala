@@ -21,13 +21,9 @@ case class LoginInfoDB(
 
 }
 
-object LoginInfoDB{
+object LoginInfoDB extends ((Long, String, String, Long) => LoginInfoDB ){
   def apply(id: Long, loginInfo: LoginInfo, profileId: Long): LoginInfoDB =
     LoginInfoDB(id, loginInfo.providerID, loginInfo.providerKey, profileId)
-
-  def mapperTo(
-              id: Long, providerId: String, providerKey: String, profileId: Long
-              ) = apply(id, providerId, providerKey, profileId)
 
   def apply(tuple: (Long, String, String, Long)): LoginInfoDB =
     LoginInfoDB(tuple._1, tuple._2, tuple._3, tuple._4)

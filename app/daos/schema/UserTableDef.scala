@@ -10,7 +10,7 @@ class UserTableDef(tag: Tag) extends Table[UserDB](tag, "User") {
   def publicId = column[UUID]("public_id")
   def roles = column[String]("roles")
 
-  def * = (id, publicId, roles) <>((UserDB.mapperTo _).tupled, UserDB.unapply)
+  def * = (id, publicId, roles) <>(UserDB.tupled, UserDB.unapply)
 
   def pk = primaryKey("primaryKey", id)
 }

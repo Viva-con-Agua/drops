@@ -11,7 +11,7 @@ class PasswordInfoTableDef(tag: Tag) extends Table[PasswordInfoDB](tag, "Passwor
   def profileId = column[Long]("profile_id")
 
   def * =
-    (id, hasher, password, profileId) <> ((PasswordInfoDB.mapperTo _).tupled, PasswordInfoDB.unapply)
+    (id, hasher, password, profileId) <> (PasswordInfoDB.tupled, PasswordInfoDB.unapply)
 
   def profileKey = foreignKey("profile_id", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 
