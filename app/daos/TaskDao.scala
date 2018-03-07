@@ -36,7 +36,7 @@ class MariadbTaskDao extends TaskDao {
   val userTasks = TableQuery[UserTaskTableDef]
   val users = TableQuery[UserTableDef]
 
-  def all(): Future[Seq[Task]] = dbConfig.db.run(tasks.result).map(tasks => tasks.map(task => task.toTask))
+  def all(): Future[Seq[Task]] = dbConfig.db.run(tasks.result).map(t => t.map(task => task.toTask))
 
 
   def find(id: Long): Future[Option[Task]] = dbConfig.db.run(tasks.filter(t => t.id === id).result).map(_.headOption.map(_.toTask))
@@ -52,7 +52,7 @@ class MariadbTaskDao extends TaskDao {
       val action = for{
         (t, _) <- (tasks join userTasks.filter(ut => ut.userId === user.head.id) on (_.id === _.taskId))
       } yield(t)
-      dbConfig.db.run(action.result).map(tasks => tasks.map(task => task.toTask))
+      dbConfig.db.run(action.result).map(t => t.map(task => task.toTask))
     })
   }
 
