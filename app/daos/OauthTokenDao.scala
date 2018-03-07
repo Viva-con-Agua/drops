@@ -166,8 +166,8 @@ class MariadbOauthTokenDao extends OauthTokenDao {
 
   override def createOrUpdate(token: OauthToken) : Future[OauthToken] = {
     findDBModel(token.accessToken).flatMap(t => t.isDefined match {
-      case true => dbConfig.db.run(oauthTokens.filter(_.id === t.get.id).update(token.toOauthTokenDBWithId(t.get.id))).flatMap(_ => find(t.get.id))
-      case false => dbConfig.db.run((oauthTokens returning oauthTokens.map(_.id)) += token.toOauthTokenDB).flatMap(r => {find(r)})
+      case true => dbConfig.db.run(oauthTokens.filter(_.id === t.get.id).update(OauthTokenDB(token, t.get.id))).flatMap(_ => find(t.get.id))
+      case false => dbConfig.db.run((oauthTokens returning oauthTokens.map(_.id)) += OauthTokenDB(token)).flatMap(r => {find(r)})
     }).map(_.get)
   }
 }

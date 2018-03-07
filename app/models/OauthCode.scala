@@ -1,7 +1,5 @@
 package models
 
-
-import models.database.OauthCodeDB
 import org.joda.time.{DateTime, Duration}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Json, OWrites, Reads}
@@ -15,9 +13,6 @@ import scala.util.Random
 case class OauthCode(code : String, user: User, client : OauthClient, created: DateTime = new DateTime(new java.util.Date())) {
   // currently codes are valid for one day
   def isExpired : Boolean = created.plus(new Duration(24L*60L*60L*1000L)).isBeforeNow
-
-  def toOauthCodeDB : OauthCodeDB =
-    OauthCodeDB(code, user.id, client.id, created)
 }
 
 object OauthCode {

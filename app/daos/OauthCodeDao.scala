@@ -3,6 +3,7 @@ package daos
 import javax.inject.Inject
 
 import daos.schema.{OauthClientTableDef, OauthCodeTableDef}
+import models.database.OauthCodeDB
 
 import scala.concurrent.Future
 import models.{OauthClient, OauthCode}
@@ -77,7 +78,7 @@ class MariadbOauthCodeDao @Inject() (userDao:MariadbUserDao)extends OauthCodeDao
   }
 
   override def save(code: OauthCode) : Future[OauthCode] = {
-    dbConfig.db.run(oauthCodes += code.toOauthCodeDB).flatMap(_ => find(code.code)).map(_.get)
+    dbConfig.db.run(oauthCodes += OauthCodeDB(code)).flatMap(_ => find(code.code)).map(_.get)
   }
 
   override def delete(code: OauthCode) : Future[Boolean] = {

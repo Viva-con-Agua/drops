@@ -4,6 +4,7 @@ import daos.schema.OauthClientTableDef
 
 import scala.concurrent.Future
 import models.OauthClient
+import models.database.OauthClientDB
 import play.api.Play
 import play.api.Play._
 import play.api.libs.json.Json
@@ -92,7 +93,7 @@ class MariadbOauthClientDao extends OauthClientDao {
   }
 
   override def save(client: OauthClient) : Future[OauthClient] = {
-    dbConfig.db.run(oauthClients += client.toOauthClientDB).flatMap(_ => find(client.id)).map(_.get)
+    dbConfig.db.run(oauthClients += OauthClientDB(client)).flatMap(_ => find(client.id)).map(_.get)
   }
 
   override def validate(id: String, secret: Option[String], grantType: String) : Future[Boolean] = {
