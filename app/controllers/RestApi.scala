@@ -42,6 +42,7 @@ class RestApi @Inject() (
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
+  val pool1UserDao : Pool1UserDao,
   val userService : UserService,
   val taskService : TaskService,
   val ApiAction : ApiAction,
@@ -59,7 +60,7 @@ class RestApi @Inject() (
     *  @return if the json in the request.body is  successful, return JsSuccess Type, else return BadRequest with json errors
     */
   def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
-
+  
   def profile = SecuredAction.async { implicit request =>
     val json = Json.toJson(request.identity.profileFor(request.authenticator.loginInfo).get)
     val prunedJson = json.transform(
@@ -320,5 +321,7 @@ class RestApi @Inject() (
     accessRightDao.delete(id).map(count => if (count == 0) NotFound else Ok)
   }}
 
-
+  def createPool1User() = Action.async(validateJson[Pool1User]) { request => 
+    pool1UserDao.save(request.body).map{user => Ok(Json.toJson(user))}
+  }
 }

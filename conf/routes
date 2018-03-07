@@ -38,6 +38,9 @@ GET     /rest/access/:id                                    controllers.RestApi.
 DELETE  /rest/access/:id                                    controllers.RestApi.deleteAccessRight(id: Long)
 POST    /rest/access                                        controllers.RestApi.createAccessRight
 
+#Pool1User Rest API
+POST 		/rest/pool1user/create															controllers.RestApi.createPool1User	
+
 # OAuth2 Rest API
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
 GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String)
@@ -53,8 +56,10 @@ GET     /auth/signin                                        controllers.Auth.sig
 POST    /auth/authenticate                                  controllers.Auth.authenticate
 GET     /auth/signout                                       controllers.Auth.signOut
 
+
 GET     /auth/reset                                         controllers.Auth.startResetPassword
 POST    /auth/reset                                         controllers.Auth.handleStartResetPassword
+GET  	  /auth/pool1/:email																	controllers.Auth.handlePool1StartResetPassword(email:String)
 GET     /auth/reset/:token                                  controllers.Auth.resetPassword(token:String)
 POST    /auth/reset/:token                                  controllers.Auth.handleResetPassword(token:String)
 

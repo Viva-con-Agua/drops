@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.docker.Cmd
 
 name := """Drops"""
 
-version := "0.20.14"
+version := "0.24.17"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
@@ -32,6 +32,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % "1.1.1",
   "com.typesafe.play" %% "play-slick-evolutions" % "1.1.1",
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
+	"com.github.tyagihas" % "scala_nats_2.11" % "0.3.0",
   specs2 % Test
 )
 

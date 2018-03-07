@@ -92,6 +92,8 @@ reset.startLegend=Hast du dein Passwort vergessen??
 reset.email=Email
 reset.submit=Abschicken
 reset.instructions=Wir haben dir eine Email an {0} geschickt. Folge den Anweisungen in der Email, um dein Passwort zurückzusetzen.
+reset.instructionsPool1= Wir haben festgestellt, dass du bereits einen alten Pool Account besitzt und dich zum ersten mal auf dem neuen Pool² eingeloggt hast. Auf Grund der Sicherheit der Passwörter im Pool1 muss dieses neu gesetzt werden. Wir haben dir eine Email gesendet, mit der du dein Passwort neu setzen kannst.
+
 reset.legend=Passwort zurücksetzen
 reset.password=Passwort
 reset.verifyPassword=Bestätige Passwort
@@ -127,9 +129,11 @@ mail.welcome.subject=Willkommen im Boot
 mail.welcome.hi=Moin, {0}!
 mail.welcome.instructions=Danke, dass du dabei bist. Rufe nur noch den folgenden Link auf, um deinen Account zu aktivieren.
 
+
 mail.reset.subject=Passwort neu setzen
 mail.reset.hi=Moin, {0}!
 mail.reset.instructions=Du willst dein Passwort neu setzen? Klicke auf den folgenden Link!
+mail.reset.instructions=Wir haben mitbekommen, dass du dich mit deinem alten Pool Account angemeldet hast. Es ist wichtig das du dein Passwort neu setzt. Klick einfach auf den unteren Link.
 
 crew.legend=Crew
 crew.name=Crew Name
@@ -141,7 +145,9 @@ crew.update.noProfileForLogin=Ooohh!! Kein Tropfenprofil für den eingeloggten N
 crew.select.one=Bitte wähle deine Crew aus
 
 oauth2server.clientId.notFound=Keinen OAuth 2 Client gefunden, der zu der angegebenen ID passt.
+oauth2server.clientSecret.missing=Kein OAuth 2 Client Secret angegeben!
 oauth2server.clientId.missing=Keine OAuth 2 Client ID angegeben!
+oauth2server.security.method.notImplemented=Konfigurierte Methode zur Absicherung der Webservices ''{0}'' ist bisher nicht implementiert. Bitte ändere den Wert der Variablen ''drops.ws.security'' in deiner application.conf.
 
 oauth2.register.title=Registriere Oauth2 Client
 oauth2.register.legend=Registriere Oauth2 Client
@@ -174,3 +180,6 @@ rest.api.syntaxError=Die Anfrage hat einen syntaktischen Fehler
 rest.api.syntaxGrammar=Die Anfrage hat einen grammatikalischen Fehler
 rest.api.missingFilterValue=Für Teile der Filteranfrage ist kein Wert gesetzt
 rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage ist noch nicht implementiert.
+rest.api.givenClientNotFound=Es konnte der angebenen ID kein valider Client zugeordnet werden.
+rest.api.noClientSecretGiven=Methode zur Absicherung der Webservices ist momentan ''secret'', aber es wurde kein Client Secret angegeben.
+rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der Webservices ist derzeit nicht implementiert, bitte ändere ''drops.ws.security'' in deiner application.conf

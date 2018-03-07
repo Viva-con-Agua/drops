@@ -25,10 +25,10 @@ class ApiAction @Inject()(
   def invokeBlock[A](request: Request[A], block: (ApiRequest[A]) => Future[Result]) = {
     implicit val messages : Messages = messagesApi.preferred(request)
     Try(apiRequestProvider.get[A](request)) match {
-      case Success(apiRequest) => block(apiRequest)/*apiRequest.getClient.flatMap(_ match {
-        case Some(oauthClient) => block(apiRequest)
-        case _ => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.noValidAPIClient"))))
-      })*/
+      case Success(apiRequest) => apiRequest.getClient.flatMap(_ match {
+        case Left(oauthClient) => block(apiRequest)
+        case Right(e) => Future.successful(BadRequest(Json.obj("error" -> Messages(e.getMessage))))
+      })
       case Failure(f) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.noValidAPIRequest", f.getMessage))))
     }
   }

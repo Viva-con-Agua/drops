@@ -359,7 +359,14 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.20.14 (2018-01-09)
+## Version 0.24.17 (2018-02-21)
+* [[B] #205 - Redirect Problems in a running Session](https://github.com/Viva-con-Agua/drops/issues/205)
+* [[F] #202 - OES Create Update Delete](https://github.com/Viva-con-Agua/drops/issues/202)
+* [[F] #107 - User import from external tools](https://github.com/Viva-con-Agua/drops/issues/107)
+* [[F] #38 - logout event](https://github.com/Viva-con-Agua/drops/issues/38)
+* [[B] #186 - the oauth handshake contains the client_secret](https://github.com/Viva-con-Agua/drops/issues/186)
+* [[I] #183 - Accessibility of views bases on Pool 1 connection](https://github.com/Viva-con-Agua/drops/issues/183)
+* [[F] #180 - Allow webservice secrets](https://github.com/Viva-con-Agua/drops/issues/180)
 * [[F] #106 - Send new registered user to Pool 1](https://github.com/Viva-con-Agua/drops/issues/106)
 
 ## Version 0.19.14 (2017-12-14)

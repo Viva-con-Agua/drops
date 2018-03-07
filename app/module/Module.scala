@@ -45,6 +45,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[OauthCodeDao].to[MariadbOauthCodeDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[MariadbPasswordInfoDao]
     bind[DelegableAuthInfoDAO[OAuth1Info]].to[MariadbOAuth1InfoDao]
+    bind[Pool1UserDao].to[MongoPool1UserDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
     bind[PasswordHasher].toInstance(new BCryptPasswordHasher)
     bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))

@@ -92,6 +92,8 @@ reset.startLegend=Have you forgot your password?
 reset.email=Email
 reset.submit=Submit
 reset.instructions=We''ve sent you an email to {0} with instructions to reset your password.
+reset.instructionsPool1=We noticed that you already have an old pool account and log in for the first time on the new one. For reasons of password security, we have sent you a link to {0} with which you can reset your password.
+ 
 reset.legend=Reset your password
 reset.password=Password
 reset.verifyPassword=Verify password
@@ -119,7 +121,7 @@ error.profileUnauth=Can't access profile information: must authenticate first.
 error.sex.notAllowed=Given sexuality is unknown, please enter a known one (male, female, other).
 error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123456 or +176/123456
 error.profile.image.upload=Profile image has not been uploaded! Try again!
-
+error.pool1userinit=We send a mail for rest your passwort.
 
 success.profile.image.upload=Profile image was successfully uploaded!
 
@@ -130,6 +132,7 @@ mail.welcome.instructions=Thanks for signing up. Just go to the following url to
 mail.reset.subject=Reset password
 mail.reset.hi=Hello, {0}!
 mail.reset.instructions=We have received a request to reset your password. Just go to the following url to proceed.
+mail.reset.instructionsPool1=We have received your first login with an old Pool Account. Just go to the following url to set a new Password.
 
 crew.legend=Crew
 crew.name=Crew Name
@@ -141,7 +144,9 @@ crew.update.noProfileForLogin=Internal Server Error: Found no profile for the cu
 crew.select.one=Please, select a crew
 
 oauth2server.clientId.notFound=No client application is registered with the given client ID.
+oauth2server.clientSecret.missing=No client secret is given.
 oauth2server.clientId.missing=No client ID is given.
+oauth2server.security.method.notImplemented=Configured security method ''{0}'' is not implemented yet. Please change ''drops.ws.security'' in your application.conf.
 
 oauth2.register.title=Register Oauth2 Client
 oauth2.register.legend=Register Oauth2 Client
@@ -175,6 +180,9 @@ rest.api.syntaxError=The query has an syntax error
 rest.api.syntaxGrammar=The query has an grammar error
 rest.api.missingFilterValue=There is no filter value for one or more query parts
 rest.api.queryFunctionsNotImplementedYet=One or more query functions are not implemented yet
+rest.api.givenClientNotFound=Found no valid client for the given ID.
+rest.api.noClientSecretGiven=Security method ''secret'' is currently configured, but no client secret was given.
+rest.api.securityMethodNotImplemented=The currently configured security method is not implemented yet, please change ''drops.ws.security'' in your application.conf 
 
 pool1.error.config.noURI=No Pool 1 system configured (missing URL)
 pool1.debug.not.activated=Export not activated in configuration! Set `pool1.export=true` in your applications conf file.
