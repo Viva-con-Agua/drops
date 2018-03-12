@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.24.18 (2018-03-12)
+## Version 0.24.19 (2018-03-12)
+* [[I] #123 - Split Task and AccessRight Model in Database and Business Models](https://github.com/Viva-con-Agua/drops/issues/123)
 * [[I] #114 - Mongo to MariaDB](https://github.com/Viva-con-Agua/drops/issues/114)
 * [[B] #205 - Redirect Problems in a running Session](https://github.com/Viva-con-Agua/drops/issues/205)
 * [[F] #202 - OES Create Update Delete](https://github.com/Viva-con-Agua/drops/issues/202)
