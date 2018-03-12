@@ -12,7 +12,7 @@ class Nats @Inject() (
   )
 {
   
-  val server = configuration.getString("nats.ip")
+  val server = configuration.getString("nats.ip").get
   val opts: Properties = new Properties
   opts.put("server", server)
 

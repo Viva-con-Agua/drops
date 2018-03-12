@@ -32,19 +32,20 @@ class Module extends AbstractModule with ScalaModule {
 
   def configure() {
     bind[IdentityService[User]].to[UserService]
-    bind[UserDao].to[MongoUserDao]
+    bind[UserDao].to[MariadbUserDao]
 //    bind[UserApiQueryDao[JsObject]].to[MongoUserApiQueryDao]
-    bind[CrewDao].to[MongoCrewDao]
-    bind[UserTokenDao].to[MongoUserTokenDao]
+    bind[CrewDao].to[MariadbCrewDao]
+    bind[UserTokenDao].to[MariadbUserTokenDao]
     bind[TaskDao].to[MariadbTaskDao]
+    bind[PasswordInfoDao].to[MariadbPasswordInfoDao]
     bind[AccessRightDao].to[MariadbAccessRightDao]
-    bind[OauthClientDao].to[MongoOauthClientDao]
-    bind[OauthTokenDao].to[MongoOauthTokenDao]
+    bind[OauthClientDao].to[MariadbOauthClientDao]
+    bind[OauthTokenDao].to[MariadbOauthTokenDao]
     bind[PoolService].to[PoolServiceImpl]
-    bind[OauthCodeDao].to[MongoOauthCodeDao]
+    bind[OauthCodeDao].to[MariadbOauthCodeDao]
+    bind[DelegableAuthInfoDAO[PasswordInfo]].to[MariadbPasswordInfoDao]
+    bind[DelegableAuthInfoDAO[OAuth1Info]].to[MariadbOAuth1InfoDao]
     bind[Pool1UserDao].to[MongoPool1UserDao]
-    bind[DelegableAuthInfoDAO[PasswordInfo]].to[PasswordInfoDao]
-    bind[DelegableAuthInfoDAO[OAuth1Info]].to[OAuth1InfoDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
     bind[PasswordHasher].toInstance(new BCryptPasswordHasher)
     bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))

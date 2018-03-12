@@ -39,13 +39,20 @@ class Application @Inject() (
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
+  val pool1Url = configuration.getString("pool1.url").get
 
   def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     val template: Template = dispenserService.buildTemplate(
       NavigationData("GlobalNav", "", None),
       "Drops", views.html.index(request.identity, request.authenticator.loginInfo).toString
       )
-    Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
+    val dispenserResult = Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
+
+    if (!pool1Export) {
+      dispenserResult
+    }else{
+      Future.successful(Redirect(pool1Url))
+    }
   }
 
   def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
@@ -66,6 +73,7 @@ class Application @Inject() (
           val supporter = profile.supporter.copy(
             firstName = Some(userData.firstName),
             lastName = Some(userData.lastName),
+            fullName = Some(s"${userData.firstName} ${userData.lastName}"),
             birthday = Some(userData.birthday.getTime),
             mobilePhone = Some(userData.mobilePhone),
             placeOfResidence = Some(userData.placeOfResidence),

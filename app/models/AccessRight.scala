@@ -6,12 +6,6 @@ import models.HttpMethod.HttpMethod
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-/**
-  * Created bei jottmann on 29.08.2017
-  */
-
-
-
 case class AccessRight (
                          id: Long,
                          uri: URI,
@@ -19,13 +13,9 @@ case class AccessRight (
                          name: Option[String],
                          description: Option[String],
                          service: String
-                      )
-object AccessRight{
-  def mapperTo(
-                id: Long, uri: URI, method: HttpMethod,
-                name: Option[String], description: Option[String], service: String
-              ) = apply(id, uri, method, name, description, service)
+                       )
 
+object AccessRight extends ((Long, URI, HttpMethod, Option[String], Option[String], String) => AccessRight ){
   def apply(tuple: (Long, URI, HttpMethod, Option[String], Option[String], String)): AccessRight =
     AccessRight(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
@@ -66,8 +56,8 @@ object AccessRight{
       (JsPath \ "description").readNullable[String] and
       (JsPath \ "service").read[String]
     ).tupled.map((task) => if(task._1.isEmpty)
-      AccessRight(0, task._2, task._3, task._4, task._5, task._6)
-      else AccessRight(task._1.get, task._2, task._3, task._4, task._5, task._6))
+    AccessRight(0, task._2, task._3, task._4, task._5, task._6)
+  else AccessRight(task._1.get, task._2, task._3, task._4, task._5, task._6))
 }
 
 object HttpMethod extends Enumeration {
