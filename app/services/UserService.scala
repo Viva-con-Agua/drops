@@ -12,7 +12,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, TaskDao, UserDao}
-import models.database.AccessRight
+import models.AccessRight
 import models.{Profile, ProfileImage, User}
 import utils.Nats
 
