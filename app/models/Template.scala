@@ -1,4 +1,4 @@
-package models
+package models.dispenser
 
 import java.util.UUID
 import play.api.libs.functional.syntax._

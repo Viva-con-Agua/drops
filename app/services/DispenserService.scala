@@ -15,7 +15,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-import models.{Template, NavigationData, TemplateData, MetaData, JsonFormatsTemplate}
+import models.dispenser.{Template, NavigationData, TemplateData, MetaData, JsonFormatsTemplate}
 
 class DispenserService @Inject() (
   configuration: Configuration,

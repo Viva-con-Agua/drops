@@ -13,6 +13,7 @@ import play.api._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models._
+import models.dispenser._
 import play.api.data.Form
 import play.api.data.Forms._
 import services.{UserService, DispenserService}

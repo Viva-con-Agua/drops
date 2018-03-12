@@ -29,6 +29,7 @@ import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
+import models.dispenser._
 import UserForms.UserConstraints
 import services.{UserService, UserTokenService, Pool1Service, DispenserService}
 import utils.{Mailer, Nats}
