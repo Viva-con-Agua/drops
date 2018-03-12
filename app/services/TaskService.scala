@@ -3,7 +3,6 @@ package services
 import javax.inject.Inject
 
 import daos.{AccessRightDao, TaskDao}
-import models.database.TaskDB
 import play.api.libs.json.{JsObject, Json}
 
 import scala.concurrent.Future
