@@ -11,7 +11,9 @@
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
 @implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
-
+	@request.flash.get("error").map { msg =>
+    @errors.alert(msg, "error")
+  }
     <div class="col-md-8 col-md-offset-2">
         <div class="row">
             <h1>Übersicht der Tasks</h1>
