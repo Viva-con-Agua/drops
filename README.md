@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.24.17 (2018-02-21)
+## Version 0.24.18 (2018-03-12)
+* [[I] #114 - Mongo to MariaDB](https://github.com/Viva-con-Agua/drops/issues/114)
 * [[B] #205 - Redirect Problems in a running Session](https://github.com/Viva-con-Agua/drops/issues/205)
 * [[F] #202 - OES Create Update Delete](https://github.com/Viva-con-Agua/drops/issues/202)
 * [[F] #107 - User import from external tools](https://github.com/Viva-con-Agua/drops/issues/107)
