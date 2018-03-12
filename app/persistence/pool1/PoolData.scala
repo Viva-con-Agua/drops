@@ -116,12 +116,12 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
     */
   val container = PoolUserDataContainer(
     userLogin = user.profiles.head.email.getOrElse(""),
-    userNiceName = user.profiles.head.supporter.username.getOrElse(""),
+    userNiceName = user.profiles.head.supporter.fullName.getOrElse(""),
     email = user.profiles.head.email.getOrElse(""),
     displayName = user.profiles.head.supporter.fullName.getOrElse(""),
-    userName = user.profiles.head.supporter.username.getOrElse(""),
+    userName = user.profiles.head.supporter.fullName.getOrElse(""),
     meta = UserMeta(
-      nickName = user.profiles.head.supporter.username.getOrElse(""),
+      nickName = user.profiles.head.supporter.fullName.getOrElse(""),
       firstName = user.profiles.head.supporter.firstName.getOrElse(""),
       lastName = user.profiles.head.supporter.lastName.getOrElse(""),
       mobile = user.profiles.head.supporter.mobilePhone.getOrElse(""),

@@ -21,10 +21,11 @@ import User._
 import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
-import com.mohiva.play.silhouette.api.util.PasswordHasher
+import com.mohiva.play.silhouette.api.util.{PasswordHasher, PasswordInfo}
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
-import daos.{CrewDao, OauthClientDao, UserDao}
-import daos.{AccessRightDao, TaskDao, Pool1UserDao}
+import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
+import daos._
+import models.database.{AccessRight, TaskDB}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
 import utils.Query.{QueryAST, QueryLexer, QueryParser}
@@ -77,31 +78,17 @@ class RestApi @Inject() (
   }
 
   def getUsers = ApiAction.async { implicit request => {
-    def body(query : JsObject, limit : Int, sort : JsObject) = userDao.ws.list(query, limit, sort).map(users => Ok(
-      Json.toJson(users.map(PublicUser(_)))
-    ))
-    implicit val u: UserDao = userDao
-    implicit val config : RequestConfig = UserRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) =>
-        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
-      )
-      case None => body(Json.obj(), 20, Json.obj())
-    }
+    userDao.list.map( userList => {
+      Ok(Json.toJson(userList.map(PublicUser(_))))
+    })
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
-    def body(query: JsObject) = userDao.ws.find(id, query).map(_ match {
+
+    userDao.find(id).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
       case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
     })
-    implicit val u: UserDao = userDao
-    implicit val config : RequestConfig = UserRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) => body(ext._1))
-      case None => body(Json.obj())
-    }
-
   }}
 
   case class CreateUserBody(
@@ -112,6 +99,7 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
+     password: Option[String], //Password is optional, perhaps its necessary to set the pw on the first login
      profileImageUrl: Option[String]
   )
   object CreateUserBody{
@@ -126,7 +114,11 @@ class RestApi @Inject() (
       case Some(_) =>
         Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
       case None =>{
-        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+        var passwordInfo : Option[PasswordInfo] = None
+        if(signUpData.password.isDefined)
+          passwordInfo = Option(passwordHasher.hash(signUpData.password.get))
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo, List(new DefaultProfileImage))
+
         avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
           userService.save(User(id = UUID.randomUUID(), profiles =
             (signUpData.profileImageUrl, avatarUrl) match {
@@ -261,7 +253,7 @@ class RestApi @Inject() (
     taskDao.find(id).map(task => Ok(Json.toJson(task)))
   }}
 
-  def createTask() = Action.async(validateJson[Task]) {implicit request => {
+  def createTask() = Action.async(validateJson[TaskDB]) { implicit request => {
     taskDao.create(request.body).map{task => Ok(Json.toJson(task))}
   }}
 

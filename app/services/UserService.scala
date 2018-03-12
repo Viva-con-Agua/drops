@@ -12,7 +12,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, TaskDao, UserDao}
-import models.{AccessRight, Profile, ProfileImage, User}
+import models.database.AccessRight
+import models.{Profile, ProfileImage, User}
 import utils.Nats
 
 class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao, nats: Nats) extends IdentityService[User] {

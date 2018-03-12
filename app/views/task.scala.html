@@ -5,8 +5,8 @@
 @import scala.concurrent.duration._
 @import scala.language.postfixOps
 
-
-@(loggedUser:User, loginInfo:LoginInfo, tasks: Future[Seq[Task]])(implicit request:RequestHeader,messages:Messages)
+@import models.database.TaskDB
+@(loggedUser:User, loginInfo:LoginInfo, tasks: Future[Seq[TaskDB]])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 

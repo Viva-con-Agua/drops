@@ -1,8 +1,8 @@
-package models
+package models.database
 
 import java.net.URI
 
-import models.HttpMethod.HttpMethod
+import models.database.HttpMethod.HttpMethod
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -11,7 +11,15 @@ import play.api.libs.json._
   */
 
 
-
+/**
+  * Definition of the database access right model
+  * @param id
+  * @param uri
+  * @param method
+  * @param name
+  * @param description
+  * @param service
+  */
 case class AccessRight (
                          id: Long,
                          uri: URI,
@@ -20,12 +28,7 @@ case class AccessRight (
                          description: Option[String],
                          service: String
                       )
-object AccessRight{
-  def mapperTo(
-                id: Long, uri: URI, method: HttpMethod,
-                name: Option[String], description: Option[String], service: String
-              ) = apply(id, uri, method, name, description, service)
-
+object AccessRight extends ((Long, URI, HttpMethod, Option[String], Option[String], String) => AccessRight ){
   def apply(tuple: (Long, URI, HttpMethod, Option[String], Option[String], String)): AccessRight =
     AccessRight(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 

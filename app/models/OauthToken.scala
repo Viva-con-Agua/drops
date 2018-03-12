@@ -10,7 +10,11 @@ import scalaoauth2.provider.{AccessToken, AuthInfo}
 /**
   * Created by johann on 25.11.16.
   */
-case class OauthToken(accessToken: AccessToken, client: OauthClient, userId: UUID)
+case class OauthToken(
+                       accessToken: AccessToken,
+                       client: OauthClient,
+                       userId: UUID
+                     )
 
 object OauthToken {
 
