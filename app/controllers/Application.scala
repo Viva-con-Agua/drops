@@ -13,9 +13,10 @@ import play.api._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models._
+import models.dispenser._
 import play.api.data.Form
 import play.api.data.Forms._
-import services.UserService
+import services.{UserService, DispenserService}
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
@@ -34,23 +35,34 @@ class Application @Inject() (
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator],
   configuration: Configuration,
+  dispenserService: DispenserService,
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
   val pool1Url = configuration.getString("pool1.url").get
 
-  def index = SecuredAction.async { implicit request =>
+  def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
+    val template: Template = dispenserService.buildTemplate(
+      NavigationData("GlobalNav", "", None),
+      "Drops", views.html.index(request.identity, request.authenticator.loginInfo).toString
+      )
+    val dispenserResult = Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
+
     if (!pool1Export) {
-      Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
+      dispenserResult
     }else{
       Future.successful(Redirect(pool1Url))
     }
   }
 
   def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    crewDao.list.map(l =>
-      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
-    )
+    crewDao.list.map(l => {
+      val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        "Drops", views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define).toString
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
+    })
   }
 
   def updateBase = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
@@ -118,8 +130,11 @@ class Application @Inject() (
 
   def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
     val resultingTasks: Future[Seq[Task]] = taskDao.all()
-
-    Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
+    val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        "Drops", views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks).toString
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
   }
 
   def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
@@ -183,7 +198,11 @@ class Application @Inject() (
   }}
 
   def registration = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)) { implicit request =>
-    Ok(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register))
+    val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        "Drops", views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register).toString
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
   }
 
   def registerOAuth2Client = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)).async { implicit request =>

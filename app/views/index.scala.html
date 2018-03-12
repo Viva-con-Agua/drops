@@ -2,7 +2,6 @@
 
 @(loggedUser: User, loginInfo:LoginInfo)(implicit messages:Messages)
 
-@views.html.templates.mainApp(Messages("app.title"), tab = "index", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
   <h2 class="text-primary">@Messages("index.header")</h2>
   <p class="lead">
       @Html(Messages("index.logged", loggedUser.fullName(loginInfo).getOrElse(Messages("index.none")), routes.Application.profile)) <br/>
@@ -11,7 +10,6 @@
   <hr/>
   <p class="lead">@Messages("index.restProfile")</p>
   <button class="btn btn-default" onclick="fetchProfile()">@Messages("index.fetchProfile")</button>
-}
 
 @views.html.dialog()
 
