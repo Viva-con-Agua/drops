@@ -20,6 +20,7 @@ import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
 import slick.driver.MySQLDriver.api._
+import slick.jdbc.GetResult
 
 trait CrewDao extends ObjectIdResolver with CountResolver {
   def find(id: UUID):Future[Option[Crew]]
@@ -153,12 +154,10 @@ class MariadbCrewDao extends CrewDao {
   }
 
   override def list: Future[List[Crew]] = {
-    val action = for {
-      (crew, city) <- (crews
-        join cities on (_.id === _.crewId)
-        )} yield (crew, city)
+    implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextString))
+    implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextLong))
 
-    dbConfig.db.run(action.result).map(CrewConverter.buildCrewListFromResult(_))
+    dbConfig.db.run(sql"SELECT * FROM Crews".as[(CrewDB, CityDB)]).map(CrewConverter.buildCrewListFromResult(_))
   }
 
   override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
