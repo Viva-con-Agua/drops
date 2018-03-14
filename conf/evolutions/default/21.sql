@@ -6,5 +6,5 @@ CREATE TABLE Pool1User(
   PRIMARY KEY (id)
 );
 
-# --- !Down
+# --- !Downs
 DROP Table Pool1User;
