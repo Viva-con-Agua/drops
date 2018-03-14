@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import daos.schema.{OauthClientTableDef, OauthCodeTableDef}
 import models.database.OauthCodeDB
-
+import java.util.UUID
 import scala.concurrent.Future
 import models.{OauthClient, OauthCode}
 import play.api.Play
@@ -20,7 +20,6 @@ import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
 import slick.driver.MySQLDriver.api._
 import play.api.db.slick.DatabaseConfigProvider
-
 /**
   * Created by johann on 24.11.16.
   */
@@ -78,7 +77,14 @@ class MariadbOauthCodeDao @Inject() (userDao:MariadbUserDao)extends OauthCodeDao
   }
 
   override def save(code: OauthCode) : Future[OauthCode] = {
-    dbConfig.db.run(oauthCodes += OauthCodeDB(code)).flatMap(_ => find(code.code)).map(_.get)
+    delete(code.user.id, code.client.id ).flatMap(_ => dbConfig.db.run(oauthCodes += OauthCodeDB(code)).flatMap(_ => find(code.code)).map(_.get))
+  }
+
+  def delete(userId: UUID, clientId: String) : Future[Boolean] = {
+    dbConfig.db.run(oauthCodes.filter(oC =>oC.clientId === clientId && oC.userId === userId).delete).map(_ match{
+      case 0 => false
+      case 1 => true
+    })
   }
 
   override def delete(code: OauthCode) : Future[Boolean] = {
