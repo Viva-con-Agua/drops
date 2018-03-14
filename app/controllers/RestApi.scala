@@ -232,6 +232,10 @@ class RestApi @Inject() (
     }
   }}
 
+  def getCrews = Action.async{ implicit request => {
+    crewDao.list.map(crews => Ok(Json.toJson(crews)))
+  }}
+
   //ToDo: ApiAction instead of Action
   def getTasks = Action.async{ implicit  request => {
     taskDao.all().map(tasks => Ok(Json.toJson(tasks)))
