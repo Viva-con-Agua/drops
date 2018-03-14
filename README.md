@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.25.19 (2018-03-12)
+## Version 0.26.19 (2018-03-14)
+* [[F] #208 - Add MariadbPool1UserDao](https://github.com/Viva-con-Agua/drops/issues/208)
 * [[F] #91 - handler for dispenser templates](https://github.com/Viva-con-Agua/drops/issues/91)
 * [[I] #123 - Split Task and AccessRight Model in Database and Business Models](https://github.com/Viva-con-Agua/drops/issues/123)
 * [[I] #114 - Mongo to MariaDB](https://github.com/Viva-con-Agua/drops/issues/114)
