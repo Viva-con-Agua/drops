@@ -217,6 +217,7 @@ class Auth @Inject() (
   }
 
 
+
   def authenticate = Action.async { implicit request =>
     signInForm.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(views.html.auth.signIn(bogusForm, socialProviderRegistry))),
