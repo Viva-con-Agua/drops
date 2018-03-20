@@ -34,7 +34,7 @@ class DispenserService @Inject() (
   def buildRequestTemplate(path: String, content: String, userid: Option[UUID] = None): Template = {
      Template(
       MetaData("Drops", "simple", None),
-      NavigationData("Drops", path, userid),
+      NavigationData("drops", path, userid),
       TemplateData("Drops", java.util.Base64.getEncoder.encodeToString(content.getBytes("UTF-8")))
     ) 
   }
