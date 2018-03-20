@@ -207,11 +207,12 @@ class Auth @Inject() (
     Future.successful(request.identity match {
       case Some(user) => Redirect(routes.Application.index())
       case None => {
-        val template: Template = dispenserService.buildTemplate(
+        /*val template: Template = dispenserService.buildTemplate(
           NavigationData("no-SignIn", "SIGN IN", None), 
           "SignIn", views.html.auth.signIn(signInForm, socialProviderRegistry).toString
         )
-        Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))
+        Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))*/
+        dispenserService.getTemplate(views.html.auth.signIn(signInForm, socialProviderRegistry))
       }
     })
   }
