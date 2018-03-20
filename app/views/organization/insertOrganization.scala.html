@@ -2,36 +2,36 @@
 
 @implicitFieldConstructor = @{b3.vertical.fieldConstructor}
 	@request.flash.get("error").map { msg =>
-		@error.alert(msg, "error")
+		@errors.alert(msg, "error")
 	}
-	@b3.form(routes.organization.insert) {
+	@b3.form(routes.OrganizationController.insert) {
 		<fieldset>
 			<legend>@Messages("")</legend>
 			@helper.CSRF.formField
 
-			@b3.name(OrganizationForm("name"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("name"),
+				'_label -> Messages("organizationInsert.name")
 			)
-			@b3.address(OrganizationForm("address"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("address"),
+				'_label -> Messages("organizationInsert.name")
 			)
-			@b3.telefon(OrganizationForm("telefon"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("telefon"),
+				'_label -> Messages("organizationInsert.name")
 			)
-			@b3.fax(OrganizationForm("fax"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("fax"),
+				'_label -> Messages("organizationInsert.name")
 			)
 			@b3.email(OrganizationForm("email"),
-				'_label -> Messages(organizationInsert.name)
+				'_label -> Messages("organizationInsert.name")
 			)
-			@b3.executive(OrganizationForm("executive"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("executive"),
+				'_label -> Messages("organizationInsert.name")
 			)
-			@b3.abbreviation(OrganizationForm("abbreviation"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("abbreviation"),
+				'_label -> Messages("organizationInsert.name")
 			)
-			@b3.impressum(OrganizationForm("impressum"),
-				'_label -> Messages(organizationInsert.name)
+			@b3.text(OrganizationForm("impressum"),
+				'_label -> Messages("organizationInsert.name")
 			)
 			@b3.submit('class -> "btn btn-primary"){ @Messages("organizationInsert.submit") }
 		}

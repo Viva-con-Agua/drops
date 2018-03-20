@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 import java.util.Properties
 import org.nats._
-
+import play.api.Logger
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
@@ -211,6 +211,7 @@ class Auth @Inject() (
           NavigationData("no-SignIn", "SIGN IN", None), 
           "SignIn", views.html.auth.signIn(signInForm, socialProviderRegistry).toString
         )
+        
         Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))
       }
     })
