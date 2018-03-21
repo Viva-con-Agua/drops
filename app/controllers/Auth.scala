@@ -145,7 +145,7 @@ class Auth @Inject() (
 
   def handleStartSignUp = Action.async { implicit request =>
     signUpForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.startSignUp(bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.startSignUp(bogusForm)))),
       signUpData => {
         val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
         userService.retrieve(loginInfo).flatMap {
@@ -212,7 +212,7 @@ class Auth @Inject() (
           "SignIn", views.html.auth.signIn(signInForm, socialProviderRegistry).toString
         )
         Ok(views.html.dispenser.apply(dispenserService.getSimpleTemplate(template)))*/
-        dispenserService.getTemplate(views.html.auth.signIn(signInForm, socialProviderRegistry))
+        Ok(dispenserService.getTemplate(views.html.auth.signIn(signInForm, socialProviderRegistry)))
       }
     })
   }

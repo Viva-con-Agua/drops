@@ -66,12 +66,12 @@ class DispenserService @Inject() (
 
   }
 
-  def getTemplate(content: Html)(implicit request: RequestHeader): Result = {
+  def getTemplate(content: Html)(implicit request: RequestHeader): Html = {
     val json = Json.toJson(buildRequestTemplate(request.path, content.toString))
     val url = dispenserUrl + "template/full"
     Logger.debug(url)
     Await.result(connect(url, json).map {response =>
-      Ok(views.html.dispenser(response.body))
+      views.html.dispenser(response.body)
     }, 10 second)
   }
 
