@@ -15,12 +15,13 @@ import models.{Crew, CrewStub, ObjectId, ObjectIdWrapper}
 import models.Crew._
 import models.converter.CrewConverter
 import models.database.{CityDB, CrewDB}
+import play.Logger
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
 import slick.driver.MySQLDriver.api._
-import slick.jdbc.GetResult
+import slick.jdbc.{GetResult, PositionedParameters, SQLActionBuilder, SetParameter}
 
 trait CrewDao extends ObjectIdResolver with CountResolver {
   def find(id: UUID):Future[Option[Crew]]
@@ -86,16 +87,21 @@ class MongoCrewDao extends CrewDao {
 }
 
 class MariadbCrewDao extends CrewDao {
+
+
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   val crews = TableQuery[CrewTableDef]
   val cities = TableQuery[CityTableDef]
+
+  implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextString))
+  implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextLong))
 
   override def find(id: UUID): Future[Option[Crew]] = {
     val action = for {
       (crew, city) <- (crews.filter(_.publicId === id)
         join cities on (_.id === _.crewId)
         )} yield (crew, city)
-
+    
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
   }
 
@@ -154,10 +160,27 @@ class MariadbCrewDao extends CrewDao {
   }
 
   override def list: Future[List[Crew]] = {
-    implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextString))
-    implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextLong))
+    val action = for {
+      (crew, city) <- (crews
+        join cities on (_.id === _.crewId)
+        )} yield (crew, city)
 
-    dbConfig.db.run(sql"SELECT * FROM Crews".as[(CrewDB, CityDB)]).map(CrewConverter.buildCrewListFromResult(_))
+    dbConfig.db.run(action.result).map(CrewConverter.buildCrewListFromResult(_))
+  }
+
+  //Source: https://github.com/slick/slick/issues/1161
+  def concat(a: SQLActionBuilder, b: SQLActionBuilder): SQLActionBuilder = {
+    SQLActionBuilder(a.queryParts ++ b.queryParts, new SetParameter[Unit] {
+      def apply(p: Unit, pp: PositionedParameters): Unit = {
+        a.unitPConv.apply(p, pp)
+        b.unitPConv.apply(p, pp)
+      }
+    })
+  }
+
+  def list_with_statement(statement : SQLActionBuilder) : Future[List[Crew]] = {
+    var sql_action = statement.as[(CrewDB, CityDB)]
+    dbConfig.db.run(sql_action).map(CrewConverter.buildCrewListFromResult(_))
   }
 
   override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
