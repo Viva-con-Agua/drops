@@ -2,25 +2,49 @@ package utils.Query
 
 import java.security.SecurityPermission
 
+import net.minidev.json.JSONObject
+import play.api.libs.json.JsObject
+
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{NoPosition, Position, Reader}
 
-case class QueryParserError(msg: String)
+//case class QueryParserError(msg: String)
+class QueryParserError(message: String) extends Exception(message) {
+  def this(message: String, cause: Throwable) {
+    this(message)
+    initCause(cause)
+  }
+
+  def this(cause: Throwable) {
+    this(Option(cause).map(_.toString).orNull, cause)
+  }
+
+  def this() {
+    this(null: String)
+  }
+}
+
+case class QueryParser(
+                      values: JSONObject
+                      )
 
 object QueryParser extends Parsers{
   override type Elem = QueryToken
 
-  class QueryTokenReader(tokens: Seq[QueryToken]) extends Reader[QueryToken]{
+  var values: JsObject = null
+
+  class QueryTokenReader(tokens: Seq[QueryToken],values: JsObject) extends Reader[QueryToken]{
     override def first: QueryToken = tokens.head
-    override def rest: Reader[QueryToken] = new QueryTokenReader(tokens.tail)
+    override def rest: Reader[QueryToken] = new QueryTokenReader(tokens.tail, values: JsObject)
     override def pos: Position = tokens.headOption.map(t => t.pos).getOrElse(NoPosition)
     override def atEnd: Boolean = tokens.isEmpty
   }
 
-  def apply(tokens: Seq[QueryToken]): Either[QueryParserError, QueryAST] = {
-    val reader = new QueryTokenReader(tokens)
+  def apply(tokens: Seq[QueryToken], values: JsObject): Either[QueryParserError, QueryAST] = {
+    this.values = values
+    val reader = new QueryTokenReader(tokens, values)
     program(reader) match {
-      case NoSuccess(msg, next) => Left(QueryParserError(msg))
+      case NoSuccess(msg, next) => Left(new QueryParserError(msg))
       case Success(result, next) => Right(result)
     }
   }
@@ -34,7 +58,7 @@ object QueryParser extends Parsers{
   }
 
   def statement: Parser[QueryAST] = {
-     and | or | eq  | lt | le
+     and | or | eq  | lt | le | like
   }
 
 
@@ -46,19 +70,19 @@ object QueryParser extends Parsers{
   }
 
   def and : Parser[A] = {
-    ((eq | lt | le) ~ AND ~ (eq | lt | le)) ^^ {
+    ((eq | lt | le | like) ~ AND ~ (eq | lt | le | like)) ^^ {
       case f1 ~ _ ~ f2  => A(f1, f2)
     }
   }
 
   def or : Parser[O] = {
-    ((eq | lt | le) ~ OR ~ (eq | lt | le)) ^^ {
+    ((eq | lt | le | like) ~ OR ~ (eq | lt | le | like)) ^^ {
       case f1 ~ _ ~ f2 => O(f1, f2)
     }
   }
 
   def eq: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ EQUALS)     ^^ { case entity ~ _ ~  field ~ _ ~ _ => EQ(entity, field) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ EQUALS)     ^^ { case entity ~ _ ~  field ~ _ ~ _ => EQ(entity, field, values.\(entity.str).\(field.str).as[String]) }
   }
 
   def lt: Parser[Conditions] = positioned {
@@ -67,5 +91,9 @@ object QueryParser extends Parsers{
 
   def le: Parser[Conditions] = positioned {
     (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field) }
+  }
+
+  def like: Parser[Conditions] = positioned{
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LIKE_OPERATOR) ^^ {case entity ~ _ ~ field ~ _ ~ _ => LIKE(entity, field, values.\(entity.str).\(field.str).as[String]) }
   }
 }

@@ -21,3 +21,4 @@ sealed trait QueryOperator extends QueryToken
 case object EQUALS      extends QueryOperator
 case object LESS_THEN   extends QueryOperator
 case object LESS_EQUAL  extends QueryOperator
+case object LIKE_OPERATOR        extends QueryOperator
