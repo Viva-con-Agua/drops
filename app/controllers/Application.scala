@@ -42,12 +42,7 @@ class Application @Inject() (
   val pool1Url = configuration.getString("pool1.url").get
 
   def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    /*val template: Template = dispenserService.buildTemplate(
-      NavigationData("GlobalNav", "", None),
-      "Drops", views.html.index(request.identity, request.authenticator.loginInfo).toString
-      )
     val dispenserResult = Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
-    */
     if (!pool1Export) {
       Future.successful(Ok(dispenserService.getTemplate(views.html.index(request.identity, request.authenticator.loginInfo))))
     }else{
