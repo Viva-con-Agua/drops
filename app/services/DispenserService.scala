@@ -72,7 +72,7 @@ class DispenserService @Inject() (
     Logger.debug(url)
     Await.result(connect(url, json).map {response =>
       views.html.dispenser(response.body)
-    }, 10 second)
+    }, 1 second)
   }
 
   def getNavigation(navigation: String): Html = {

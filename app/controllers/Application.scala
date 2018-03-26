@@ -42,14 +42,14 @@ class Application @Inject() (
   val pool1Url = configuration.getString("pool1.url").get
 
   def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    val template: Template = dispenserService.buildTemplate(
+    /*val template: Template = dispenserService.buildTemplate(
       NavigationData("GlobalNav", "", None),
       "Drops", views.html.index(request.identity, request.authenticator.loginInfo).toString
       )
     val dispenserResult = Future.successful(Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template))))
-
+    */
     if (!pool1Export) {
-      dispenserResult
+      Future.successful(Ok(dispenserService.getTemplate(views.html.index(request.identity, request.authenticator.loginInfo))))
     }else{
       Future.successful(Redirect(pool1Url))
     }
@@ -57,11 +57,7 @@ class Application @Inject() (
 
   def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     crewDao.list.map(l => {
-      val template: Template = dispenserService.buildTemplate(
-        NavigationData("GlobalNav", "", None),
-        "Drops", views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define).toString
-      )
-      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
+      Ok(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define)))
     })
   }
 
@@ -130,11 +126,7 @@ class Application @Inject() (
 
   def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
     val resultingTasks: Future[Seq[Task]] = taskDao.all()
-    val template: Template = dispenserService.buildTemplate(
-        NavigationData("GlobalNav", "", None),
-        "Drops", views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks).toString
-      )
-      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
+      Ok(dispenserService.getTemplate(views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks)))
   }
 
   def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
