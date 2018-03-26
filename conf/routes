@@ -39,11 +39,12 @@ DELETE  /rest/access/:id                                    controllers.RestApi.
 POST    /rest/access                                        controllers.RestApi.createAccessRight
 
 #Pool1User Rest API
-POST 		/rest/pool1user/create															controllers.RestApi.createPool1User	
+POST 		/rest/pool1user/create							controllers.RestApi.createPool1User
 
 # OAuth2 Rest API
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
 GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String)
+GET     /oauth2/code/get                                    controllers.OAuth2Controller.getCodeOAuth2Spec(scope: String, client_id : String, response_type : String, state: String, redirect_uri: String)
 
 # Authentication
 GET     /auth/init                                          controllers.Auth.init
@@ -67,6 +68,7 @@ GET     /auth/social/:providerId                            controllers.Auth.soc
 
 # OAuth 2 Server
 GET     /oauth2/access_token                                controllers.OAuth2Controller.accessToken
+POST    /oauth2/access_token                                controllers.OAuth2Controller.accessToken
 GET     /oauth2/register                                    controllers.Application.registration
 POST    /oauth2/register                                    controllers.Application.registerOAuth2Client
 
