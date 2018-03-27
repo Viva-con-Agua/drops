@@ -125,7 +125,7 @@ class Auth @Inject() (
           token <- userTokenService.save(UserToken.create(user.id, config.get.getString("email").get, true))
         } yield {
           mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
-          Ok(views.html.auth.finishSignUp(profile))
+          Ok(dispenserService.getTemplate(views.html.auth.finishSignUp(profile)))
         }
       }
     })
@@ -135,10 +135,6 @@ class Auth @Inject() (
     Future.successful(request.identity match {
       case Some(user) => redirectAfterLogin
       case None => {
-        val template: Template = dispenserService.buildTemplate(
-          NavigationData("no-SignIn", "SIGN UP", None), 
-          "SignIn", views.html.auth.startSignUp(signUpForm).toString
-        )
         Ok(dispenserService.getTemplate(views.html.auth.startSignUp(signUpForm)))
     }})
   }
@@ -215,7 +211,7 @@ class Auth @Inject() (
 
   def authenticate = Action.async { implicit request =>
     signInForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.signIn(bogusForm, socialProviderRegistry))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.signIn(bogusForm, socialProviderRegistry)))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
         pool1Service.pool1user(signInData.email).flatMap {
@@ -264,7 +260,7 @@ class Auth @Inject() (
   }
 
   def startResetPassword = Action { implicit request =>
-    Ok(views.html.auth.startResetPassword(emailForm))
+    Ok(dispenserService.getTemplate(views.html.auth.startResetPassword(emailForm)))
   }
 
   def handlePool1StartResetPassword(email64: String) = Action.async { implicit request =>
@@ -282,14 +278,14 @@ class Auth @Inject() (
 
   def handleStartResetPassword = Action.async { implicit request =>
     emailForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.startResetPassword(bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.startResetPassword(bogusForm)))),
       email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
         case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
         case Some(user) => for {
           token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
         } yield {
           mailer.resetPassword(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
-          Ok(views.html.auth.resetPasswordInstructions(email))
+          Ok(dispenserService.getTemplate(views.html.auth.resetPasswordInstructions(email)))
         }
       }
     )
@@ -301,7 +297,7 @@ class Auth @Inject() (
       case None => 
         Future.successful(NotFound(views.html.errors.notFound(request)))
       case Some(token) if !token.isSignUp && !token.isExpired => 
-        Future.successful(Ok(views.html.auth.resetPassword(tokenId, resetPasswordForm)))
+        Future.successful(Ok(dispenserService.getTemplate(views.html.auth.resetPassword(tokenId, resetPasswordForm))))
       case _ => for {
         _ <- userTokenService.remove(id)
       } yield NotFound(views.html.errors.notFound(request))
@@ -310,7 +306,7 @@ class Auth @Inject() (
 
   def handleResetPassword(tokenId:String) = Action.async { implicit request =>
     resetPasswordForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.resetPassword(tokenId, bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.resetPassword(tokenId, bogusForm)))),
       passwords => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
@@ -326,7 +322,7 @@ class Auth @Inject() (
               //pool1 user
               _ <- pool1Service.confirmed(token.email)
               _ <- userService.confirm(loginInfo)
-              result <- env.authenticatorService.embed(value, Ok(views.html.auth.resetPasswordDone()))
+              result <- env.authenticatorService.embed(value, Ok(dispenserService.getTemplate(views.html.auth.resetPasswordDone())))
             } yield result
         }
       } 
