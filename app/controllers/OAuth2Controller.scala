@@ -35,7 +35,7 @@ class OAuth2Controller @Inject() (
 ) extends Silhouette[User,CookieAuthenticator] with OAuth2Provider {
   override val tokenEndpoint = new DropsTokenEndpoint()
 
-  def accessToken = UserAwareAction.async { implicit request =>
+  def accessToken = Action.async { implicit request =>
     issueAccessToken(oauthDataHandler)
   }
 
@@ -79,7 +79,7 @@ class OAuth2Controller @Inject() (
     * @param redirect_uri redirect_uri again
     * @return
     */
-  def getCodeOAuth2Spec(scope: String, client_id : String, response_type : String, state: String, redirect_uri: String) =
+  def getCodeOAuth2Spec(scope: Option[String], client_id : String, response_type : String, state: String, redirect_uri: String) =
     SecuredAction.async { implicit request =>
       response_type match {
         case "code" => oauthClientDao.find(client_id, None, "authorization_code").flatMap(_ match {
@@ -100,16 +100,4 @@ class OAuth2Controller @Inject() (
         case _ => Future.successful(BadRequest(Messages("oauth2server.responseTypeUnsupported", "code")))
       }
     }
-
-  /**
-    * Implement this to return a result when the user is not authenticated.
-    *
-    * As defined by RFC 2616, the status code of the response should be 401 Unauthorized.
-    *
-    * @param request The request header.
-    * @return The result to send to the client.
-    */
-  override def onNotAuthenticated(request: RequestHeader): Option[Future[Result]] = {
-    Some(Future.successful(Unauthorized(Json.obj("error" -> "No access"))))
-  }
 }
