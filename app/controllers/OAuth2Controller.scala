@@ -17,7 +17,7 @@ import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import daos.{OauthClientDao, OauthCodeDao}
 import models.{OauthCode, User}
 
-import scalaoauth2.provider.OAuth2Provider
+import scalaoauth2.provider._
 import oauth2server._
 
 import scala.concurrent.Future
@@ -36,7 +36,18 @@ class OAuth2Controller @Inject() (
   override val tokenEndpoint = new DropsTokenEndpoint()
 
   def accessToken = Action.async { implicit request =>
-    issueAccessToken(oauthDataHandler)
+    issueAccessToken(oauthDataHandler) recover {
+      case e: InvalidClient => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: InvalidGrant => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: InvalidScope => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: InvalidToken => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: RedirectUriMismatch => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: AccessDenied => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: UnauthorizedClient => generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, e.errorType, e.description)
+      case e: ExpiredToken => generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, e.errorType, e.description)
+      case e: InsufficientScope => generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, e.errorType, e.description)
+      case e: OAuthError => generateJsonErrorMsg(request, play.api.mvc.Results.BadRequest, e.errorType, e.description)
+    }
   }
 
   /**
@@ -46,6 +57,7 @@ class OAuth2Controller @Inject() (
     * Secondly, you can use a secret ('secret') and last the microservices can be identified using Sluice. Method in use
     * will be defined in your application.conf
     *
+    * @deprecated
     * @author Johann Sell
     * @param clientId identifies the client
     * @return
@@ -90,14 +102,37 @@ class OAuth2Controller @Inject() (
                 val queryStringState = "state=" + state
                 Redirect(uri + "?" + queryStringCode + "&" + queryStringState)
               }).getOrElse(
-                BadRequest(Messages("oauth2server.clientHasNoRedirectURI"))
+                generateErrorMsg(request, play.api.mvc.Results.BadRequest, "Incomplete OAuth Client", Messages("oauth2server.clientHasNoRedirectURI"))
               )
             )
-            case _ => Future.successful(BadRequest(Messages("oauth2server.redirectUriDoesNotMatch")))
+            case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.Forbidden, "Invalid OAuth Client", Messages("oauth2server.redirectUriDoesNotMatch")))
           }
-          case _ => Future.successful(BadRequest(Messages("oauth2server.clientId.notFound")))
+          case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.NotFound, "Invalid OAuth Client", Messages("oauth2server.clientId.notFound")))
         })
-        case _ => Future.successful(BadRequest(Messages("oauth2server.responseTypeUnsupported", "code")))
+        case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.BadRequest, "Unsupported Response Type", Messages("oauth2server.responseTypeUnsupported", "code")))
       }
     }
+
+  protected def generateJsonErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+    request.accepts("application/json") match {
+      case true => code(Json.obj(
+        "status" -> "error",
+        "code" -> code.header.status,
+        "type" -> typ,
+        "msg" -> msg
+      )).as("application/json")
+      case _ => generateErrorMsg(request, code, typ, msg)
+    }
+
+  protected def generateErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+//    request.accepts("application/json") match {
+//      case true => code(Json.obj(
+//        "status" -> "error",
+//        "code" -> code.header.status,
+//        "type" -> typ,
+//        "msg" -> msg
+//      )).as("application/json")
+//      case _ =>
+//    }
+    code(msg)
 }

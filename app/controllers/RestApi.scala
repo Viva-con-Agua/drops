@@ -59,7 +59,9 @@ class RestApi @Inject() (
     *  @param A Reads json datatype and request.
     *  @return if the json in the request.body is  successful, return JsSuccess Type, else return BadRequest with json errors
     */
-  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e =>
+    responseError(play.api.mvc.Results.BadRequest, "InvalidJsonInRequestBody", JsError.toJson(e))
+  ))
   
   def profile = SecuredAction.async { implicit request =>
     val json = Json.toJson(request.identity.profileFor(request.authenticator.loginInfo).get)
@@ -68,13 +70,13 @@ class RestApi @Inject() (
       (__ \ 'passordInfo).json.prune andThen 
       (__ \ 'oauth1Info).json.prune)
     prunedJson.fold(
-      _ => Future.successful(InternalServerError(Json.obj("error" -> Messages("error.profileError")))),
+      _ => Future.successful(responseError(play.api.mvc.Results.InternalServerError, "InternalProfileError", Messages("error.profileError"))),
       js => Future.successful(Ok(js))
     )
   }
 
   override def onNotAuthenticated(request:RequestHeader) = {
-    Some(Future.successful(Unauthorized(Json.obj("error" -> Messages("error.profileUnauth")))))
+    Some(Future.successful(responseError(play.api.mvc.Results.Unauthorized, "UserNotAuthorized", Messages("error.profileUnauth"))))
   }
 
   def getUsers = ApiAction.async { implicit request => {
@@ -87,9 +89,20 @@ class RestApi @Inject() (
 
     userDao.find(id).map(_ match {
       case Some(user) => Ok(Json.toJson(PublicUser(user)))
-      case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
+      case _ => responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("rest.api.canNotFindGivenUser", id))
     })
   }}
+
+  protected def responseError(code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+    responseError(code, typ, JsString(msg))
+
+  protected def responseError(code: play.api.mvc.Results.Status, typ: String, msg: JsValue) : Result =
+    code(Json.obj(
+      "status" -> "error",
+      "code" -> code.header.status,
+      "type" -> typ,
+      "msg" -> msg
+    )).as("application/json")
 
   case class CreateUserBody(
      email: String,
@@ -112,7 +125,7 @@ class RestApi @Inject() (
     val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
     userService.retrieve(loginInfo).flatMap{
       case Some(_) =>
-        Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
+        Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserExists", Messages("error.userExists", signUpData.email)))
       case None =>{
         var passwordInfo : Option[PasswordInfo] = None
         if(signUpData.password.isDefined)
@@ -165,12 +178,12 @@ class RestApi @Inject() (
                 val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
                 userService.update(userObj.get.updateProfile(updatedProfile)).map((u) => Ok(Json.toJson(u)))
               }
-              case None => Future(NotFound(Messages("error.profileError")))
+              case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "ProfileNotFound", Messages("error.profileError")))
             }
           }
-          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+          case false => Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserIDMismatch", Messages("error.identifiersDontMatch")))
         }
-        case None => Future(NotFound(Messages("error.noUser")))
+        case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
   }}
@@ -192,11 +205,11 @@ class RestApi @Inject() (
         case Some(user) => user.id == id match {
           case true => user.profileFor(loginInfo) match {
             case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
-            case None => Future(NotFound(Messages("error.profileError")))
+            case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "ProfileNotFound", Messages("error.profileError")))
           }
-          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+          case false => Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserIDMismatch", Messages("error.identifiersDontMatch")))
         }
-        case None => Future(NotFound(Messages("error.noUser")))
+        case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
   }}
@@ -212,9 +225,9 @@ class RestApi @Inject() (
       userObj match {
         case Some(user) => user.id == id match {
           case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
-          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+          case false => Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserIDMismatch", Messages("error.identifiersDontMatch")))
         }
-        case None => Future(NotFound(Messages("error.noUser")))
+        case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
   }}
