@@ -7,7 +7,10 @@ import slick.jdbc.{PositionedParameters, SQLActionBuilder, SetParameter}
 
 object Converter {
   def astToSQL(ast: QueryAST) : SQLActionBuilder = {
-    val query = "SELECT * FROM Crews WHERE " + ast.toSqlStatement
+    //val query = "SELECT * FROM Crews WHERE " + ast.toSqlStatement
+    val filter = ast.toSqlStatement
+    concat(sql"""SELECT * FROM Crews""", Converter.concat(sql""" WHERE """, filter))
+  }
 
   def concat(a: SQLActionBuilder, b: SQLActionBuilder): SQLActionBuilder = {
     SQLActionBuilder(a.queryParts ++ b.queryParts, new SetParameter[Unit] {
