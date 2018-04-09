@@ -28,7 +28,8 @@ DELETE  /rest/user/:id                                     controllers.RestApi.d
 
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
-POST    /rest/crew                                         controllers.RestApi.crews
+POST    /rest/crew                                          controllers.RestApi.crews
+POST    /rest/crew/query                                    controllers.RestApi.getCrews
 GET     /rest/task                                          controllers.RestApi.getTasks
 POST    /rest/task                                          controllers.RestApi.createTask
 GET     /rest/task/:id                                      controllers.RestApi.getTasksWithAccessRights(id: Long)

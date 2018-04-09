@@ -28,17 +28,20 @@ import daos._
 import models.database.{AccessRight, TaskDB}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
-import utils.Query.{QueryAST, QueryLexer, QueryParser}
+import utils.Query._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
 import scala.util.parsing.json.JSONArray
+
+
 
 //import net.liftweb.json._
 
 class RestApi @Inject() (
   val userDao : UserDao,
   val crewDao: CrewDao,
+  val mariadbCrewDao : MariadbCrewDao,
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
@@ -56,10 +59,10 @@ class RestApi @Inject() (
 
   /** checks whether a json is validate or not
     *
-    *  @param A Reads json datatype and request.
+    *  @param B Reads json datatype and request.
     *  @return if the json in the request.body is  successful, return JsSuccess Type, else return BadRequest with json errors
     */
-  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+  def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
   
   def profile = SecuredAction.async { implicit request =>
     val json = Json.toJson(request.identity.profileFor(request.authenticator.loginInfo).get)
@@ -232,8 +235,31 @@ class RestApi @Inject() (
     }
   }}
 
-  def getCrews = Action.async{ implicit request => {
-    crewDao.list.map(crews => Ok(Json.toJson(crews)))
+  case class FilterBody(
+              query: Option[String],
+              values: Option[JsObject],
+              sort : Option[String],
+              offset: Option[Long],
+              limit: Option[Long]
+           )
+
+  object FilterBody {
+    implicit val filterBodyJsonFormat = Json.format[FilterBody]
+  }
+
+  def getCrews = Action.async(validateJson[FilterBody]){ implicit request => {
+
+    val query = request.body.query.get
+    val values = request.body.values.get
+
+    val tokens = QueryLexer(query).right.get
+    val ast = QueryParser(tokens, values).right.get
+
+    ast.toSqlStatement.queryParts.foreach(s => Logger.debug(s.toString))
+    val statement = Converter.astToSQL(ast)
+    Logger.debug(statement.toString)
+    mariadbCrewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
+    //crewDao.list.map(crews => Ok(Json.toJson(crews)))
   }}
 
   //ToDo: ApiAction instead of Action
@@ -273,7 +299,7 @@ class RestApi @Inject() (
       Future(BadRequest(Json.obj("error" -> Messages("rest.api.syntaxError"))))
     }else {
       //Use the parser to validate and extract grammar
-      val ast = QueryParser(tokens.right.get)
+      val ast = QueryParser(tokens.right.get, null)
       if (ast.isLeft) {
         Future(InternalServerError(Json.obj("error" -> Messages("rest.api.syntaxGrammar"))))
       }
