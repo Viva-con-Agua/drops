@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.26.20 (2018-03-14)
+## Version 0.26.21 (2018-04-10)
+* [[B] #217 - Missing template on BadRequest](https://github.com/Viva-con-Agua/drops/issues/217)
 * [[B] #213 - OAuth Database bug](https://github.com/Viva-con-Agua/drops/issues/213)
 * [[F] #208 - Add MariadbPool1UserDao](https://github.com/Viva-con-Agua/drops/issues/208)
 * [[F] #91 - handler for dispenser templates](https://github.com/Viva-con-Agua/drops/issues/91)
