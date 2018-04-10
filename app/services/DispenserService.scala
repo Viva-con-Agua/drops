@@ -31,6 +31,14 @@ class DispenserService @Inject() (
       .post(json)
   }
   
+  def buildRequestTemplate(path: String, content: String, userid: Option[UUID] = None): Template = {
+     Template(
+      MetaData("Drops", "simple", None),
+      NavigationData("drops", path, userid),
+      TemplateData("Drops", java.util.Base64.getEncoder.encodeToString(content.getBytes("UTF-8")))
+    ) 
+  }
+
   def buildTemplate(navigationData: NavigationData, contentName: String, content: String):Template = {
     Template(
       MetaData("Drops", "simple", None),
@@ -56,6 +64,15 @@ class DispenserService @Inject() (
       response.body
     }, 10 second)
 
+  }
+
+  def getTemplate(content: Html)(implicit request: RequestHeader): Html = {
+    val json = Json.toJson(buildRequestTemplate(request.path, content.toString))
+    val url = dispenserUrl + "template/full"
+    Logger.debug(url)
+    Await.result(connect(url, json).map {response =>
+      views.html.dispenser(response.body)
+    }, 1 second)
   }
 
   def getNavigation(navigation: String): Html = {
