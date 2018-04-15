@@ -13,7 +13,7 @@ object QueryLexer extends RegexParsers {
   }
 
   def tokens : Parser[List[QueryToken]] = {
-    phrase(rep1(like | lessEqual | equals | lessThen  | and | or | seqarator | identifier))
+    phrase(rep1(like | lessEqual | equals | lessThen | greaterThen | greaterEqual | and | or | seqarator | identifier))
   }
 
   /**
@@ -28,12 +28,14 @@ object QueryLexer extends RegexParsers {
     "([a-zA-Z]+)".r ^^ {str => IDENTIFIER(str)}
   }
 
-  def and       =   "_AND_"   ^^ (_ => AND)
-  def or        =   "_OR_"    ^^ (_ => OR)
-  def equals    =   "="       ^^ (_ => EQUALS)
-  def lessThen  =   "<"       ^^ (_ => LESS_THEN)
-  def lessEqual =   "<="      ^^ (_ => LESS_EQUAL)
-  def like      =   "LIKE"    ^^ (_ => LIKE_OPERATOR)
-  def seqarator =   "."       ^^ (_ => SEPARATOR)
+  def and           =   "_AND_"   ^^ (_ => AND)
+  def or            =   "_OR_"    ^^ (_ => OR)
+  def equals        =   "="       ^^ (_ => EQUALS)
+  def lessThen      =   "<"       ^^ (_ => LESS_THEN)
+  def lessEqual     =   "<="      ^^ (_ => LESS_EQUAL)
+  def greaterThen   =   ">"       ^^ (_ => GREATER_THEN)
+  def greaterEqual  =   ">="      ^^ (_ => GREATER_EQUAL)
+  def like          =   "LIKE"    ^^ (_ => LIKE_OPERATOR)
+  def seqarator     =   "."       ^^ (_ => SEPARATOR)
 }
 

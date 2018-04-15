@@ -24,34 +24,71 @@ case class AndThen(step1: QueryAST, step2: QueryAST) extends QueryAST {
 }
 
 sealed trait Combinations { def step: QueryAST }
+
+/**
+  * AND
+  * @param step1
+  * @param step2
+  */
 case class A(step1: QueryAST, step2: QueryAST) extends QueryAST {
   override def toSqlStatement = {
-    //step1.toSqlStatement + " AND " + step2.toSqlStatement
     val sql1 = step1.toSqlStatement
     val sql2 = step2.toSqlStatement
 
     sql"""#$sql1 AND #$sql2"""
     Converter.concat(sql1, Converter.concat(sql""" AND """, sql2))
   }
-} //AND
+}
+
+/**
+  * OR
+  * @param step1
+  * @param step2
+  */
 case class O(step1: QueryAST, step2: QueryAST) extends QueryAST {
-  override def toSqlStatement = ???
-} //OR
+  override def toSqlStatement ={
+
+    val sql1 = step1.toSqlStatement
+    val sql2 = step2.toSqlStatement
+
+    sql"""#$sql1 AND #$sql2"""
+    Converter.concat(sql1, Converter.concat(sql""" OR """, sql2))
+  }
+}
 
 sealed trait Conditions extends QueryAST
 case class EQ(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Conditions{
-  //entity.str + "_" + field.str + " = \""+ value + "\""
   def toSqlStatement = {
     val fieldname = entity.str + "_" + field.str
     Converter.concat(sql"""#$fieldname""", Converter.concat(sql"""=""", sql"""'#$value'"""))
   }
 }
-case class LT(entity: IDENTIFIER, field: IDENTIFIER) extends Conditions {
-  override def toSqlStatement = ???
+case class LT(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Conditions {
+  def toSqlStatement = {
+    val fieldname = entity.str + "_" + field.str
+    Converter.concat(sql"""#$fieldname""", Converter.concat(sql"""<""", sql"""'#$value'"""))
+  }
 }
-case class LE(entity: IDENTIFIER, field: IDENTIFIER) extends Conditions {
-  override def toSqlStatement = ???
+case class LE(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Conditions {
+  def toSqlStatement = {
+    val fieldname = entity.str + "_" + field.str
+    Converter.concat(sql"""#$fieldname""", Converter.concat(sql"""<=""", sql"""'#$value'"""))
+  }
 }
+
+case class GT(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Conditions {
+  def toSqlStatement = {
+    val fieldname = entity.str + "_" + field.str
+    Converter.concat(sql"""#$fieldname""", Converter.concat(sql""">""", sql"""'#$value'"""))
+  }
+}
+case class GE(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Conditions {
+  def toSqlStatement = {
+    val fieldname = entity.str + "_" + field.str
+    Converter.concat(sql"""#$fieldname""", Converter.concat(sql""">=""", sql"""'#$value'"""))
+  }
+}
+
 case class LIKE(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Conditions {
   override def toSqlStatement = {
     val fieldname = entity.str + "_" + field.str

@@ -58,7 +58,7 @@ object QueryParser extends Parsers{
   }
 
   def statement: Parser[QueryAST] = {
-     and | or | eq  | lt | le | like
+     and | or | eq  | lt | le | gt | ge | like
   }
 
 
@@ -70,13 +70,13 @@ object QueryParser extends Parsers{
   }
 
   def and : Parser[A] = {
-    ((eq | lt | le | like) ~ AND ~ (eq | lt | le | like)) ^^ {
+    ((eq | lt | le | gt | ge | like) ~ AND ~ (eq | lt | le | gt | ge | like)) ^^ {
       case f1 ~ _ ~ f2  => A(f1, f2)
     }
   }
 
   def or : Parser[O] = {
-    ((eq | lt | le | like) ~ OR ~ (eq | lt | le | like)) ^^ {
+    ((eq | lt | le | gt | ge | like) ~ OR ~ (eq | lt | le | gt | ge | like)) ^^ {
       case f1 ~ _ ~ f2 => O(f1, f2)
     }
   }
@@ -86,11 +86,19 @@ object QueryParser extends Parsers{
   }
 
   def lt: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => LT(entity, field) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => LT(entity, field, values.\(entity.str).\(field.str).as[String]) }
   }
 
   def le: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field, values.\(entity.str).\(field.str).as[String]) }
+  }
+
+  def gt: Parser[Conditions] = positioned {
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => GT(entity, field, values.\(entity.str).\(field.str).as[String]) }
+  }
+
+  def ge: Parser[Conditions] = positioned {
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => GE(entity, field, values.\(entity.str).\(field.str).as[String]) }
   }
 
   def like: Parser[Conditions] = positioned{
