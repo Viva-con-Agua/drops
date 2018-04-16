@@ -26,9 +26,10 @@ import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
 import models.database.{AccessRight, TaskDB}
+import models.views.Crews
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
-import utils.Query._
+import utils.Query.{QueryParserError, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
@@ -237,7 +238,7 @@ class RestApi @Inject() (
 
   case class FilterBody(
               query: Option[String],
-              values: Option[JsObject],
+              values: Option[Crews],
               sort : Option[String],
               offset: Option[Long],
               limit: Option[Long]
@@ -248,18 +249,21 @@ class RestApi @Inject() (
   }
 
   def getCrews = Action.async(validateJson[FilterBody]){ implicit request => {
-
     val query = request.body.query.get
     val values = request.body.values.get
 
     val tokens = QueryLexer(query).right.get
-    val ast = QueryParser(tokens, values).right.get
+    try{
+      val ast = QueryParser(tokens, values).right.get
 
-    ast.toSqlStatement.queryParts.foreach(s => Logger.debug(s.toString))
-    val statement = Converter.astToSQL(ast)
-    Logger.debug(statement.toString)
-    mariadbCrewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
-    //crewDao.list.map(crews => Ok(Json.toJson(crews)))
+      ast.toSqlStatement.queryParts.foreach(s => Logger.debug(s.toString))
+      val statement = Converter.astToSQL(ast)
+      Logger.debug(statement.toString)
+      mariadbCrewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
+    }catch{
+      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case _: Throwable => Future(InternalServerError)
+    }
   }}
 
   //ToDo: ApiAction instead of Action
