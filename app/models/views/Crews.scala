@@ -8,9 +8,25 @@ import play.api.libs.json.{JsPath, Reads, _}
 case class Crews (
                    crew: Option[CrewView],
                    city: Option[CityView]
-                 )
+                 ) extends ViewBase{
 
-object Crews {
+  //ToDo: Generic Solution? Perhaps with Scala Reflections
+  def getValue (fieldname: String): Object = {
+    fieldname match {
+      case "city" => city.get
+      case "crew" => crew.get
+    }
+  }
+
+  def isFieldDefined(fieldname: String): Boolean = {
+    fieldname match{
+      case "city" => city.isDefined
+      case "crew" => crew.isDefined
+    }
+  }
+}
+
+object Crews{
   def apply(tuple: (Option[CrewView], Option[CityView])) : Crews =
     Crews(tuple._1, tuple._2)
 
@@ -27,7 +43,19 @@ object Crews {
 
 case class CityView(
               name: Option[String]
-            )
+            )extends ViewBase{
+  def getValue (fieldname: String): Object = {
+    fieldname match {
+      case "name" => name.get
+    }
+  }
+
+  def isFieldDefined(fieldname: String): Boolean = {
+    fieldname match{
+      case "name" => name.isDefined
+    }
+  }
+}
 object CityView{
   implicit val cityViewFormat: Format[CityView] = Json.format[CityView]
 }
@@ -36,7 +64,23 @@ case class CrewView(
                    publicId: Option[UUID],
                    name: Option[String],
                    country: Option[String]
-               )
+               )extends ViewBase {
+  def getValue (fieldname: String): Object = {
+    fieldname match {
+      case "publicId" => publicId.get
+      case "name" => name.get
+      case "country" => country.get
+    }
+  }
+
+  def isFieldDefined(fieldname: String): Boolean = {
+    fieldname match {
+      case "publicId" => publicId.isDefined
+      case "name" => name.isDefined
+      case "country" => country.isDefined
+    }
+  }
+}
 
 object CrewView{
   def apply(tuple: (Option[UUID], Option[String], Option[String])): CrewView =
