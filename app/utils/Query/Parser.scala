@@ -2,7 +2,9 @@ package utils.Query
 
 import java.security.SecurityPermission
 
+import models.views.ViewBase
 import net.minidev.json.JSONObject
+import play.api.i18n.Messages
 import play.api.libs.json.JsObject
 
 import scala.util.parsing.combinator.Parsers
@@ -31,16 +33,16 @@ case class QueryParser(
 object QueryParser extends Parsers{
   override type Elem = QueryToken
 
-  var values: JsObject = null
+  var values: ViewBase = null
 
-  class QueryTokenReader(tokens: Seq[QueryToken],values: JsObject) extends Reader[QueryToken]{
+  class QueryTokenReader(tokens: Seq[QueryToken],values: ViewBase) extends Reader[QueryToken]{
     override def first: QueryToken = tokens.head
-    override def rest: Reader[QueryToken] = new QueryTokenReader(tokens.tail, values: JsObject)
+    override def rest: Reader[QueryToken] = new QueryTokenReader(tokens.tail, values: ViewBase)
     override def pos: Position = tokens.headOption.map(t => t.pos).getOrElse(NoPosition)
     override def atEnd: Boolean = tokens.isEmpty
   }
 
-  def apply(tokens: Seq[QueryToken], values: JsObject): Either[QueryParserError, QueryAST] = {
+  def apply(tokens: Seq[QueryToken], values: ViewBase): Either[QueryParserError, QueryAST] = {
     this.values = values
     val reader = new QueryTokenReader(tokens, values)
     program(reader) match {
@@ -82,26 +84,40 @@ object QueryParser extends Parsers{
   }
 
   def eq: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ EQUALS)     ^^ { case entity ~ _ ~  field ~ _ ~ _ => EQ(entity, field, values.\(entity.str).\(field.str).as[String]) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ EQUALS)     ^^ { case entity ~ _ ~  field ~ _ ~ _ => EQ(entity, field, getValue(entity.str, field.str)) }
   }
 
   def lt: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => LT(entity, field, values.\(entity.str).\(field.str).as[String]) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => LT(entity, field, getValue(entity.str, field.str)) }
   }
 
   def le: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field, values.\(entity.str).\(field.str).as[String]) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field, getValue(entity.str, field.str)) }
   }
 
   def gt: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => GT(entity, field, values.\(entity.str).\(field.str).as[String]) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => GT(entity, field, getValue(entity.str, field.str)) }
   }
 
   def ge: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => GE(entity, field, values.\(entity.str).\(field.str).as[String]) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => GE(entity, field, getValue(entity.str, field.str)) }
   }
 
   def like: Parser[Conditions] = positioned{
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LIKE_OPERATOR) ^^ {case entity ~ _ ~ field ~ _ ~ _ => LIKE(entity, field, values.\(entity.str).\(field.str).as[String]) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LIKE_OPERATOR) ^^ {case entity ~ _ ~ field ~ _ ~ _ => LIKE(entity, field, getValue(entity.str, field.str)) }
+  }
+  //ToDo: Add Error Handling!
+  //ToDo: Use Messages
+  def getValue(entity: String, field: String) : String = {
+    if(values.isFieldDefined(entity)){
+      val e : ViewBase = values.getValue(entity).asInstanceOf[ViewBase]
+      if(e.isFieldDefined(field)){
+        e.getValue(field).toString
+      }else{
+        throw new QueryParserError("There is no filter value for one or more query parts")
+      }
+    }else{
+      throw new QueryParserError("There is no filter value for one or more query parts")
+    }
   }
 }
