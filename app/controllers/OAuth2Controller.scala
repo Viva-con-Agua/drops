@@ -17,7 +17,7 @@ import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import daos.{OauthClientDao, OauthCodeDao}
 import models.{OauthCode, User}
 
-import scalaoauth2.provider.OAuth2Provider
+import scalaoauth2.provider._
 import oauth2server._
 
 import scala.concurrent.Future
@@ -35,8 +35,19 @@ class OAuth2Controller @Inject() (
 ) extends Silhouette[User,CookieAuthenticator] with OAuth2Provider {
   override val tokenEndpoint = new DropsTokenEndpoint()
 
-  def accessToken = UserAwareAction.async { implicit request =>
-    issueAccessToken(oauthDataHandler)
+  def accessToken = Action.async { implicit request =>
+    issueAccessToken(oauthDataHandler) recover {
+      case e: InvalidClient => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: InvalidGrant => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: InvalidScope => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: InvalidToken => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: RedirectUriMismatch => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: AccessDenied => generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, e.errorType, e.description)
+      case e: UnauthorizedClient => generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, e.errorType, e.description)
+      case e: ExpiredToken => generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, e.errorType, e.description)
+      case e: InsufficientScope => generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, e.errorType, e.description)
+      case e: OAuthError => generateJsonErrorMsg(request, play.api.mvc.Results.BadRequest, e.errorType, e.description)
+    }
   }
 
   /**
@@ -46,9 +57,9 @@ class OAuth2Controller @Inject() (
     * Secondly, you can use a secret ('secret') and last the microservices can be identified using Sluice. Method in use
     * will be defined in your application.conf
     *
+    * @deprecated
     * @author Johann Sell
     * @param clientId identifies the client
-    * @param clientSecret secures the communication, if this method is configured.
     * @return
     */
   def getCode(clientId : String) = SecuredAction.async { implicit request => {
@@ -62,4 +73,66 @@ class OAuth2Controller @Inject() (
       case _ => Future.successful(BadRequest(Messages("oauth2server.clientId.notFound")))
     })
   }}
+
+  /**
+    * If a valid client was submitted, a new OAuth code will be generated and send to the clients redirect URI.
+    *
+    * Different possibilities to secure webservice communication are supported. First, you can use no security ('none').
+    * Secondly, you can use a secret ('secret') and last the microservices can be identified using Sluice. Method in use
+    * will be defined in your application.conf
+    *
+    * TODO: Use Scope, extend response type
+    *
+    * @author Johann Sell
+    * @param scope defines the set of visible attributes
+    * @param client_id identifies the client
+    * @param response_type explicitly defines, if a code is wanted
+    * @param state can be used for stateful interaction (e.g. redirect infos; see OAuth 2 Spec)
+    * @param redirect_uri redirect_uri again
+    * @return
+    */
+  def getCodeOAuth2Spec(scope: Option[String], client_id : String, response_type : String, state: String, redirect_uri: String) =
+    SecuredAction.async { implicit request =>
+      response_type match {
+        case "code" => oauthClientDao.find(client_id, None, "authorization_code").flatMap(_ match {
+          case Some(client) => client.redirectUri.map(_ == redirect_uri).getOrElse(true) match {
+            case true => oauthCodeDao.save(OauthCode(request.identity, client)).map(
+              code => code.client.redirectUri.map((uri) => {
+                val queryStringCode = "code=" + code.code
+                val queryStringState = "state=" + state
+                Redirect(uri + "?" + queryStringCode + "&" + queryStringState)
+              }).getOrElse(
+                generateErrorMsg(request, play.api.mvc.Results.BadRequest, "Incomplete OAuth Client", Messages("oauth2server.clientHasNoRedirectURI"))
+              )
+            )
+            case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.Forbidden, "Invalid OAuth Client", Messages("oauth2server.redirectUriDoesNotMatch")))
+          }
+          case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.NotFound, "Invalid OAuth Client", Messages("oauth2server.clientId.notFound")))
+        })
+        case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.BadRequest, "Unsupported Response Type", Messages("oauth2server.responseTypeUnsupported", "code")))
+      }
+    }
+
+  protected def generateJsonErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+    request.accepts("application/json") match {
+      case true => code(Json.obj(
+        "status" -> "error",
+        "code" -> code.header.status,
+        "type" -> typ,
+        "msg" -> msg
+      )).as("application/json")
+      case _ => generateErrorMsg(request, code, typ, msg)
+    }
+
+  protected def generateErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+//    request.accepts("application/json") match {
+//      case true => code(Json.obj(
+//        "status" -> "error",
+//        "code" -> code.header.status,
+//        "type" -> typ,
+//        "msg" -> msg
+//      )).as("application/json")
+//      case _ =>
+//    }
+    code(msg)
 }

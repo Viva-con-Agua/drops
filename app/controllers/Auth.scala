@@ -22,6 +22,7 @@ import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.exceptions.IdentityNotFoundException
 import com.mohiva.play.silhouette.impl.providers._
 import play.api._
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
@@ -100,6 +101,8 @@ class Auth @Inject() (
   nats: Nats) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
+
+  override val logger: Logger = Logger(this.getClass())
 
   def init = Action.async { implicit request => {
     val config = configuration.getConfig("admin.default")
@@ -253,8 +256,9 @@ class Auth @Inject() (
     userService.retrieve(request.authenticator.loginInfo).flatMap {
       case None => 
         Future.successful(Redirect(routes.Auth.signOut()).flashing("error" -> Messages("error.noUser")))
-      case Some(user) => 
+      case Some(user) => {
         Future.successful(nats.publishLogout(user.id))
+      }
     }
     env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
   }
