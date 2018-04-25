@@ -4,7 +4,7 @@
 #
 
 # --- !Ups
-CREATE TABLE AccessRight (
+CREATE TABLE AccessRight(
   id BIGINT(20) NOT NULL AUTO_INCREMENT,
   uri VARCHAR(512) NOT NULL,
   name VARCHAR(255),
