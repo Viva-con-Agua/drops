@@ -8,6 +8,8 @@ POST    /user/update                                        controllers.Applicat
 POST    /user/uploadAvatar                                  controllers.Files.uploadProfileImage
 GET     /file/get/:id                                       controllers.Files.get(id: String)
 
+GET     /delete                                             controllers.Application.userDelete
+
 
 GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
