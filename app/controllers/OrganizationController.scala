@@ -4,6 +4,9 @@ import javax.inject.Inject
 
 import play.api._
 import play.api.mvc._
+import play.api.Play.current
+import play.api.libs.iteratee
+import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -27,12 +30,21 @@ class OrganizationController @Inject() (
       val env:Environment[User,CookieAuthenticator]
   )extends Silhouette[User,CookieAuthenticator] {
     
+    
     def index = SecuredAction.async { implicit request => ??? }
 
-    def insert = SecuredAction.async { implicit request =>
+    /*def insert = SecuredAction.async { implicit request =>
       Future.successful(Ok(dispenserService.getTemplate(views.html.organization.insertOrganization(OrganizationForms.organizationForm))))
     
+    }*/
+    
+    def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))) 
+
+    def insert = Action.async(validateJson[OrganizationStub]) { implicit request => 
+      organizationService.save(request.body.toOrganization)
+      Future.successful(Ok)
     }
+
 
     def handleInsertOrganization = SecuredAction.async { implicit request =>
       OrganizationForms.organizationForm.bindFromRequest.fold(
@@ -55,9 +67,9 @@ class OrganizationController @Inject() (
           )
         for {
           organization <- organizationService.save(organizationStub.toOrganization)
-        }yield{
-          Ok(dispenserService.getTemplate(views.html.organization.insertOrganization(OrganizationForms.organizationForm)))
-        }
+        }yield organization
+          Future.successful(Ok(dispenserService.getTemplate(views.html.organization.insertOrganization(OrganizationForms.organizationForm))))
+        
       } 
      
     )
