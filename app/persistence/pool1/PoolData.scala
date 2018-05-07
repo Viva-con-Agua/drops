@@ -1,5 +1,6 @@
 package persistence.pool1
 
+import java.util.UUID
 import play.api.http._
 import play.api.mvc._
 import models.User
@@ -110,6 +111,21 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
         (JsPath \ "usermeta").read[UserMeta]
       ).tupled.map(PoolUserDataContainer( _ ))
   }
+
+  case class PoolUserUUIDJson(hash: String, userId: UUID)
+  
+  object PoolUserUUIDData {
+    val uuidJson = Json.toJson(userId)
+    def toPoolPost : Map[String, Seq[String]] = Map(
+      "hash" -> Seq(hash),
+      "user" -> Seq(this.uuidJson.toString)
+    )
+  }
+
+    
+    
+  
+
 
   /**
     * Mapping between User and PoolUser

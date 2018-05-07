@@ -258,9 +258,11 @@ class Auth @Inject() (
         Future.successful(Redirect(routes.Auth.signOut()).flashing("error" -> Messages("error.noUser")))
       case Some(user) => {
         Future.successful(nats.publishLogout(user.id))
+
       }
     }
     env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
+    
   }
 
   def startResetPassword = Action { implicit request =>
