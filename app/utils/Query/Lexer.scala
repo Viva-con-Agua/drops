@@ -13,7 +13,7 @@ object QueryLexer extends RegexParsers {
   }
 
   def tokens : Parser[List[QueryToken]] = {
-    phrase(rep1(like | lessEqual | equals | lessThen | greaterThen | greaterEqual | and | or | seqarator | identifier))
+    phrase(rep1(like | lessEqual | equals | lessThen | greaterThen | greaterEqual | and | or | seqarator | identifier | index))
   }
 
   /**
@@ -26,6 +26,10 @@ object QueryLexer extends RegexParsers {
   def identifier: Parser[IDENTIFIER] = {
     //model.key.
     "([a-zA-Z]+)".r ^^ {str => IDENTIFIER(str)}
+  }
+
+  def index: Parser[INDEX] = {
+    "([0-9]+)".r ^^ {i => INDEX(i.toInt)}
   }
 
   def and           =   "_AND_"   ^^ (_ => AND)

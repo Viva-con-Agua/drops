@@ -9,6 +9,8 @@ sealed trait QueryToken extends Positional
 //ToDo: Add dot separator or use different definitions für entity and key
 case class IDENTIFIER(str: String) extends QueryToken
 case class VALUE(str: String) extends QueryToken
+case class INDEX(i: Int) extends QueryToken
+
 
 case object SEPARATOR extends QueryToken
 

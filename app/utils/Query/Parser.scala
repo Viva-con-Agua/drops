@@ -2,10 +2,11 @@ package utils.Query
 
 import java.security.SecurityPermission
 
-import models.views.ViewBase
+import models.views.{ViewBase, ViewObject}
 import net.minidev.json.JSONObject
 import play.api.i18n.Messages
 import play.api.libs.json.JsObject
+import utils.Query.QueryParser.entity
 
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{NoPosition, Position, Reader}
@@ -26,6 +27,7 @@ class QueryParserError(message: String) extends Exception(message) {
   }
 }
 
+//ToDo: Values so hier noch notwendig?
 case class QueryParser(
                       values: JSONObject
                       )
@@ -33,16 +35,16 @@ case class QueryParser(
 object QueryParser extends Parsers{
   override type Elem = QueryToken
 
-  var values: ViewBase = null
+  var values: ViewObject = null
 
-  class QueryTokenReader(tokens: Seq[QueryToken],values: ViewBase) extends Reader[QueryToken]{
+  class QueryTokenReader(tokens: Seq[QueryToken],values: ViewObject) extends Reader[QueryToken]{
     override def first: QueryToken = tokens.head
-    override def rest: Reader[QueryToken] = new QueryTokenReader(tokens.tail, values: ViewBase)
+    override def rest: Reader[QueryToken] = new QueryTokenReader(tokens.tail, values: ViewObject)
     override def pos: Position = tokens.headOption.map(t => t.pos).getOrElse(NoPosition)
     override def atEnd: Boolean = tokens.isEmpty
   }
 
-  def apply(tokens: Seq[QueryToken], values: ViewBase): Either[QueryParserError, QueryAST] = {
+  def apply(tokens: Seq[QueryToken], values: ViewObject): Either[QueryParserError, QueryAST] = {
     this.values = values
     val reader = new QueryTokenReader(tokens, values)
     program(reader) match {
@@ -71,6 +73,10 @@ object QueryParser extends Parsers{
     accept("field identifier", { case f @ IDENTIFIER(str) => f })
   }
 
+  private def index: Parser[INDEX] = {
+    accept("index identifier", { case f @ INDEX(i) => f })
+  }
+
   def and : Parser[A] = {
     ((eq | lt | le | gt | ge | like) ~ AND ~ (eq | lt | le | gt | ge | like)) ^^ {
       case f1 ~ _ ~ f2  => A(f1, f2)
@@ -84,35 +90,41 @@ object QueryParser extends Parsers{
   }
 
   def eq: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ EQUALS)     ^^ { case entity ~ _ ~  field ~ _ ~ _ => EQ(entity, field, getValue(entity.str, field.str)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ EQUALS) ^^ { case entity ~ _ ~  field ~ _ ~ _ => EQ(entity, field, getValue(entity.str, field.str, 0)) } |
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ EQUALS)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => EQ(entity, field, getValue(entity.str, field.str, index.i)) }
   }
 
   def lt: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => LT(entity, field, getValue(entity.str, field.str)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => LT(entity, field, getValue(entity.str, field.str, 0)) } |
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ LESS_THEN)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => LT(entity, field, getValue(entity.str, field.str, index.i)) }
   }
 
   def le: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field, getValue(entity.str, field.str)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => LE(entity, field, getValue(entity.str, field.str, 0)) } |
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ LESS_EQUAL)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => LE(entity, field, getValue(entity.str, field.str, index.i)) }
   }
 
   def gt: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => GT(entity, field, getValue(entity.str, field.str)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ GREATER_THEN)  ^^ { case entity ~ _ ~  field ~ _ ~ _ => GT(entity, field, getValue(entity.str, field.str, 0)) } |
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ GREATER_THEN)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => GT(entity, field, getValue(entity.str, field.str, index.i)) }
   }
 
   def ge: Parser[Conditions] = positioned {
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LESS_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => GE(entity, field, getValue(entity.str, field.str)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ GREATER_EQUAL) ^^ { case entity ~ _ ~  field ~ _ ~ _ => GE(entity, field, getValue(entity.str, field.str, 0)) } |
+      (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ GREATER_EQUAL)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => GE(entity, field, getValue(entity.str, field.str, index.i)) }
   }
 
   def like: Parser[Conditions] = positioned{
-    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LIKE_OPERATOR) ^^ {case entity ~ _ ~ field ~ _ ~ _ => LIKE(entity, field, getValue(entity.str, field.str)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LIKE_OPERATOR) ^^ {case entity ~ _ ~ field ~ _ ~ _ => LIKE(entity, field, getValue(entity.str, field.str, 0)) } |
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ LIKE_OPERATOR)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => LIKE(entity, field, getValue(entity.str, field.str, index.i)) }
   }
   //ToDo: Add Error Handling!
   //ToDo: Use Messages
-  def getValue(entity: String, field: String) : String = {
+  def getValue(entity: String, field: String, index: Int) : String = {
     if(values.isFieldDefined(entity)){
       val e : ViewBase = values.getValue(entity).asInstanceOf[ViewBase]
-      if(e.isFieldDefined(field)){
-        e.getValue(field).toString
+      if(e.isFieldDefined(field, index)){
+        e.getValue(field, index).toString
       }else{
         throw new QueryParserError("There is no filter value for one or more query parts")
       }
