@@ -112,10 +112,10 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
       ).tupled.map(PoolUserDataContainer( _ ))
   }
 
-  case class PoolUserUUIDJson(hash: String, userId: UUID)
+  case class PoolUserUUIDData(hash: String, user: User)
   
   object PoolUserUUIDData {
-    val uuidJson = Json.toJson(userId)
+    val uuidJson = Json.toJson(user.id)
     def toPoolPost : Map[String, Seq[String]] = Map(
       "hash" -> Seq(hash),
       "user" -> Seq(this.uuidJson.toString)

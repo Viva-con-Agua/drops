@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait PoolService {
   def save(user: User)(implicit messages: Messages) : Future[Boolean]
-  def logout(userId: UUID)(implicit messages: Messages) : Future[Boolean]
+  def logout(user: User)(implicit messages: Messages) : Future[Boolean]
 }
 
 class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) extends PoolService {
@@ -32,9 +32,9 @@ class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) ext
     })
   }}
 
-  override def logout(userId: UUID)(implicit messages: Messages): Future[Boolean] = PoolAction(false, userId) { userId => {
-    val container = PoolUserUUIDData(configuration.getString("pool1.hash").getOrElse(""), userId)
-    api.logout[UUID](container).map(_ match {
+  override def logout(user: User)(implicit messages: Messages): Future[Boolean] = PoolAction(false, user) { User => {
+    val container = PoolUserUUIDData(configuration.getString("pool1.hash").getOrElse(""), user)
+    api.logout[User](container).map(_ match {
       case Left(v) => {
         Logger.debug(Messages("pool1.debug.export.success", v.toString))
         true
