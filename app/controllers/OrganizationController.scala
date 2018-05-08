@@ -45,33 +45,4 @@ class OrganizationController @Inject() (
       Future.successful(Ok)
     }
 
-
-    def handleInsertOrganization = SecuredAction.async { implicit request =>
-      OrganizationForms.organizationForm.bindFromRequest.fold(
-        bogusForm => Future.successful(
-          BadRequest(dispenserService.getTemplate(views.html.organization.insertOrganization(bogusForm)))
-        ),
-      organizationData => {
-        //what identify an organization?
-        //case None => 
-          val organizationStub = OrganizationStub(
-            organizationData.name, 
-            organizationData.address, 
-            organizationData.telefon, 
-            organizationData.fax,
-            organizationData.email,
-            organizationData.executive,
-            organizationData.abbreviation,
-            organizationData.impressum,
-            None
-          )
-        for {
-          organization <- organizationService.save(organizationStub.toOrganization)
-        }yield organization
-          Future.successful(Ok(dispenserService.getTemplate(views.html.organization.insertOrganization(OrganizationForms.organizationForm))))
-        
-      } 
-     
-    )
-  }
 }

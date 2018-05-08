@@ -20,6 +20,7 @@ import utils.Nats
 class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: Nats) {
   def retrieve():Future[Option[Organization]] = ???
   def save(organization: Organization) = organizationDAO.create(OrganizationDB(organization))
-  
+  def find(publicId: UUID) = organizationDAO.find(publicId)
+  def find(name: String) = organizationDAO.find(name)
 }
 
