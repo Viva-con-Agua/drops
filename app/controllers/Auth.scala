@@ -257,6 +257,7 @@ class Auth @Inject() (
       case None => 
         Future.successful(Redirect(routes.Auth.signOut()).flashing("error" -> Messages("error.noUser")))
       case Some(user) => {
+        pool.logout(user)
         Future.successful(nats.publishLogout(user.id))
 
       }

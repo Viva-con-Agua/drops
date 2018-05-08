@@ -2,7 +2,8 @@ package persistence.pool1
 
 import java.net.URI
 import javax.inject.Inject
-
+import play.api.libs.json._
+import models.User
 import java.util.UUID
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.{Configuration, Logger}
@@ -39,7 +40,7 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
     }
   }
 
-  def logout[T](userId: UUID)(implicit messages: Messages): Future[Either[PoolResult, Exception]] = {
+  def logout[T](data: PoolData[T])(implicit messages: Messages): Future[Either[PoolResult, Exception]] = {
     try {
       val url = if (logoutUrl.isDefined)
         logoutUrl.get
@@ -50,7 +51,7 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
         .withFollowRedirects(true)
         .withRequestTimeout(3000)
       
-      request.post(userId.toString).map((res) => {
+      request.post(data.toUUIDPost).map((res) => {
         Left(res.json.validate[PoolResult].get)
       })
     } catch {
@@ -59,4 +60,13 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
       }
     }
   }
+
+  /*private def toPoolPost(hash: String, user: User) : Map[String, Seq[String]] = {
+    val uuidJson = user.id.toString
+      Map(
+        "hash" -> Seq(hash),
+        "user" -> Seq(Json.obj({"UUID": uuidJson}).toString)
+      )
+    }*/
+
 }

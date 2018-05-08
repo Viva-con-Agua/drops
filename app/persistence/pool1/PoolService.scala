@@ -32,8 +32,8 @@ class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) ext
     })
   }}
 
-  override def logout(user: User)(implicit messages: Messages): Future[Boolean] = PoolAction(false, user) { User => {
-    val container = PoolUserUUIDData(configuration.getString("pool1.hash").getOrElse(""), user)
+  override def logout(user: User)(implicit messages: Messages): Future[Boolean] = PoolAction(false, user) { user => {
+    val container = PoolUserData(configuration.getString("pool1.hash").getOrElse(""), user)
     api.logout[User](container).map(_ match {
       case Left(v) => {
         Logger.debug(Messages("pool1.debug.export.success", v.toString))
