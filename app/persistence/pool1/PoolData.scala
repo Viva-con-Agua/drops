@@ -119,15 +119,11 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
   
 
   object PoolUserUUIDContainer {
+   
     
-    implicit val uuidContainerWrites : Writes[PoolUserUUIDContainer] = (
-      (JsPath \ "uuid").write[String]
-    )(unlift(PoolUserUUIDContainer.unapply))
-    implicit val uuidContainerReads : Reads[PoolUserUUIDContainer] = (
-      (JsPath \ "uuid").read[String]
-      )(PoolUserUUIDContainer( _ ))
-  }
-    
+    implicit val uuidContainerWrites : Writes[PoolUserUUIDContainer] = (JsPath \ "uuid").write[PoolUserUUIDContainer]
+    implicit val uuidContainerReads : Reads[PoolUserUUIDContainer] = (JsPath \ "uuid").read[PoolUserUUIDContainer]
+  } 
     
   
 
