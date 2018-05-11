@@ -32,7 +32,7 @@ case class OrganizationStub(
 }
 
 case class Organization(
-  id: UUID,
+  publicId: UUID,
   override val name: String,
   override val address: String,
   override val telefon: String,

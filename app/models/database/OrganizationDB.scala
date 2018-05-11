@@ -29,5 +29,9 @@ object OrganizationDB {
     id: Long, publicId: UUID, name: String, address: String, telefon: String, fax: String, email: String, executive: String, abbreviation: String, impressum: String
   ) = apply(id, publicId, name, address, telefon, fax, email, executive, abbreviation, impressum)
 
-  def apply(orgnization: Organization):OrganizationDB = OrganizationDB(0, orgnization.id, orgnization.name, orgnization.address, orgnization.telefon, orgnization.fax, orgnization.email, orgnization.executive, orgnization.abbreviation, orgnization.impressum)
+  
+  def apply(id: Long, organization: Organization):OrganizationDB = OrganizationDB(id, organization.publicId, organization.name, organization.address, organization.telefon, organization.fax, organization.email, organization.executive, organization.abbreviation, organization.impressum)
+
+  def apply(organization: Organization):OrganizationDB = OrganizationDB(0, organization.publicId, organization.name, organization.address, organization.telefon, organization.fax, organization.email, organization.executive, organization.abbreviation, organization.impressum)
+
 }
