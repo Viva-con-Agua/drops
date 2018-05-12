@@ -6,6 +6,7 @@ import models.views.{ViewBase, ViewObject}
 import net.minidev.json.JSONObject
 import play.api.i18n.Messages
 import play.api.libs.json.JsObject
+
 import utils.Query.QueryParser.entity
 
 import scala.util.parsing.combinator.Parsers
@@ -62,7 +63,7 @@ object QueryParser extends Parsers{
   }
 
   def statement: Parser[QueryAST] = {
-     and | or | eq  | lt | le | gt | ge | like
+    expression | eq  | lt | le | gt | ge | like
   }
 
 
@@ -77,15 +78,10 @@ object QueryParser extends Parsers{
     accept("index identifier", { case f @ INDEX(i) => f })
   }
 
-  def and : Parser[A] = {
-    ((eq | lt | le | gt | ge | like) ~ AND ~ (eq | lt | le | gt | ge | like)) ^^ {
-      case f1 ~ _ ~ f2  => A(f1, f2)
-    }
-  }
 
-  def or : Parser[O] = {
-    ((eq | lt | le | gt | ge | like) ~ OR ~ (eq | lt | le | gt | ge | like)) ^^ {
-      case f1 ~ _ ~ f2 => O(f1, f2)
+  def expression : Parser[Combination] = {
+    ((eq  | lt | le | gt | ge | like) ~ rep((OR | AND) ~ (eq  | lt | le | gt | ge | like))) ^^ {
+      case f1 ~ f2 => Combination(f1, f2)
     }
   }
 

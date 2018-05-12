@@ -1,5 +1,6 @@
 package utils.Query
 
+import play.api.Logger
 import play.api.libs.json.JsObject
 import slick.jdbc.{PositionedParameters, SQLActionBuilder, SetParameter}
 import slick.driver.MySQLDriver.api._
@@ -35,7 +36,6 @@ case class A(step1: QueryAST, step2: QueryAST) extends QueryAST {
     val sql1 = step1.toSqlStatement
     val sql2 = step2.toSqlStatement
 
-    sql"""#$sql1 AND #$sql2"""
     Converter.concat(sql1, Converter.concat(sql""" AND """, sql2))
   }
 }
@@ -51,8 +51,21 @@ case class O(step1: QueryAST, step2: QueryAST) extends QueryAST {
     val sql1 = step1.toSqlStatement
     val sql2 = step2.toSqlStatement
 
-    sql"""#$sql1 AND #$sql2"""
     Converter.concat(sql1, Converter.concat(sql""" OR """, sql2))
+  }
+}
+
+case class Combination(f1: QueryAST, f2: List[_root_.utils.Query.QueryParser.~[QueryToken, QueryAST]]) extends QueryAST {
+  override def toSqlStatement = {
+    var sql = f1.toSqlStatement
+    f2.foreach(o => {
+      sql = o._1 match{
+        case AND => Converter.concat(sql, Converter.concat(sql""" AND """, o._2.toSqlStatement))
+        case OR => Converter.concat(sql, Converter.concat(sql""" OR """, o._2.toSqlStatement))
+        case _ => throw new Exception
+      }
+    })
+    sql
   }
 }
 
