@@ -1,10 +1,10 @@
 # --- !Ups
-CREATE TABLE Profile_Organization (
-				profileId = BIGINT(20) NOT NULL,
-				organizationId = BIGINT(20) NOT NULL,
-				PRIMARY KEY (profileId, organizationId),
-				FOREIGN KEY (profileId) REFERENCES Profile(id) ON UPDATE CASCADE ,
-				FOREIGN KEY (organizationId) REFERENCES Organization(id) ON UPDATE CASCADE 
+CREATE TABLE Profile_Organization(
+				profile_id BIGINT(20),
+				organization_id BIGINT(20),
+				PRIMARY KEY (profile_id, organization_id),
+				FOREIGN KEY (profile_id) REFERENCES Profile(id) ON UPDATE CASCADE ,
+				FOREIGN KEY (organization_id) REFERENCES Organization(id) ON UPDATE CASCADE 
 );
 
 # --- !Downs

@@ -22,6 +22,7 @@ trait OrganizationDAO {
   def find(id: Long): Future[Option[Organization]]
   def find(id: UUID): Future[Option[Organization]]
   def find(name: String): Future[Option[Organization]]
+  def update(organization: Organization): Future[Organization]
   def withProfile(id: UUID): Future[Seq[ProfileDB]]
 }
 
