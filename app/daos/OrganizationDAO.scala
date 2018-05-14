@@ -7,7 +7,7 @@ import play.api.Play
 
 import models.{Organization, Profile}
 import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB}
-//import models.converter.{OrganizationConverter}
+import models.converter.{OrganizationConverter}
 import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef }
 
 import play.api.db.slick.DatabaseConfigProvider
@@ -23,7 +23,8 @@ trait OrganizationDAO {
   def find(id: UUID): Future[Option[Organization]]
   def find(name: String): Future[Option[Organization]]
   def update(organization: Organization): Future[Organization]
-  def withProfile(id: UUID): Future[Seq[ProfileDB]]
+  def withProfile(id: Long): Future[Option[Organization]]
+  def withProfile(id: UUID): Future[Option[Organization]]
 }
 
 class MariadbOrganizationDAO extends OrganizationDAO {
@@ -68,15 +69,19 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     dbConfig.db.run((profileOrganizations returning profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id))))
       .flatMap((id) => find(id._1)) 
     }
+  
+  def withProfile(id: Long): Future[Option[Organization]] = ???
 
-  def withProfile(id: UUID): Future[Seq[ProfileDB]] = ???
-    /*dbConfig.db.run(organizations.filter(o => o.publicId === id).result).flatMap(organization => {
+  def withProfile(id: UUID): Future[Option[Organization]] = {
+    dbConfig.db.run(organizations.filter(o => o.publicId === id).result).flatMap(organization => {
       val action = for {
-        (o, _) <- (profiles join profileOrganization.filter(uo => uo.organizationId === organization.head.id) on (_.id === _.profileId))
-    } yield(o)
-      dbConfig.db.run(action.result)
+        (o, p) <- (organizations join profileOrganizations.filter(uo => uo.organizationId === organization.head.id) on (_.id === _.profileId))
+    } yield(o, p)
+      dbConfig.db.run(action.result).map(result =>{
+        OrganizationConverter.buildOrganizationFromResult(result).headOption
+      })
     })
-  }*/
+  }
   
   /*def saveProfile(profileId : UUID, organizationId : UUID) : Future[Seq[Organization]] = {
     dbConfig.db.run(organizatons.filter(o => o.pulicId == id).result).
