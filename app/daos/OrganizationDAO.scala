@@ -58,14 +58,15 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       }).flatMap(_ => find(organization_id)).map(o => o.get)
   }
   
-  def addProfile(profileEmail: String, organizationId: UUID): Future[Organization] = {
+  def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]] = {
     var profile_id = 0L
     var organization_id = 0L
     dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
       organization_id = o.head.id})
     dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
       profile_id = p.head.id })
-    dbConfig.db.run((profileOrganizations returning profileOrganizations.map(_.profileId -> profileId, _.organizationId -> organization_id))).flatMap((id) => find(id)) 
+    dbConfig.db.run((profileOrganizations returning profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id))))
+      .flatMap((id) => find(id._1)) 
     }
 
   def withProfile(id: UUID): Future[Seq[ProfileDB]] = ???
