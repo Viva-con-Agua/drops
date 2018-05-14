@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import play.api.Play
 
 import models.{Organization, Profile}
-import models.database.{OrganizationDB, ProfileDB}
+import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB}
 //import models.converter.{OrganizationConverter}
 import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef }
 
@@ -57,6 +57,16 @@ class MariadbOrganizationDAO extends OrganizationDAO {
         dbConfig.db.run((organizations.filter(_.id === o.head.id).update(OrganizationDB(o.head.id, organization))))
       }).flatMap(_ => find(organization_id)).map(o => o.get)
   }
+  
+  def addProfile(profileEmail: String, organizationId: UUID): Future[Organization] = {
+    var profile_id = 0L
+    var organization_id = 0L
+    dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
+      organization_id = o.head.id})
+    dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
+      profile_id = p.head.id })
+    dbConfig.db.run((profileOrganizations returning profileOrganizations.map(_.profileId -> profileId, _.organizationId -> organization_id))).flatMap((id) => find(id)) 
+    }
 
   def withProfile(id: UUID): Future[Seq[ProfileDB]] = ???
     /*dbConfig.db.run(organizations.filter(o => o.publicId === id).result).flatMap(organization => {
