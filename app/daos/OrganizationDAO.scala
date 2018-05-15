@@ -67,10 +67,17 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
       profile_id = p.head.id })
     dbConfig.db.run((profileOrganizations returning profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id))))
-      .flatMap((id) => find(id._1)) 
+      .flatMap((id) => withProfile(id._1)) 
     }
   
-  def withProfile(id: Long): Future[Option[Organization]] = ???
+  def withProfile(id: Long): Future[Option[Organization]] = {
+    val action = for {
+        o <- organizations.filter(o => o.id === id) 
+        (p, _) <- profiles join profileOrganizations.filter(uo => uo.organizationId === o.id) on (_.id === _.profileId)
+        
+    } yield(o, p)
+      dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(_))
+  }
 
   def withProfile(id: UUID): Future[Option[Organization]] = {
       val action = for {
@@ -81,13 +88,6 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(_))
     
   }
-  
-  /*def saveProfile(profileId : UUID, organizationId : UUID) : Future[Seq[Organization]] = {
-    dbConfig.db.run(organizatons.filter(o => o.pulicId == id).result).
-      val action = for {
-        (o,)
-      profileOrganizations)
-  }*/
 
   private def findOrganizationDBModel(id: UUID): Future[OrganizationDB] = {
     dbConfig.db.run(organizations.filter(_.publicId === id).result).map(o => o.head)

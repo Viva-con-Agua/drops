@@ -11,7 +11,7 @@ object OrganizationConverter {
   def buildOrganizationFromResult(result : Seq[(OrganizationDB, ProfileDB)]) : Option[Organization] = {
     if(result.headOption.isDefined) {
       val organization = result.headOption.get._1
-      val profileList = result.seq.foldLeft(Seq[String]()) { (profileList, dbEntry) => {
+      val profileList = result.seq.foldLeft(Set[String]()) { (profileList, dbEntry) => {
         profileList ++ List(dbEntry._2.email)
         profileList 
     }}
@@ -26,7 +26,7 @@ object OrganizationConverter {
           organization.executive,
           organization.abbreviation,
           organization.impressum,
-          profileList))
+          Some(profileList)))
     }else{
       None
     }
