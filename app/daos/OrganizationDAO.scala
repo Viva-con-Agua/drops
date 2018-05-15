@@ -22,7 +22,8 @@ trait OrganizationDAO {
   def find(id: Long): Future[Option[Organization]]
   def find(id: UUID): Future[Option[Organization]]
   def find(name: String): Future[Option[Organization]]
-  def update(organization: Organization): Future[Organization]
+  def update(organization: Organization): Future[Option[Organization]]
+  def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
   def delete(id: UUID): Future[Option[Organization]]
@@ -52,13 +53,13 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       r.headOption.map(_.toOrganization(None)))
 
  
-  def update(organization: Organization): Future[Organization] = {
+  def update(organization: Organization): Future[Option[Organization]] = {
     var organization_id = 0L
     dbConfig.db.run((organizations.filter(r => r.publicId === organization.publicId || r.name === organization.name)).result)
       .flatMap(o =>{
         organization_id = o.head.id
         dbConfig.db.run((organizations.filter(_.id === o.head.id).update(OrganizationDB(o.head.id, organization))))
-      }).flatMap(_ => find(organization_id)).map(o => o.get)
+      }).flatMap((id) => find(id))
   }
   
   def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]] = {
@@ -90,6 +91,7 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(_))
     
   }
+
   def delete(id: UUID): Future[Option[Organization]] = ???
 
   def deleteProfile(id: UUID, email: String): Future[Option[Organization]] = ???

@@ -21,6 +21,8 @@ import models._
 import models.forms.OrganizationForms
 import models.dispenser._
 import services._
+import java.util.UUID
+import play.api.libs.json.{JsPath, Json, OWrites, Reads}
 
 class OrganizationController @Inject() (
       //forms: OrganizationForms,
@@ -41,25 +43,38 @@ class OrganizationController @Inject() (
     def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))) 
 
     def insert = Action.async(validateJson[OrganizationStub]) { implicit request => 
-      organizationService.save(request.body.toOrganization)
-      Future.successful(Ok)
-    }
-
-    def addProfile = Action.async(email: String, id: UUID) { implicit request => 
-      organizationService.addProfile(email, id).flatMap {
-        case Some( _ ) =>
-          Future.successful(Ok( _ ))
-        case None =>
-          Future.successful(BadRequest("error"))
+      organizationService.save(request.body.toOrganization).flatMap {
+        case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+        case _ => Future.successful(BadRequest("error"))
       }
     }
 
-    def getOrganization = Action.async(id: UUID) { implicit request => 
-      organizationService.find(id).flatMap
+    def addProfile(email: String, id: UUID) = Action.async { implicit request => 
+      organizationService.addProfile(email, id).flatMap {
+        case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+        case _ => Future.successful(BadRequest("error"))
+      }
     }
 
-    def getOrganizationWithProfile = Action.async { implicit request => ??? }
+    def getOrganization(id: UUID) = Action.async { implicit request => 
+      organizationService.find(id).flatMap {
+        case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+        case _ => Future.successful(BadRequest("error"))
+      }       
+    }
 
-    def updateOrganization = Action.async { implicit request => ??? }
+    def getOrganizationWithProfile(id: UUID) = Action.async { implicit request => 
+      organizationService.withProfile(id).flatMap {
+        case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+        case _ => Future.successful(BadRequest("error"))
+      }
+    }
+
+    def updateOrganization = Action.async(validateJson[Organization]) { implicit request => 
+      organizationService.update(request.body).flatMap {
+        case Some(org) => Future.successful(Ok(Json.toJson(org)))
+        case _ => Future.successful(BadRequest("error"))
+      }
+    }
 
 }
