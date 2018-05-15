@@ -49,22 +49,22 @@ class OrganizationController @Inject() (
       }
     }
 
-    def addProfile(email: String, id: UUID) = Action.async { implicit request => 
-      organizationService.addProfile(email, id).flatMap {
+    def addProfile(email: String, id: String) = Action.async { implicit request => 
+      organizationService.addProfile(email, UUID.fromString(id)).flatMap {
         case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
         case _ => Future.successful(BadRequest("error"))
       }
     }
 
-    def getOrganization(id: UUID) = Action.async { implicit request => 
-      organizationService.find(id).flatMap {
+    def getOrganization(id: String) = Action.async { implicit request => 
+      organizationService.find(UUID.fromString(id)).flatMap {
         case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
         case _ => Future.successful(BadRequest("error"))
       }       
     }
 
-    def getOrganizationWithProfile(id: UUID) = Action.async { implicit request => 
-      organizationService.withProfile(id).flatMap {
+    def getOrganizationWithProfile(id: String) = Action.async { implicit request => 
+      organizationService.withProfile(UUID.fromString(id)).flatMap {
         case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
         case _ => Future.successful(BadRequest("error"))
       }
