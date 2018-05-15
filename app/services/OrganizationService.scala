@@ -22,5 +22,8 @@ class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: Nats
   def save(organization: Organization) = organizationDAO.create(OrganizationDB(organization))
   def find(publicId: UUID) = organizationDAO.find(publicId)
   def find(name: String) = organizationDAO.find(name)
+  def update(organization: Organization) = organizationDAO.update(organization)
+  def addProfile(email: String, id: UUID) = organizationDAO.addProfile(email, id)
+  def withProfile(id: UUID) = organizationDAO.withProfile(id)
 }
 

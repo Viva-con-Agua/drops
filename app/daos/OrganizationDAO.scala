@@ -25,6 +25,8 @@ trait OrganizationDAO {
   def update(organization: Organization): Future[Organization]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
+  def delete(id: UUID): Future[Option[Organization]]
+  def deleteProfile(id: UUID, email: String): Future[Option[Organization]]
 }
 
 class MariadbOrganizationDAO extends OrganizationDAO {
@@ -88,6 +90,9 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(_))
     
   }
+  def delete(id: UUID): Future[Option[Organization]] = ???
+
+  def deleteProfile(id: UUID, email: String): Future[Option[Organization]] = ???
 
   private def findOrganizationDBModel(id: UUID): Future[OrganizationDB] = {
     dbConfig.db.run(organizations.filter(_.publicId === id).result).map(o => o.head)

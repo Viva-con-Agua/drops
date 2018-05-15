@@ -45,4 +45,21 @@ class OrganizationController @Inject() (
       Future.successful(Ok)
     }
 
+    def addProfile = Action.async(email: String, id: UUID) { implicit request => 
+      organizationService.addProfile(email, id).flatMap {
+        case Some( _ ) =>
+          Future.successful(Ok( _ ))
+        case None =>
+          Future.successful(BadRequest("error"))
+      }
+    }
+
+    def getOrganization = Action.async(id: UUID) { implicit request => 
+      organizationService.find(id).flatMap
+    }
+
+    def getOrganizationWithProfile = Action.async { implicit request => ??? }
+
+    def updateOrganization = Action.async { implicit request => ??? }
+
 }
