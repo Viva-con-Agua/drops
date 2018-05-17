@@ -71,7 +71,7 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
       p.head.id }), 10 second )
     Logger.debug(s"profile_id=$profile_id")
-    dbConfig.db.run((profileOrganizations returning profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id))))
+    val dummy = Await.result(dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id)))), 10 second)
       find(organization_id) 
     }
   
