@@ -67,9 +67,9 @@ GET     /auth/social/:providerId                            controllers.Auth.soc
 
 # Organizations
 POST   /organization/insert                                	controllers.OrganizationController.insert
-POST   /organization/addProfile/:email:id    								controllers.OrganizationController.addProfile(email:String, id:String)
-POST   /organization/get/:id																controllers.OrganizationController.getOrganization(id:String)
-POST   /organization/getWithProfile/:id											controllers.OrganizationController.getOrganizationWithProfile(id:String)
+POST   /organization/addProfile    													controllers.OrganizationController.addProfile
+POST   /organization/get																		controllers.OrganizationController.getOrganization
+POST   /organization/getWithProfile													controllers.OrganizationController.getOrganizationWithProfile
 POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
 # OAuth 2 Server
 GET     /oauth2/access_token                                controllers.OAuth2Controller.accessToken

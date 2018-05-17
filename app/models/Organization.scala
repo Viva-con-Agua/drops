@@ -55,4 +55,30 @@ object OrganizationStub {
   implicit val organizationJsonFormat = Json.format[OrganizationStub]
 }
 
+trait OrganizationUUIDBase {
+  val publicId: UUID
+}
+
+case class OrganizationUUID(
+  publicId: UUID
+)extends OrganizationUUIDBase
+
+object OrganizationUUID{
+  implicit val organizationUUIDJsonFormat = Json.format[OrganizationUUID]
+}
+
+trait ProfileOrganizationBase {
+  val email: String
+  val publicId: UUID
+}
+case class ProfileOrganization(
+  email: String,
+  publicId: UUID
+  ) extends ProfileOrganizationBase
+
+object ProfileOrganization{
+  implicit val profileOrganizationJsonFormat = Json.format[ProfileOrganization]
+}
+
+
 

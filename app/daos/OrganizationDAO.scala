@@ -2,9 +2,11 @@ package daos
 
 import java.util.UUID
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import play.api.Play
-
+import play.api.Logger
 import models.{Organization, Profile}
 import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB}
 import models.converter.{OrganizationConverter}
@@ -63,14 +65,14 @@ class MariadbOrganizationDAO extends OrganizationDAO {
   }
   
   def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]] = {
-    var profile_id = 0L
-    var organization_id = 0L
-    dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
-      organization_id = o.head.id})
-    dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
-      profile_id = p.head.id })
+    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
+      o.head.id}), 10 second)
+    Logger.debug(s"organization_id=$organization_id")
+    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
+      p.head.id }), 10 second )
+    Logger.debug(s"profile_id=$profile_id")
     dbConfig.db.run((profileOrganizations returning profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id))))
-      .flatMap((id) => withProfile(id._1)) 
+      find(organization_id) 
     }
   
   def withProfile(id: Long): Future[Option[Organization]] = {
