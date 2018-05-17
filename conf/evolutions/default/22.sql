@@ -10,7 +10,8 @@ CREATE TABLE Organization(
   executive VARCHAR(255),
   abbreviation VARCHAR(255),
   impressum VARCHAR(255),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+	UNIQUE KEY (name)
 );
 
 # --- !Downs

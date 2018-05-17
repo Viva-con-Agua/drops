@@ -24,6 +24,7 @@ class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: Nats
   def find(name: String) = organizationDAO.find(name)
   def update(organization: Organization): Future[Option[Organization]] = organizationDAO.update(organization)
   def addProfile(email: String, id: UUID) = organizationDAO.addProfile(email, id)
+  def checkProfileOranization(email: String, id: UUID): Future[Boolean] = organizationDAO.checkProfileOranization(email, id)
   def withProfile(id: UUID) = organizationDAO.withProfile(id)
 }
 

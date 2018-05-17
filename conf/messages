@@ -188,3 +188,7 @@ pool1.error.config.noURI=No Pool 1 system configured (missing URL)
 pool1.debug.not.activated=Export not activated in configuration! Set `pool1.export=true` in your applications conf file.
 pool1.debug.export.success=Successful export!\n{0}
 pool1.debug.export.failure=Failure on export!\n{0}
+
+organization.error.exist=Organization already exist
+organization.error.notFound=Organization not found
+organization.error.profileInv=Profile is part of the organization

@@ -43,16 +43,26 @@ class OrganizationController @Inject() (
     def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))) 
 
     def insert = Action.async(validateJson[OrganizationStub]) { implicit request => 
-      organizationService.save(request.body.toOrganization).flatMap {
-        case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
-        case _ => Future.successful(BadRequest("error"))
+      organizationService.find(request.body.name).flatMap { 
+        case Some(orga) => Future.successful(BadRequest(Messages("organization.error.exist")))
+        case _ => {
+          organizationService.save(request.body.toOrganization).flatMap {
+            case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+            case _ => Future.successful(BadRequest("error"))
+          }
+        }
       }
     }
 
-    def addProfile = Action.async(validateJson[ProfileOrganization]) { implicit request => 
-      organizationService.addProfile(request.body.email, request.body.publicId).flatMap {
-        case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
-        case _ => Future.successful(BadRequest("error"))
+    def addProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
+      organizationService.checkProfileOranization(request.body.email, request.body.publicId).flatMap {
+        case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
+        case false => {
+          organizationService.addProfile(request.body.email, request.body.publicId).flatMap {
+            case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+            case _ => Future.successful(BadRequest("error"))
+          }
+        }
       }
     }
 

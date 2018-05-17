@@ -26,6 +26,7 @@ trait OrganizationDAO {
   def find(name: String): Future[Option[Organization]]
   def update(organization: Organization): Future[Option[Organization]]
   def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]]
+  def checkProfileOranization(profileEmail: String, organizationId: UUID): Future[Boolean]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
   def delete(id: UUID): Future[Option[Organization]]
@@ -75,6 +76,16 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       find(organization_id) 
     }
   
+  def checkProfileOranization(profileEmail: String, organizationId:UUID): Future[Boolean] = {
+    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
+      o.head.id}), 10 second)
+    Logger.debug(s"organization_id=$organization_id")
+    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
+      p.head.id }), 10 second )
+    Logger.debug(s"profile_id=$profile_id")
+    dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === organization_id && uo.profileId === profile_id)).exists.result)
+  }
+
   def withProfile(id: Long): Future[Option[Organization]] = {
     val action = for {
         o <- organizations.filter(o => o.id === id) 
