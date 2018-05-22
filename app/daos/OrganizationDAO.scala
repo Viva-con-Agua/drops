@@ -86,22 +86,24 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === organization_id && uo.profileId === profile_id)).exists.result)
   }
 
-  def withProfile(id: Long): Future[Option[Organization]] = {
-    val action = for {
+  def withProfile(id: Long): Future[Option[Organization]] = ???
+  /*  val action = for {
         o <- organizations.filter(o => o.id === id) 
         (p, _) <- profiles join profileOrganizations.filter(uo => uo.organizationId === o.id) on (_.id === _.profileId)
         
     } yield(o, p)
-      dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(_))
-  }
+      dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(o, p))
+  }*/
 
   def withProfile(id: UUID): Future[Option[Organization]] = {
       val action = for {
         o <- organizations.filter(o => o.publicId === id) 
-        (p, _) <- profiles join profileOrganizations.filter(uo => uo.organizationId === o.id) on (_.id === _.profileId)
+        op <- profileOrganizations.filter(uo => uo.organizationId === o.id) 
+        p <- profiles join profiles.filter(p => p.id === op.profileId)
         
-    } yield(o, p)
-      dbConfig.db.run(action.result).map(OrganizationConverter.buildOrganizationFromResult(_))
+    } yield (p, o)
+      dbConfig.db.run(action.result).map(p => {OrganizationConverter.buildOrganizationFromResult(p)
+      })
     
   }
 
