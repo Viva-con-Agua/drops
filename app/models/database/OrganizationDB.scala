@@ -1,5 +1,7 @@
 package models.database
 
+import models.Profile
+
 import java.util.UUID
 
 import models.Organization
@@ -17,7 +19,7 @@ case class OrganizationDB(
   impressum: String
   
   ){
-    def toOrganization(users : Option[Set[String]]) : Organization = Organization(this.publicId, this.name, this.address, this.telefon, this.fax, this.email, this.executive, this.abbreviation, this.impressum, users)
+    def toOrganization(profiles : Option[Set[String]]) : Organization = Organization(this.publicId, this.name, this.address, this.telefon, this.fax, this.email, this.executive, this.abbreviation, this.impressum, profiles)
     
 }
 
