@@ -13,3 +13,4 @@ CREATE TABLE UserToken(
 
 # --- !Downs
 DROP TABLE UserToken;
+
