@@ -38,4 +38,7 @@ class ErrorHandler @Inject() (
 
   override def onServerError(request:RequestHeader, exception:Throwable):Future[Result] = 
     Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onServerError", views.html.errors.serverError(request, exception).toString))))
+
+  override def onBadRequest(request: RequestHeader, message: String): Future[Result] =
+    Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onNotFound", views.html.errors.badRequest(request).toString))))
 }

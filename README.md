@@ -359,7 +359,9 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.26.21 (2018-04-10)
+## Version 0.26.23 (2018-05-03)
+* [[I] #222 - Allow simple filter OES](https://github.com/Viva-con-Agua/drops/issues/222)
+* [[B] #215 - OAuth 2 Provider does not implements query params](https://github.com/Viva-con-Agua/drops/issues/215)
 * [[B] #217 - Missing template on BadRequest](https://github.com/Viva-con-Agua/drops/issues/217)
 * [[B] #213 - OAuth Database bug](https://github.com/Viva-con-Agua/drops/issues/213)
 * [[F] #208 - Add MariadbPool1UserDao](https://github.com/Viva-con-Agua/drops/issues/208)
