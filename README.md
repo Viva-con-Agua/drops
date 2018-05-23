@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.26.23 (2018-05-03)
+## Version 0.26.24 (2018-05-03)
+* [[F] #32 -  Organizations are configurable](https://github.com/Viva-con-Agua/drops/issues/32)
 * [[I] #222 - Allow simple filter OES](https://github.com/Viva-con-Agua/drops/issues/222)
 * [[B] #215 - OAuth 2 Provider does not implements query params](https://github.com/Viva-con-Agua/drops/issues/215)
 * [[B] #217 - Missing template on BadRequest](https://github.com/Viva-con-Agua/drops/issues/217)
