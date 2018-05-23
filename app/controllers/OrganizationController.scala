@@ -87,4 +87,13 @@ class OrganizationController @Inject() (
       }
     }
 
+    def deleteProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
+      organizationService.checkProfileOranization(request.body.email, request.body.publicId).flatMap {
+        case false => Future.successful(BadRequest(Messages("organization.error.profileInv")))
+        case true => {
+          organizationService.deleteProfile(request.body.publicId, request.body.email)
+          Future.successful(Ok)
+        }
+      }
+    }
 }
