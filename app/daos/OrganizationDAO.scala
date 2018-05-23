@@ -29,8 +29,8 @@ trait OrganizationDAO {
   def checkProfileOranization(profileEmail: String, organizationId: UUID): Future[Boolean]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
-  def delete(id: UUID): Future[Option[Organization]]
-  def deleteProfile(id: UUID, email: String): Future[Option[Organization]]
+  def delete(id: UUID): Future[Int]
+  def deleteProfile(id: UUID, email: String): Future[Int]
 }
 
 class MariadbOrganizationDAO extends OrganizationDAO {
@@ -105,9 +105,21 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     
   }
 
-  def delete(id: UUID): Future[Option[Organization]] = ???
+  def delete(id: UUID): Future[Int] = {
+    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === id).result).map( o =>{
+      o.head.id}), 10 second)
+    dbConfig.db.run(organizations.filter(o => o.id === organization_id).delete)
+  }
 
-  def deleteProfile(id: UUID, email: String): Future[Option[Organization]] = ???
+  def deleteProfile(id: UUID, profileEmail: String): Future[Int] = {
+    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === id).result).map( o =>{
+      o.head.id}), 10 second)
+    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
+      p.head.id }), 10 second )
+    dbConfig.db.run((profileOrganizations.filter(op => op.profileId === profile_id && op.organizationId === organization_id).delete))
+  }
+
+
 
   private def findOrganizationDBModel(id: UUID): Future[OrganizationDB] = {
     dbConfig.db.run(organizations.filter(_.publicId === id).result).map(o => o.head)
