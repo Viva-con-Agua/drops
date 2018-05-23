@@ -87,6 +87,16 @@ class OrganizationController @Inject() (
       }
     }
 
+    def delete = Action.async(validateJson[OrganizationUUID]) { implicit request =>
+      organizationService.find(request.body.publicId).flatMap {
+        case Some (orga) => {
+          organizationService.delete(request.body.publicId)
+          Future.successful(Ok)
+        }
+        case _ => Future.successful(BadRequest(Messages("organization.error.exist")))
+      }
+    }
+
     def deleteProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
       organizationService.checkProfileOranization(request.body.email, request.body.publicId).flatMap {
         case false => Future.successful(BadRequest(Messages("organization.error.profileInv")))

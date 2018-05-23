@@ -69,6 +69,7 @@ GET     /auth/social/:providerId                            controllers.Auth.soc
 POST   /organization/insert                                	controllers.OrganizationController.insert
 POST   /organization/addProfile    													controllers.OrganizationController.addProfile
 POST   /organization/deleteProfile    													controllers.OrganizationController.deleteProfile
+POST   /organization/delete  													controllers.OrganizationController.delete
 POST   /organization/get																		controllers.OrganizationController.getOrganization
 POST   /organization/withProfile													controllers.OrganizationController.getOrganizationWithProfile
 POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
