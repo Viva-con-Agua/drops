@@ -7,6 +7,6 @@ case class BankaccountDB(
     blz: Option[String],
     iban: String,
     bic: String,
-    organizationId: Long
+    organization_id: Long
   )
 object BankaccountDB extends ((Long, String, Option[String], Option[String], String, String, Long) => BankaccountDB){}
