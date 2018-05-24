@@ -4,7 +4,7 @@ import models.Profile
 
 import java.util.UUID
 
-import models.Organization
+import models.{Organization, Bankaccount}
 
 case class OrganizationDB(
   id: Long,
@@ -17,9 +17,8 @@ case class OrganizationDB(
   executive: String,
   abbreviation: String,
   impressum: String
-  
   ){
-    def toOrganization(profiles : Option[Set[String]]) : Organization = Organization(this.publicId, this.name, this.address, this.telefon, this.fax, this.email, this.executive, this.abbreviation, this.impressum, profiles)
+    def toOrganization(bankaccount: Option[Set[Bankaccount]], profiles : Option[Set[String]]) : Organization = Organization(this.publicId, this.name, this.address, this.telefon, this.fax, this.email, this.executive, this.abbreviation, this.impressum, bankaccount, profiles)
     
 }
 

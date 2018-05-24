@@ -29,6 +29,7 @@ object OrganizationConverter {
           organization.executive,
           organization.abbreviation,
           organization.impressum,
+          None,
           Some(profileList)))
     }else{
       None
