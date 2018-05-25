@@ -108,5 +108,21 @@ object ProfileOrganization{
   implicit val profileOrganizationJsonFormat = Json.format[ProfileOrganization]
 }
 
+trait BankaccountOrganizationBase{
+  val publicId: UUID
+  val bankaccount: Bankaccount
+}
+
+case class BankaccountOrganization(
+  publicId: UUID,
+  bankaccount: Bankaccount
+  )extends BankaccountOrganizationBase
+
+
+object BankaccountOrganization{
+  implicit val bankaccountOrganizationJsonFormat = Json.format[BankaccountOrganization]
+}
+
+
 
 

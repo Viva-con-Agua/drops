@@ -31,6 +31,9 @@ trait OrganizationDAO {
   def withProfile(id: UUID): Future[Option[Organization]]
   def delete(id: UUID): Future[Int]
   def deleteProfile(id: UUID, email: String): Future[Int]
+  def withBankaccounts(id: Long): Future[Option[Organization]]
+  def withBankaccounts(publicId: UUID): Future[Option[Organization]]
+  def addBankaccount(bankaccount: Bankaccount, publicId: UUID): Future[Option[Organization]]
 }
 
 class MariadbOrganizationDAO extends OrganizationDAO {
@@ -134,6 +137,15 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
   }
   
+  def withBankaccounts(publicId: UUID): Future[Option[Organization]] = {
+    val action = for {
+      o <- organizations.filter(o => o.publicId === publicId)
+      b <- bankaccounts.filter(b => b.organization_id === o.id)
+
+    }yield (o, b)
+    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
+  }
+
   def addBankaccount(bankaccount: Bankaccount, organizationId: UUID): Future[Option[Organization]] = {
     dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o => {
       dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
