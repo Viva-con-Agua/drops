@@ -35,5 +35,33 @@ object OrganizationConverter {
       None
     }
   }
+
+  def buildOrganizationBankaccountFromResult(result: Seq[(OrganizationDB, BankaccountDB)]) : Option[Organization] = {
+    if(result.headOption.isDefined) {
+      val organization = result.headOption.get._1
+      val bankaccountList = result.seq.foldLeft(Set[Bankaccount]()) { 
+        (bankaccountList, dbEntry) => {
+          bankaccountList ++ List(dbEntry._2.toBankaccount)
+        }
+      }
+      Option(
+        Organization(
+          organization.publicId, 
+          organization.name, 
+          organization.address, 
+          organization.telefon, 
+          organization.fax, 
+          organization.email,
+          organization.executive,
+          organization.abbreviation,
+          organization.impressum,
+          Some(bankaccountList),
+          None
+        )
+      )
+    }else{
+      None
+    }
+  }
 }
 
