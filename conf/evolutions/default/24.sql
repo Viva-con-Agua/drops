@@ -8,6 +8,7 @@ CREATE TABLE Bankaccount(
 	bic VARCHAR(255),
 	organization_id BIGINT(20),
 	PRIMARY KEY (id),
+	UNIQUE KEY (iban),
 	FOREIGN KEY (organization_id) REFERENCES Organization(id) ON UPDATE CASCADE
 );
 
