@@ -7,7 +7,6 @@ import net.minidev.json.JSONObject
 import play.api.i18n.Messages
 import play.api.libs.json.JsObject
 
-import utils.Query.QueryParser.entity
 
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{NoPosition, Position, Reader}
@@ -63,7 +62,7 @@ object QueryParser extends Parsers{
   }
 
   def statement: Parser[QueryAST] = {
-    expression | eq  | lt | le | gt | ge | like
+    combined_group | group | expression | eq  | lt | le | gt | ge | like
   }
 
 
@@ -82,6 +81,18 @@ object QueryParser extends Parsers{
   def expression : Parser[Combination] = {
     ((eq  | lt | le | gt | ge | like) ~ rep((OR | AND) ~ (eq  | lt | le | gt | ge | like))) ^^ {
       case f1 ~ f2 => Combination(f1, f2)
+    }
+  }
+
+  def group : Parser[Group] = {
+    (OPEN_BRACKET ~ expression ~ CLOSE_BRACKET) ^^ { case  f1 ~ f2 ~ f3 => Group(f1, f2, f3)}
+  }
+
+
+
+  def combined_group : Parser[CombinedGroup] = {
+    ((expression | group) ~ rep(( OR | AND ) ~ (expression | group))) ^^ {
+      case f1 ~ f2  => CombinedGroup(f1, f2)
     }
   }
 

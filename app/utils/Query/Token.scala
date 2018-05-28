@@ -26,3 +26,7 @@ case object LESS_EQUAL    extends QueryOperator
 case object GREATER_THEN  extends QueryOperator
 case object GREATER_EQUAL extends QueryOperator
 case object LIKE_OPERATOR extends QueryOperator
+
+sealed trait GroupOperator extends QueryToken
+case object OPEN_BRACKET extends GroupOperator
+case object CLOSE_BRACKET extends GroupOperator

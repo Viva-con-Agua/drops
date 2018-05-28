@@ -55,11 +55,33 @@ case class O(step1: QueryAST, step2: QueryAST) extends QueryAST {
   }
 }
 
-case class Combination(f1: QueryAST, f2: List[_root_.utils.Query.QueryParser.~[QueryToken, QueryAST]]) extends QueryAST {
+case class Combination(f1: QueryAST, f2: List[QueryParser.~[QueryToken, QueryAST]]) extends QueryAST {
   override def toSqlStatement = {
     var sql = f1.toSqlStatement
     f2.foreach(o => {
       sql = o._1 match{
+        case AND => Converter.concat(sql, Converter.concat(sql""" AND """, o._2.toSqlStatement))
+        case OR => Converter.concat(sql, Converter.concat(sql""" OR """, o._2.toSqlStatement))
+        case _ => throw new Exception
+      }
+    })
+    sql
+  }
+}
+
+case class Group(f1: QueryToken, f2: Combination, f3: QueryToken)extends QueryAST{
+  override def toSqlStatement = {
+    val sql = f2.toSqlStatement
+
+    Converter.concat(sql"""(""", Converter.concat(sql, sql""")"""))
+  }
+}
+
+case class CombinedGroup(f1: QueryAST, f2: List[QueryParser.~[QueryToken, QueryAST]]) extends QueryAST{
+  override def toSqlStatement = {
+    var sql = f1.toSqlStatement
+    f2.foreach(o => {
+      sql = o._1 match {
         case AND => Converter.concat(sql, Converter.concat(sql""" AND """, o._2.toSqlStatement))
         case OR => Converter.concat(sql, Converter.concat(sql""" OR """, o._2.toSqlStatement))
         case _ => throw new Exception
