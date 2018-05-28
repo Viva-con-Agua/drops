@@ -251,18 +251,46 @@ class RestApi @Inject() (
   def getCrews = Action.async(validateJson[FilterBody]){ implicit request => {
     val query = request.body.query.get
     val values = request.body.values.get
-
-    val tokens = QueryLexer(query).right.get
+    val tokensObj = QueryLexer(query)
+    if(tokensObj.isLeft){
+      Logger.debug("ERROR")
+      Logger.debug(tokensObj.left.get.msg)
+    }
+    val tokens = tokensObj.right.get
+    Logger.debug(tokens.toString)
     try{
-      val ast = QueryParser(tokens, values).right.get
-
+      Logger.debug("0")
+      val p = QueryParser(tokens, values)
+      Logger.debug("1")
+      if(p.isLeft){
+        Logger.debug("ERROR")
+        Logger.debug(p.left.get.getMessage)
+        p.left.get.printStackTrace()
+      }
+      Logger.debug("2")
+      val ast = p.right.get
+      Logger.debug("3")
+      Logger.debug(ast.toString)
+      Logger.debug("4")
       ast.toSqlStatement.queryParts.foreach(s => Logger.debug(s.toString))
+      Logger.debug("5")
       val statement = Converter.astToSQL(ast)
+      Logger.debug("6")
       Logger.debug(statement.toString)
+      Logger.debug("7")
       mariadbCrewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
     }catch{
       case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-      case _: Throwable => Future(InternalServerError)
+      case e: Exception => {
+        Logger.debug(e.getMessage)
+        e.printStackTrace()
+        Future(InternalServerError(e.getMessage))
+      }
+      case e: Throwable => {
+        Logger.debug(e.getMessage)
+        e.printStackTrace()
+        Future(InternalServerError)
+      }
     }
   }}
 
