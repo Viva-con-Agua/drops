@@ -1,4 +1,4 @@
-package models.views
+package models.dbviews
 
 abstract class ViewObject(){
   def getValue (viewname: String): ViewBase

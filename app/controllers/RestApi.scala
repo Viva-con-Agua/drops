@@ -26,7 +26,7 @@ import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
 import models.database.{AccessRight, TaskDB}
-import models.views.Crews
+import models.dbviews.Crews
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
 import utils.Query.{QueryParserError, _}

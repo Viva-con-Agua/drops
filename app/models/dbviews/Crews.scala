@@ -1,4 +1,4 @@
-package models.views
+package models.dbviews
 
 import java.util.UUID
 

@@ -2,7 +2,7 @@ package utils.Query
 
 import java.security.SecurityPermission
 
-import models.views.{ViewBase, ViewObject}
+import models.dbviews.{ViewBase, ViewObject}
 import net.minidev.json.JSONObject
 import play.api.i18n.Messages
 import play.api.libs.json.JsObject
