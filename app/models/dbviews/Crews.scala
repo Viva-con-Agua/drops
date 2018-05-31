@@ -107,25 +107,6 @@ case class CrewView(
 }
 
 object CrewView{
-  def initObj(tuple: (Option[Any], Option[Any], Option[Any])): CrewView = {
-    val pId = tuple._1.map(_ match{
-      case x:String => Map(0 -> x)
-      case x:Map[_, _] => x
-    }).asInstanceOf[Some[Map[String, UUID]]]
-
-    val n = tuple._1.map(_ match{
-      case x:String => Map(0 -> x)
-      case x:Map[_, _] => x
-    }).asInstanceOf[Some[Map[String, String]]]
-
-    val c = tuple._1.map(_ match{
-      case x:String => Map(0 -> x)
-      case x:Map[_, _] => x
-    }).asInstanceOf[Some[Map[String,String]]]
-
-    CrewView(pId, n, c)
-  }
-
   def apply(tuple: (Option[Map[String, UUID]], Option[Map[String, String]], Option[Map[String, String]])): CrewView =
     CrewView(tuple._1, tuple._2, tuple._3)
 
