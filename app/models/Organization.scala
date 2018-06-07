@@ -33,9 +33,10 @@ trait OrganizationBase {
   val telefon: String
   val fax: String
   val email: String
+  val typ: String
   val executive: String
   val abbreviation: String
-  val impressum: String
+  val impressum: Boolean
   val bankaccount: Option[Set[Bankaccount]]
   val profile: Option[Set[String]]
 }
@@ -46,14 +47,15 @@ case class OrganizationStub(
   telefon: String,
   fax: String,
   email: String,
+  typ: String,
   executive: String,
   abbreviation: String,
-  impressum: String,
+  impressum: Boolean,
   bankaccount: Option[Set[Bankaccount]],
   profile: Option[Set[String]]
 
 ) extends OrganizationBase {
-  def toOrganization: Organization = Organization(UUID.randomUUID(), name, address, telefon, fax, email, executive, abbreviation, impressum, bankaccount, profile)
+  def toOrganization: Organization = Organization(UUID.randomUUID(), name, address, telefon, fax, email, typ, executive, abbreviation, impressum, bankaccount, profile)
 }
 
 case class Organization(
@@ -63,14 +65,15 @@ case class Organization(
   override val telefon: String,
   override val fax: String,
   override val email: String,
+  override val typ: String,
   override val executive: String,
   override val abbreviation: String,
-  override val impressum: String,
+  override val impressum: Boolean,
   override val bankaccount: Option[Set[Bankaccount]],
   override val profile: Option[Set[String]]
 ) extends OrganizationBase {
   def toOrganizationStub(): OrganizationStub =
-    OrganizationStub(name, address, telefon, fax, email, executive, abbreviation, impressum, bankaccount, profile)
+    OrganizationStub(name, address, telefon, fax, email, typ, executive, abbreviation, impressum, bankaccount, profile)
 }
 
 
@@ -98,10 +101,12 @@ object OrganizationUUID{
 trait ProfileOrganizationBase {
   val email: String
   val publicId: UUID
+  val role: String
 }
 case class ProfileOrganization(
   email: String,
-  publicId: UUID
+  publicId: UUID,
+  role: String
   ) extends ProfileOrganizationBase
 
 object ProfileOrganization{

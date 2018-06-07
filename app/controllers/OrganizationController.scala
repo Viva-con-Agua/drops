@@ -58,7 +58,7 @@ class OrganizationController @Inject() (
       organizationService.checkProfileOranization(request.body.email, request.body.publicId).flatMap {
         case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
         case false => {
-          organizationService.addProfile(request.body.email, request.body.publicId).flatMap {
+          organizationService.addProfile(request.body.email, request.body.publicId, request.body.role).flatMap {
             case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
             case _ => Future.successful(BadRequest("error"))
           }

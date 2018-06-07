@@ -7,9 +7,10 @@ CREATE TABLE Organization(
   telefon VARCHAR(255),
   fax VARCHAR(255),
   email VARCHAR(255),
+	typ VARCHAR(255),
   executive VARCHAR(255),
   abbreviation VARCHAR(255),
-  impressum VARCHAR(255),
+  impressum BOOLEAN,
   PRIMARY KEY (id),
 	UNIQUE KEY (name)
 );

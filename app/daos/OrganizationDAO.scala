@@ -25,7 +25,7 @@ trait OrganizationDAO {
   def find(id: UUID): Future[Option[Organization]]
   def find(name: String): Future[Option[Organization]]
   def update(organization: Organization): Future[Option[Organization]]
-  def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]]
+  def addProfile(profileEmail: String, organizationId: UUID, role: String): Future[Option[Organization]]
   def checkProfileOranization(profileEmail: String, organizationId: UUID): Future[Boolean]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
@@ -69,12 +69,12 @@ class MariadbOrganizationDAO extends OrganizationDAO {
       }).flatMap((id) => find(id))
   }
   
-  def addProfile(profileEmail: String, organizationId: UUID): Future[Option[Organization]] = {
+  def addProfile(profileEmail: String, organizationId: UUID, role: String): Future[Option[Organization]] = {
     val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
       o.head.id}), 10 second)
     val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
       p.head.id }), 10 second )
-    val dummy = Await.result(dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id)))), 10 second)
+    val dummy = Await.result(dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId, po.role)) += ((profile_id, organization_id, role)))), 10 second)
       find(organization_id) 
     }
 
