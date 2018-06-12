@@ -29,6 +29,7 @@ trait OrganizationDAO {
   def checkProfileOranization(profileEmail: String, organizationId: UUID): Future[Boolean]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
+  def withProfileByRole(id: UUID, role: String): Future[Option[Organization]]
   def delete(id: UUID): Future[Int]
   def deleteProfile(id: UUID, email: String): Future[Int]
   def withBankaccounts(id: Long): Future[Option[Organization]]
@@ -107,7 +108,15 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     } yield (o, p)
       dbConfig.db.run(action.result).map(p => {OrganizationConverter.buildOrganizationFromResult(p)
       })
-    
+  }
+
+  def withProfileByRole(id: UUID, role: String): Future[Option[Organization]] = {
+    val action = for {
+      o <- organizations.filter(o => o.publicId === id)
+      op <- profileOrganizations.filter(po => po.organizationId === o.id && po.role == role)
+      p <- profiles.filter(p => p.id === op.profileId) 
+    } yield(o, p)
+    dbConfig.db.run(action.result).map(p => {OrganizationConverter.buildOrganizationFromResult(p)})
   }
 
   def delete(id: UUID): Future[Int] = {

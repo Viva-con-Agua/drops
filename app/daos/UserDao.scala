@@ -372,7 +372,16 @@ class MariadbUserDao extends UserDao{
   }
 
   override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))
+  
 
+  def getProfile(email: String): Future[Option[Profile]] = {
+    val action = for{
+      (profile, supporter) <- ( profiles.filter(p => p.email === email) join supporter on (_.id === _.profileId))
+    } yield(profile, supporter)
+    dbConfig.db.run(action.result).map(result => {
+      UserConverter.buildProfileListFromResult(result)
+    })
+  }
 
   //Wenn er private ist kann ich ihn nutzen. Ansonsten muss ich schauen wo er verwendet wird
   class MariadbUserWS extends UserWS {

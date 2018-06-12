@@ -47,4 +47,6 @@ object UserConverter {
 
     userStubList
   }
+
+  def buildProfileListFromResult(result: Seq[(ProfileDB, SupporterDB)]) : List[Profile] = ???
 }
