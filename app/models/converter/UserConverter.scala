@@ -49,4 +49,6 @@ object UserConverter {
   }
 
   def buildProfileListFromResult(result: Seq[(ProfileDB, SupporterDB)]) : List[Profile] = ???
+
+  def buildProfileFromResult(result: Seq[(ProfileDB, SupporterDB)]) : Option[Profile] = ???
 }
