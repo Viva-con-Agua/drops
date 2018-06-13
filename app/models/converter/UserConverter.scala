@@ -50,5 +50,14 @@ object UserConverter {
 
   def buildProfileListFromResult(result: Seq[(ProfileDB, SupporterDB)]) : List[Profile] = ???
 
-  def buildProfileFromResult(result: Seq[(ProfileDB, SupporterDB)]) : Option[Profile] = ???
+  def buildProfileFromResult(result: Seq[(ProfileDB, SupporterDB)]) : Option[List[Profile]] = {
+    val profileList= result.seq.foldLeft[Profile](Nil)((profileList, dbEntry) => {
+      val supporter : Supporter = dbEntry._2.toSupporter
+      val loginInfo : LoginInfo = dbEntry._3-toLoginInfo
+      val profile : Profile = Profile(loginInfo, dbEntry._1.confirmed, dbEntry._1.email, supporter, None, None)
+      profileList ++ List[profile]
+      
+    })
+  }
+  }
 }

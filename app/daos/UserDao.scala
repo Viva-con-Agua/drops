@@ -376,7 +376,10 @@ class MariadbUserDao extends UserDao{
 
   def getProfile(email: String): Future[Option[Profile]] = {
     val action = for{
-      (profile, supporter) <- ( profiles.filter(p => p.email === email) join supporters on (_.id === _.profileId))
+      ((profile, supporter), loginInfo) <- ( profiles.filter(p => p.email === email) 
+          join supporters on (_.id === _.profileId)
+          join loginInfos on (_._2.id === _.profileId)
+        )
     } yield(profile, supporter)
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildProfileFromResult(result)
