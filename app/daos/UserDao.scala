@@ -38,6 +38,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def list : Future[List[User]]
   def listOfStubs : Future[List[UserStub]]
   def delete (userId:UUID):Future[Boolean]
+  def getProfile (email: String): Future[Option[Profile]]
 
 
   trait UserWS {
@@ -118,6 +119,8 @@ class MongoUserDao extends UserDao {
       case 0 => false
       case 1 => true
     })
+
+  def getProfile(email: String): Future[Option[Profile]] = ???
 
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()

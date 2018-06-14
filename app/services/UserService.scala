@@ -50,6 +50,8 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
     nats.publishDelete("USER", userId)
   }
 
+  def getProfile(email: String) = userDao.getProfile(email)
+
 //  def accessRightsForService(userId : UUID, service: String) : Future[Seq[AccessRight]] = {
 //    taskDao.idsForUser(userId).flatMap(taskIds => accessRightDao.forTaskListAndService(taskIds, service))
 //  }
