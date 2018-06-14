@@ -380,7 +380,7 @@ class MariadbUserDao extends UserDao{
           join supporters on (_.id === _.profileId)
           join loginInfos on (_._2.id === _.profileId)
         )
-    } yield(profile, supporter)
+    } yield(profile, supporter, loginInfo)
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildProfileFromResult(result)
     })

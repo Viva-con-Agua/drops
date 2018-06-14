@@ -48,16 +48,16 @@ object UserConverter {
     userStubList
   }
 
-  def buildProfileListFromResult(result: Seq[(ProfileDB, SupporterDB)]) : List[Profile] = ???
+  def buildProfileListFromResult(result: Seq[(ProfileDB, SupporterDB, LoginInfoDB)]) : List[Profile] = ???
 
-  def buildProfileFromResult(result: Seq[(ProfileDB, SupporterDB)]) : Option[List[Profile]] = {
-    val profileList= result.seq.foldLeft[Profile](Nil)((profileList, dbEntry) => {
-      val supporter : Supporter = dbEntry._2.toSupporter
-      val loginInfo : LoginInfo = dbEntry._3-toLoginInfo
-      val profile : Profile = Profile(loginInfo, dbEntry._1.confirmed, dbEntry._1.email, supporter, None, None)
-      profileList ++ List[profile]
-      
-    })
-  }
+  def buildProfileFromResult(result: Seq[(ProfileDB, SupporterDB, LoginInfoDB)]) : Option[Profile] = {
+    if(result.headOption.isDefined) {
+      val profiledb = result.headOption.get._1
+      val supporter = result.headOption.get._2
+      val loginInfo = result.headOption.get._3
+      Option(Profile(loginInfo.toLoginInfo, profiledb.confirmed, profiledb.email, supporter.toSupporter, None, None))
+    }else{
+      None
+    }
   }
 }
