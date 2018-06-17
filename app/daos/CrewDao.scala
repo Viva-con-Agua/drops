@@ -168,16 +168,6 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewListFromResult(_))
   }
 
-  //Source: https://github.com/slick/slick/issues/1161
-  def concat(a: SQLActionBuilder, b: SQLActionBuilder): SQLActionBuilder = {
-    SQLActionBuilder(a.queryParts ++ b.queryParts, new SetParameter[Unit] {
-      def apply(p: Unit, pp: PositionedParameters): Unit = {
-        a.unitPConv.apply(p, pp)
-        b.unitPConv.apply(p, pp)
-      }
-    })
-  }
-
   def list_with_statement(statement : SQLActionBuilder) : Future[List[Crew]] = {
     var sql_action = statement.as[(CrewDB, CityDB)]
     dbConfig.db.run(sql_action).map(CrewConverter.buildCrewListFromResult(_))
