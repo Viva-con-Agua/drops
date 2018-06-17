@@ -2,12 +2,25 @@ package utils.Query
 
 import scala.util.parsing.combinator.RegexParsers
 
-case class QueryLexerError(msg: String)
+class QueryLexerError(message: String) extends Exception(message) {
+  def this(message: String, cause: Throwable) {
+    this(message)
+    initCause(cause)
+  }
+
+  def this(cause: Throwable) {
+    this(Option(cause).map(_.toString).orNull, cause)
+  }
+
+  def this() {
+    this(null: String)
+  }
+}
 
 object QueryLexer extends RegexParsers {
   def apply(query : String): Either[QueryLexerError, List[QueryToken]] = {
     parse(tokens, query) match {
-      case NoSuccess(msg, next) => Left(QueryLexerError(msg))
+      case NoSuccess(msg, next) => Left(new QueryLexerError(msg))
       case Success(result, next) => Right(result)
     }
   }
