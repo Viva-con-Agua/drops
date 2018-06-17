@@ -106,4 +106,26 @@ class OrganizationController @Inject() (
         }
       }
     }
+
+    def addBankaccount = Action.async(validateJson[BankaccountOrganization]) { implicit request =>
+      organizationService.find(request.body.publicId).flatMap {
+        case Some (orga) => {
+          organizationService.addBankaccount(request.body.bankaccount, request.body.publicId)
+          Future.successful(Ok)
+        }
+        case _ => Future.successful(BadRequest(Messages("error")))
+      }
+    }
+
+    def withBankaccounts = Action.async(validateJson[OrganizationUUID]) { implicit request =>
+      organizationService.find(request.body.publicId).flatMap {
+        case Some (orga) => {
+          organizationService.withBankaccounts(request.body.publicId).flatMap {
+            case Some (orga) => Future.successful(Ok(Json.toJson(orga)))
+            case _ => Future.successful(BadRequest("error"))
+          }
+        }
+        case _ => Future.successful(BadRequest("error"))
+      }
+    }
 }

@@ -7,10 +7,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import play.api.Play
 import play.api.Logger
-import models.{Organization, Profile}
-import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB}
+import models.{Organization, Profile, Bankaccount}
+import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB, BankaccountDB}
 import models.converter.{OrganizationConverter}
-import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef }
+import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef, BankaccountTableDef }
 
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
@@ -31,6 +31,9 @@ trait OrganizationDAO {
   def withProfile(id: UUID): Future[Option[Organization]]
   def delete(id: UUID): Future[Int]
   def deleteProfile(id: UUID, email: String): Future[Int]
+  def withBankaccounts(id: Long): Future[Option[Organization]]
+  def withBankaccounts(publicId: UUID): Future[Option[Organization]]
+  def addBankaccount(bankaccount: Bankaccount, publicId: UUID): Future[Option[Organization]]
 }
 
 class MariadbOrganizationDAO extends OrganizationDAO {
@@ -38,6 +41,7 @@ class MariadbOrganizationDAO extends OrganizationDAO {
   val organizations = TableQuery[OrganizationTableDef]
   val profileOrganizations = TableQuery[ProfileOrganizationTableDef]
   val profiles = TableQuery[ProfileTableDef]
+  val bankaccounts = TableQuery[BankaccountTableDef]
 
   def all(): Future[Seq[Organization]] = ???
  
@@ -47,13 +51,13 @@ class MariadbOrganizationDAO extends OrganizationDAO {
   }
 
   def find(id: Long): Future[Option[Organization]] = dbConfig.db.run(organizations.filter(o => o.id === id).result).map( r => 
-        r.headOption.map(_.toOrganization(None)))
+        r.headOption.map(_.toOrganization(None, None)))
 
   def find(id: UUID): Future[Option[Organization]] = dbConfig.db.run(organizations.filter(o => o.publicId === id).result).map( r =>
-        r.headOption.map(_.toOrganization(None)))
+        r.headOption.map(_.toOrganization(None, None)))
 
   def find(name: String): Future[Option[Organization]] = dbConfig.db.run(organizations.filter(o => o.name === name).result).map(r => 
-      r.headOption.map(_.toOrganization(None)))
+      r.headOption.map(_.toOrganization(None, None)))
 
  
   def update(organization: Organization): Future[Option[Organization]] = {
@@ -73,6 +77,7 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     val dummy = Await.result(dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId)) += ((profile_id, organization_id)))), 10 second)
       find(organization_id) 
     }
+
   
   def checkProfileOranization(profileEmail: String, organizationId:UUID): Future[Boolean] = {
     val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
@@ -119,6 +124,42 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     dbConfig.db.run((profileOrganizations.filter(op => op.profileId === profile_id && op.organizationId === organization_id).delete))
   }
 
+  /* Bankaccount 
+   *
+   */
+  
+  def withBankaccounts(id: Long): Future[Option[Organization]] = {
+    val action = for {
+      o <- organizations.filter(o => o.id === id)
+      b <- bankaccounts.filter(b => b.organization_id === id)
+
+    }yield (o, b)
+    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
+  }
+  
+  def withBankaccounts(publicId: UUID): Future[Option[Organization]] = {
+    val action = for {
+      o <- organizations.filter(o => o.publicId === publicId)
+      b <- bankaccounts.filter(b => b.organization_id === o.id)
+
+    }yield (o, b)
+    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
+  }
+
+  def addBankaccount(bankaccount: Bankaccount, organizationId: UUID): Future[Option[Organization]] = {
+    dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o => {
+      dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
+    })
+    find(organizationId)
+  }
+    
+  /*  
+    val action = for {
+      o <- organizations.filter(o => o.publicId === organizationId)
+      b <- (bankaccounts returning bankaccounts.map(_.id)) += BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.id.result)
+    }yield (o)
+    dbConfig.db.run(action.result).flatMap((id) => find(id))
+ }*/
 
 
   private def findOrganizationDBModel(id: UUID): Future[OrganizationDB] = {
