@@ -40,9 +40,8 @@ import scala.util.parsing.json.JSONArray
 //import net.liftweb.json._
 
 class RestApi @Inject() (
-  val userDao : UserDao,
-  val crewDao: CrewDao,
-  val mariadbCrewDao : MariadbCrewDao,
+  val userDao : MariadbUserDao,
+  val crewDao: MariadbCrewDao,
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
