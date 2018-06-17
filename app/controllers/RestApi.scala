@@ -26,7 +26,7 @@ import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
 import models.database.{AccessRight, TaskDB}
-import models.dbviews.Crews
+import models.dbviews.{Crews, Users}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
 import utils.Query.{QueryParserError, _}
@@ -80,10 +80,44 @@ class RestApi @Inject() (
     Some(Future.successful(Unauthorized(Json.obj("error" -> Messages("error.profileUnauth")))))
   }
 
-  def getUsers = ApiAction.async { implicit request => {
-    userDao.list.map( userList => {
-      Ok(Json.toJson(userList.map(PublicUser(_))))
-    })
+  case class UsersFilterBody(
+                              query: Option[String],
+                              values: Option[Users],
+                              sort : Option[String],
+                              offset: Option[Long],
+                              limit: Option[Long]
+                            )
+
+  object UsersFilterBody {
+    implicit val filterBodyJsonFormat = Json.format[UsersFilterBody]
+  }
+
+  def getUsers = Action.async(validateJson[UsersFilterBody]) { implicit request => {
+    try{
+      val query = request.body.query.get
+      val values = request.body.values.get
+      val tokensObj = QueryLexer(query)
+      if(tokensObj.isLeft){
+        throw tokensObj.left.get
+      }
+      val tokens = tokensObj.right.get
+
+      val p = QueryParser(tokens,values)
+      if(p.isLeft){
+        throw p.left.get
+      }
+      val ast = p.right.get
+      val statement = Converter.astToSQL(ast, "Users")
+      userDao.list_with_statement(statement).map(users => Ok(Json.toJson(users)))
+    }catch{
+      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case e: Exception => {
+        Future(InternalServerError(e.getMessage))
+      }
+      case e: Throwable => {
+        Future(InternalServerError)
+      }
+    }
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
