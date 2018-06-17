@@ -9,8 +9,7 @@ case class Users (
                  user: Option[UserView],
                  profile: Option[ProfileView],
                  loginInfo: Option[LoginInfoView],
-                 supporterView: Option[SupporterView],
-                 roleView: Option[RoleView]
+                 supporterView: Option[SupporterView]
                  )extends ViewObject{
   def getValue(viewname: String): ViewBase = {
     viewname match {
@@ -18,7 +17,6 @@ case class Users (
       case "profile" => profile.get
       case "loginInfo" => loginInfo.get
       case "supporter" => supporterView.get
-      case "role" => roleView.get
     }
   }
 
@@ -28,38 +26,37 @@ case class Users (
       case "profile" => profile.isDefined
       case "loginInfo" => loginInfo.isDefined
       case "supporter" => supporterView.isDefined
-      case "role" => roleView.isDefined
     }
   }
 }
 
 object Users{
-  def apply(tuple: (Option[UserView], Option[ProfileView], Option[LoginInfoView], Option[SupporterView], Option[RoleView])) : Users =
-    Users(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
+  def apply(tuple: (Option[UserView], Option[ProfileView], Option[LoginInfoView], Option[SupporterView])) : Users =
+    Users(tuple._1, tuple._2, tuple._3, tuple._4)
 
   implicit val usersWrites : OWrites[Users] = (
     (JsPath \ "user").writeNullable[UserView] and
       (JsPath \ "profile").writeNullable[ProfileView] and
       (JsPath \ "loginInfo").writeNullable[LoginInfoView] and
-      (JsPath \ "supporter").writeNullable[SupporterView] and
-      (JsPath \ "role").writeNullable[RoleView]
+      (JsPath \ "supporter").writeNullable[SupporterView]
   )(unlift(Users.unapply))
 
   implicit val usersReads: Reads[Users] = (
     (JsPath \ "user").readNullable[UserView] and
       (JsPath \ "profile").readNullable[ProfileView] and
       (JsPath \ "loginInfo").readNullable[LoginInfoView] and
-      (JsPath \ "supporter").readNullable[SupporterView] and
-      (JsPath \ "role").readNullable[RoleView]
+      (JsPath \ "supporter").readNullable[SupporterView]
   ).tupled.map(Users( _ ))
 }
 
 case class UserView(
-                   publicId : Option[Map[String, UUID]]
+                   publicId : Option[Map[String, UUID]],
+                   roles : Option[Map[String, String]]
                    ) extends ViewBase {
   def getValue(fieldname: String, index: Int): Object = {
     fieldname match {
       case "publicId" => publicId.get.get(index.toString).get
+      case "roles" => roles.get.get(index.toString).get
     }
   }
 
@@ -71,17 +68,31 @@ case class UserView(
           case false => false
         }
       }
+      case "roles" => {
+        roles.isDefined match {
+          case true => roles.get.keySet.contains(index.toString)
+          case false => false
+        }
+      }
     }
   }
 }
 
 object UserView{
-  implicit val userViewWrites: Writes[UserView] =
-    (JsPath \ "publicId").writeNullable[Map[String, UUID]].contramap(_.publicId)
+  def apply(tuple: (Option[Map[String, UUID]], Option[Map[String, String]])) : UserView =
+    UserView(tuple._1, tuple._2)
 
-  implicit val userViewReads: Reads[UserView] =
-    (JsPath \ "publicId").readNullable[Map[String,UUID]].orElse(
-      (JsPath \ "publicId").readNullable[UUID].map(_.map(n => Map("0" -> n)))).map(UserView.apply)
+  implicit val userViewWrites : OWrites[UserView] = (
+    (JsPath \ "publicId").writeNullable[Map[String, UUID]] and
+      (JsPath \ "roles").writeNullable[Map[String, String]]
+    )(unlift(UserView.unapply))
+
+  implicit val userViewReads: Reads[UserView] = (
+    (JsPath \ "publicId").readNullable[Map[String, UUID]].orElse(
+      (JsPath \ "publicId").readNullable[UUID].map(_.map(p => Map("0" -> p))))and
+      (JsPath \ "roles").readNullable[Map[String, String]].orElse(
+        (JsPath \ "roles").readNullable[String].map(_.map(n => Map("0" -> n))))
+  ).tupled.map(UserView( _ ))
 }
 
 case class ProfileView(
@@ -286,32 +297,6 @@ object SupporterView{
     ).tupled.map(SupporterView( _ ))
 }
 
-case class RoleView (
-                    role: Option[Map[String,String]]
-                    ) extends ViewBase{
-  def getValue(fieldname: String, index: Int): Object = {
-    fieldname match {
-      case "role" => role.get.get(index.toString).get
-    }
-  }
 
-  def isFieldDefined(fieldname: String, index: Int): Boolean = {
-    fieldname match {
-      case "role" => {
-        role.isDefined match {
-          case true => role.get.keySet.contains(index.toString)
-          case false => false
-        }
-      }
-    }
-  }
-}
 
-object RoleView{
-  implicit val roleViewWrites: Writes[RoleView] =
-    (JsPath \ "role").writeNullable[Map[String, String]].contramap(_.role)
 
-  implicit val roleViewReads: Reads[RoleView] =
-    (JsPath \ "role").readNullable[Map[String,String]].orElse(
-      (JsPath \ "role").readNullable[String].map(_.map(n => Map("0" -> n)))).map(RoleView.apply)
-}
