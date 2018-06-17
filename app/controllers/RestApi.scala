@@ -235,7 +235,7 @@ class RestApi @Inject() (
     }
   }}
 
-  case class FilterBody(
+  case class CrewsFilterBody(
               query: Option[String],
               values: Option[Crews],
               sort : Option[String],
@@ -243,51 +243,33 @@ class RestApi @Inject() (
               limit: Option[Long]
            )
 
-  object FilterBody {
-    implicit val filterBodyJsonFormat = Json.format[FilterBody]
+  object CrewsFilterBody {
+    implicit val filterBodyJsonFormat = Json.format[CrewsFilterBody]
   }
 
-  def getCrews = Action.async(validateJson[FilterBody]){ implicit request => {
-    val query = request.body.query.get
-    val values = request.body.values.get
-    val tokensObj = QueryLexer(query)
-    if(tokensObj.isLeft){
-      Logger.debug("ERROR")
-      Logger.debug(tokensObj.left.get.msg)
-    }
-    val tokens = tokensObj.right.get
-    Logger.debug(tokens.toString)
+  def getCrews = Action.async(validateJson[CrewsFilterBody]){ implicit request => {
     try{
-      Logger.debug("0")
-      val p = QueryParser(tokens, values)
-      Logger.debug("1")
-      if(p.isLeft){
-        Logger.debug("ERROR")
-        Logger.debug(p.left.get.getMessage)
-        p.left.get.printStackTrace()
+      val query = request.body.query.get
+      val values = request.body.values.get
+      val tokensObj = QueryLexer(query)
+      if(tokensObj.isLeft){
+        throw tokensObj.left.get
       }
-      Logger.debug("2")
+      val tokens = tokensObj.right.get
+
+      val p = QueryParser(tokens,values)
+      if(p.isLeft){
+        throw p.left.get
+      }
       val ast = p.right.get
-      Logger.debug("3")
-      Logger.debug(ast.toString)
-      Logger.debug("4")
-      ast.toSqlStatement.queryParts.foreach(s => Logger.debug(s.toString))
-      Logger.debug("5")
-      val statement = Converter.astToSQL(ast)
-      Logger.debug("6")
-      Logger.debug(statement.toString)
-      Logger.debug("7")
-      mariadbCrewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
+      val statement = Converter.astToSQL(ast, "Crews")
+      crewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
     }catch{
       case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
       case e: Exception => {
-        Logger.debug(e.getMessage)
-        e.printStackTrace()
         Future(InternalServerError(e.getMessage))
       }
       case e: Throwable => {
-        Logger.debug(e.getMessage)
-        e.printStackTrace()
         Future(InternalServerError)
       }
     }
