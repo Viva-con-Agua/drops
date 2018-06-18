@@ -340,50 +340,7 @@ class RestApi @Inject() (
 
   //ToDo: Query parameter optional?
   def getAccessRights(query: String, f: String) = Action.async{ implicit  request => {
-    //Use the lexer to validate query syntax and extract tokens
-    val tokens = QueryLexer(query)
-    if(tokens.isLeft){
-      Future(BadRequest(Json.obj("error" -> Messages("rest.api.syntaxError"))))
-    }else {
-      //Use the parser to validate and extract grammar
-      val ast = QueryParser(tokens.right.get, null)
-      if (ast.isLeft) {
-        Future(InternalServerError(Json.obj("error" -> Messages("rest.api.syntaxGrammar"))))
-      }
-      else {
-
-
-        val query: QueryAST = ast.right.get
-        //validate if the desired functions exists in the query
-        query match {
-          case and : utils.Query.A => and.step1 match {
-            case step1: utils.Query.EQ => and.step2 match {
-              case step2: utils.Query.EQ => {
-                val and: utils.Query.A = query.asInstanceOf[utils.Query.A]
-
-                val step1 = and.step1
-                val step2 = and.step2
-                val filter: JsObject = Json.parse(f).as[JsObject]
-                //check, if there exists an filter value for the steps respectively the functions
-                if (QueryAST.validateStep(step1, filter) && QueryAST.validateStep(step2, filter)) {
-                  //Get the filter values
-                  //ToDo This should be generic
-                  val userId = UUID.fromString(filter.\("user").\("id").as[String])
-                  val service: String = filter.\("accessRight").\("service").as[String]
-
-                  accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
-                } else {
-                  Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-                }
-              }
-              case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-            }
-            case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-          }
-          case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-        }
-      }
-    }
+    accessRightDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
   def findAccessRight(id: Long) = Action.async{ implicit  request => {
