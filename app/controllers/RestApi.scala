@@ -29,7 +29,7 @@ import models.database.{AccessRight, TaskDB}
 import models.dbviews.{Crews, Users}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
-import utils.Query.{QueryParserError, _}
+import utils.Query._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
