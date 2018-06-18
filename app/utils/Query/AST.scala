@@ -132,9 +132,6 @@ case class LIKE(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Co
 }
 
 
-
-
-//ToDo: Extract JSON Object to Case Class for further steps in the filter query pipeline
 object QueryAST{
   /**
     * This function validates if there is a value for each term in the filter query.
@@ -145,8 +142,6 @@ object QueryAST{
   def validateStep(step: QueryAST, filter: JsObject) : Boolean = {
     val entity : String = step.asInstanceOf[utils.Query.EQ].entity.str
     val field : String = step.asInstanceOf[utils.Query.EQ].field.str
-    //ToDo: Alternate solution. Try Catch is necessary
-    // val value : String = filter.\(entity).\(field).as[String]
     if (filter.keys.contains(entity))
       if(filter.\(entity).get.asInstanceOf[JsObject].keys.contains(field))
         return true
