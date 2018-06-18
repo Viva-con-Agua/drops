@@ -58,7 +58,7 @@ object QueryParser extends Parsers{
   }
 
   def block: Parser[QueryAST] = {
-    rep1(statement) ^^ { case stmtList => stmtList reduceRight AndThen }
+    rep1(statement) ^^ { case stmtList => stmtList reduceRight A }
   }
 
   def statement: Parser[QueryAST] = {

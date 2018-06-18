@@ -14,15 +14,6 @@ sealed trait QueryAST extends Positional {
   //def toSqlStatement :String
   def toSqlStatement : SQLActionBuilder
 }
-case class AndThen(step1: QueryAST, step2: QueryAST) extends QueryAST {
-  override def toSqlStatement = {
-    //step1.toSqlStatement + " AND " + step2.toSqlStatement
-    val sql1 = step1.toSqlStatement
-    val sql2 = step2.toSqlStatement
-
-    Converter.concat(sql1, Converter.concat(sql"""AND""", sql2))
-  }
-}
 
 sealed trait Combinations { def step: QueryAST }
 
