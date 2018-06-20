@@ -24,10 +24,7 @@ sealed trait Combinations { def step: QueryAST }
   */
 case class A(step1: QueryAST, step2: QueryAST) extends QueryAST {
   override def toSqlStatement = {
-    val sql1 = step1.toSqlStatement
-    val sql2 = step2.toSqlStatement
-
-    Converter.concat(sql1, Converter.concat(sql""" AND """, sql2))
+    Converter.concat(step1.toSqlStatement, Converter.concat(sql""" AND """, step2.toSqlStatement))
   }
 }
 
@@ -38,11 +35,7 @@ case class A(step1: QueryAST, step2: QueryAST) extends QueryAST {
   */
 case class O(step1: QueryAST, step2: QueryAST) extends QueryAST {
   override def toSqlStatement ={
-
-    val sql1 = step1.toSqlStatement
-    val sql2 = step2.toSqlStatement
-
-    Converter.concat(sql1, Converter.concat(sql""" OR """, sql2))
+    Converter.concat(step1.toSqlStatement, Converter.concat(sql""" OR """, step2.toSqlStatement))
   }
 }
 
@@ -62,9 +55,7 @@ case class Combination(f1: QueryAST, f2: List[QueryParser.~[QueryToken, QueryAST
 
 case class Group(f1: QueryToken, f2: Combination, f3: QueryToken)extends QueryAST{
   override def toSqlStatement = {
-    val sql = f2.toSqlStatement
-
-    Converter.concat(sql"""(""", Converter.concat(sql, sql""")"""))
+    Converter.concat(sql"""(""", Converter.concat(f2.toSqlStatement, sql""")"""))
   }
 }
 
