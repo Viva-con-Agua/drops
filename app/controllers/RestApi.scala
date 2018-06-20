@@ -92,7 +92,7 @@ class RestApi @Inject() (
     implicit val filterBodyJsonFormat = Json.format[UsersFilterBody]
   }
 
-  def getUsers = Action.async(validateJson[UsersFilterBody]) { implicit request => {
+  def getUsers = ApiAction.async(validateJson[UsersFilterBody]) { implicit request => {
     try{
       val query = request.body.query.get
       val values = request.body.values.get
@@ -268,8 +268,9 @@ class RestApi @Inject() (
     implicit val filterBodyJsonFormat = Json.format[CrewsFilterBody]
   }
 
-  def getCrews = Action.async(validateJson[CrewsFilterBody]){ implicit request => {
+  def getCrews = ApiAction.async(validateJson[CrewsFilterBody]){ implicit request => {
     try{
+
       val query = request.body.query.get
       val values = request.body.values.get
       val tokensObj = QueryLexer(query)
