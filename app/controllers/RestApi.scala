@@ -256,19 +256,6 @@ class RestApi @Inject() (
     })
   }}
 
-  def crews = ApiAction.async { implicit request => {
-    def body(query: JsObject, limit: Int, sort: JsObject) = crewDao.ws.list(query, limit, sort).map((crews) => Ok(Json.toJson(crews)))
-
-    implicit val c: CrewDao = crewDao
-    implicit val config : RequestConfig = CrewRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) =>
-        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
-      )
-      case None => body(Json.obj(), 20, Json.obj())
-    }
-  }}
-
   case class CrewsFilterBody(
               query: Option[String],
               values: Option[Crews],
