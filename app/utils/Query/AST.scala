@@ -68,8 +68,10 @@ case class Group(f1: QueryToken, f2: Combination, f3: QueryToken)extends QueryAS
   }
 }
 
+//ToDo: Support  interleaved brackets
 case class CombinedGroup(f1: QueryAST, f2: List[QueryParser.~[QueryToken, QueryAST]]) extends QueryAST{
   override def toSqlStatement = {
+
     var sql = f1.toSqlStatement
     f2.foreach(o => {
       sql = o._1 match {
