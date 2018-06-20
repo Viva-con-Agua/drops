@@ -41,15 +41,13 @@ case class O(step1: QueryAST, step2: QueryAST) extends QueryAST {
 
 case class Combination(f1: QueryAST, f2: List[QueryParser.~[QueryToken, QueryAST]]) extends QueryAST {
   override def toSqlStatement = {
-    var sql = f1.toSqlStatement
-    f2.foreach(o => {
-      sql = o._1 match{
-        case AND => Converter.concat(sql, Converter.concat(sql""" AND """, o._2.toSqlStatement))
-        case OR => Converter.concat(sql, Converter.concat(sql""" OR """, o._2.toSqlStatement))
+    f2.foldLeft[SQLActionBuilder](f1.toSqlStatement)((res, o) => {
+      o._1 match {
+        case AND => Converter.concat(res, Converter.concat(sql""" AND """, o._2.toSqlStatement))
+        case OR => Converter.concat(res, Converter.concat(sql""" OR """, o._2.toSqlStatement))
         case _ => throw new Exception
       }
     })
-    sql
   }
 }
 
@@ -62,16 +60,13 @@ case class Group(f1: QueryToken, f2: Combination, f3: QueryToken)extends QueryAS
 //ToDo: Support  interleaved brackets
 case class CombinedGroup(f1: QueryAST, f2: List[QueryParser.~[QueryToken, QueryAST]]) extends QueryAST{
   override def toSqlStatement = {
-
-    var sql = f1.toSqlStatement
-    f2.foreach(o => {
-      sql = o._1 match {
-        case AND => Converter.concat(sql, Converter.concat(sql""" AND """, o._2.toSqlStatement))
-        case OR => Converter.concat(sql, Converter.concat(sql""" OR """, o._2.toSqlStatement))
+    f2.foldLeft[SQLActionBuilder](f1.toSqlStatement)((res, o) => {
+      o._1 match {
+        case AND => Converter.concat(res, Converter.concat(sql""" AND """, o._2.toSqlStatement))
+        case OR => Converter.concat(res, Converter.concat(sql""" OR """, o._2.toSqlStatement))
         case _ => throw new Exception
       }
     })
-    sql
   }
 }
 
