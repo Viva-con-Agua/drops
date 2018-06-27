@@ -359,7 +359,15 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.24.18 (2018-03-12)
+## Version 0.26.24 (2018-05-23)
+* [[F] #32 -  Organizations are configurable](https://github.com/Viva-con-Agua/drops/issues/32)
+* [[I] #222 - Allow simple filter OES](https://github.com/Viva-con-Agua/drops/issues/222)
+* [[B] #215 - OAuth 2 Provider does not implements query params](https://github.com/Viva-con-Agua/drops/issues/215)
+* [[B] #217 - Missing template on BadRequest](https://github.com/Viva-con-Agua/drops/issues/217)
+* [[B] #213 - OAuth Database bug](https://github.com/Viva-con-Agua/drops/issues/213)
+* [[F] #208 - Add MariadbPool1UserDao](https://github.com/Viva-con-Agua/drops/issues/208)
+* [[F] #91 - handler for dispenser templates](https://github.com/Viva-con-Agua/drops/issues/91)
+* [[I] #123 - Split Task and AccessRight Model in Database and Business Models](https://github.com/Viva-con-Agua/drops/issues/123)
 * [[I] #114 - Mongo to MariaDB](https://github.com/Viva-con-Agua/drops/issues/114)
 * [[B] #205 - Redirect Problems in a running Session](https://github.com/Viva-con-Agua/drops/issues/205)
 * [[F] #202 - OES Create Update Delete](https://github.com/Viva-con-Agua/drops/issues/202)

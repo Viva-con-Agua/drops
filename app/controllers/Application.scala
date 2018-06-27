@@ -13,11 +13,11 @@ import play.api._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import models._
+import models.dispenser._
 import play.api.data.Form
 import play.api.data.Forms._
-import services.UserService
+import services.{UserService, DispenserService}
 import daos.{CrewDao, OauthClientDao, TaskDao}
-import models.database.TaskDB
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
 import utils.authorization.{Pool1Restriction, WithAlternativeRoles, WithRole}
@@ -35,28 +35,39 @@ class Application @Inject() (
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator],
   configuration: Configuration,
+  dispenserService: DispenserService,
   socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
   val pool1Url = configuration.getString("pool1.url").get
 
-  def index = SecuredAction.async { implicit request =>
+  def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     if (!pool1Export) {
-      Future.successful(Ok(views.html.index(request.identity, request.authenticator.loginInfo)))
+      Future.successful(Ok(dispenserService.getTemplate(views.html.index(request.identity, request.authenticator.loginInfo))))
     }else{
       Future.successful(Redirect(pool1Url))
     }
   }
 
   def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    crewDao.list.map(l =>
-      Ok(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define))
-    )
+    crewDao.list.map(l => {
+      Ok(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define)))
+    })
+  }
+
+  /**
+    * Open todo: The part of DAO (removing the data from database) is not implemented yet. Take a look at the DAO and
+    * the service!
+    * @return
+    */
+  def userDelete = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
+    userService.delete(request.identity.id)
+    env.authenticatorService.discard(request.authenticator, Redirect(routes.Application.index()))
   }
 
   def updateBase = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     UserForms.userForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define))),
+      bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define)))),
       userData => request.identity.profileFor(request.authenticator.loginInfo) match {
         case Some(profile) => {
           val supporter = profile.supporter.copy(
@@ -78,7 +89,7 @@ class Application @Inject() (
 
   def updateCrew = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define))),
+      bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define)))),
       crewData => {
         request.identity.profileFor(request.authenticator.loginInfo) match {
           case Some(profile) => {
@@ -101,7 +112,7 @@ class Application @Inject() (
 
   def updatePillar = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     PillarForms.define.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm))),
+      bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm)))),
       pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
         case Some(profile) => {
           val pillars = pillarData.toMap.foldLeft[Set[Pillar]](Set())((pillars, data) => data._2 match {
@@ -118,9 +129,8 @@ class Application @Inject() (
   }
 
   def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
-    val resultingTasks: Future[Seq[TaskDB]] = taskDao.all()
-
-    Ok(views.html task(request.identity, request.authenticator.loginInfo, resultingTasks))
+    val resultingTasks: Future[Seq[Task]] = taskDao.all()
+      Ok(dispenserService.getTemplate(views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks)))
   }
 
   def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
@@ -184,12 +194,16 @@ class Application @Inject() (
   }}
 
   def registration = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)) { implicit request =>
-    Ok(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register))
+    val template: Template = dispenserService.buildTemplate(
+        NavigationData("GlobalNav", "", None),
+        "Drops", views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register).toString
+      )
+      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
   }
 
   def registerOAuth2Client = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)).async { implicit request =>
     OAuth2ClientForms.register.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm)))),
       registerData => {
         oauth2ClientDao.save(registerData.toClient)
         Future.successful(Redirect("/"))

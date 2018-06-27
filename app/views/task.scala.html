@@ -5,14 +5,15 @@
 @import scala.concurrent.duration._
 @import scala.language.postfixOps
 
-@import models.database.TaskDB
-@(loggedUser:User, loginInfo:LoginInfo, tasks: Future[Seq[TaskDB]])(implicit request:RequestHeader,messages:Messages)
+@import models.Task
+@(loggedUser:User, loginInfo:LoginInfo, tasks: Future[Seq[Task]])(implicit request:RequestHeader,messages:Messages)
 
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
 @implicitFieldConstructor = @{b3.horizontal.fieldConstructor("col-md-3","col-md-6")}
-
-@views.html.templates.mainApp(Messages("task.title"), tab = "task", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
+	@request.flash.get("error").map { msg =>
+    @errors.alert(msg, "error")
+  }
     <div class="col-md-8 col-md-offset-2">
         <div class="row">
             <h1>Übersicht der Tasks</h1>
@@ -32,4 +33,3 @@
         </div>
     </div>
 
-}

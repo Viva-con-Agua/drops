@@ -3,6 +3,7 @@ package models.database
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import models.Task
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -12,7 +13,9 @@ case class TaskDB(
                  description: Option[String],
                  deadline: Option[Date],
                  count_supporter: Option[Int]
-               )
+               ){
+  def toTask : Task = Task(id, title, description,deadline,count_supporter)
+}
 
 object TaskDB extends ((Long, String, Option[String], Option[Date], Option[Int]) => TaskDB ){
   def apply(tuple: (Long, String, Option[String], Option[Date], Option[Int])): TaskDB =
@@ -23,6 +26,9 @@ object TaskDB extends ((Long, String, Option[String], Option[Date], Option[Int])
 
   def apply(id: Long, title: String, description: String, deadline: Date, count_supporter: Int) : TaskDB =
    TaskDB(id, title, Some(description), Some(deadline), Some(count_supporter))
+
+  def apply(task: Task) : TaskDB =
+    TaskDB(task.id, task.title, task.description, task.deadline, task.count_supporter)
 
   implicit val dateWrites = new Writes[Date] {
     def writes(date: Date) = JsString(date.toString)

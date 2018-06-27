@@ -34,6 +34,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[IdentityService[User]].to[UserService]
     bind[UserDao].to[MariadbUserDao]
 //    bind[UserApiQueryDao[JsObject]].to[MongoUserApiQueryDao]
+    bind[OrganizationDAO].to[MariadbOrganizationDAO]
     bind[CrewDao].to[MariadbCrewDao]
     bind[UserTokenDao].to[MariadbUserTokenDao]
     bind[TaskDao].to[MariadbTaskDao]
@@ -45,7 +46,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[OauthCodeDao].to[MariadbOauthCodeDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[MariadbPasswordInfoDao]
     bind[DelegableAuthInfoDAO[OAuth1Info]].to[MariadbOAuth1InfoDao]
-    bind[Pool1UserDao].to[MongoPool1UserDao]
+    bind[Pool1UserDao].to[MariadbPool1UserDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
     bind[PasswordHasher].toInstance(new BCryptPasswordHasher)
     bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))

@@ -7,7 +7,6 @@
 
 @implicitFieldConstructor = @{b3.vertical.fieldConstructor}
 
-@views.html.templates.mainApp(Messages("oauth2.register.title"), tab = "oauth-register", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
   <h1>@Messages("oauth2.register.legend")</h1>
   @request.flash.get("error").map { msg =>
     @errors.alert(msg, "error")
@@ -30,4 +29,3 @@
 
       @b3.submit('class -> "btn btn-primary"){ @Messages("oauth2.register.submit") }
   }
-}
