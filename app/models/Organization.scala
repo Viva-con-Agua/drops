@@ -97,6 +97,21 @@ case class OrganizationUUID(
 object OrganizationUUID{
   implicit val organizationUUIDJsonFormat = Json.format[OrganizationUUID]
 }
+trait ProfileOrganizationNameBase {
+  val email: String
+  val name: String
+  val role: String
+}
+case class ProfileOrganizationName(
+  email: String,
+  name: String,
+  role: String
+  ) extends ProfileOrganizationNameBase
+
+object ProfileOrganizationName{
+  implicit val profileOrganizationJsonFormat = Json.format[ProfileOrganizationName]
+}
+
 
 trait ProfileOrganizationBase {
   val email: String
@@ -126,6 +141,21 @@ case class BankaccountOrganization(
 
 object BankaccountOrganization{
   implicit val bankaccountOrganizationJsonFormat = Json.format[BankaccountOrganization]
+}
+
+trait BankaccountOrganizationNameBase{
+  val name: String
+  val bankaccount: Bankaccount
+}
+
+case class BankaccountOrganizationName(
+  name: String,
+  bankaccount: Bankaccount
+  )extends BankaccountOrganizationNameBase
+
+
+object BankaccountOrganizationName{
+  implicit val bankaccountOrganizationJsonFormat = Json.format[BankaccountOrganizationName]
 }
 
 

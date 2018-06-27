@@ -24,12 +24,16 @@ class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: Nats
   def find(name: String) = organizationDAO.find(name)
   def update(organization: Organization): Future[Option[Organization]] = organizationDAO.update(organization)
   def addProfile(email: String, id: UUID, role: String) = organizationDAO.addProfile(email, id, role)
+  def addProfile(email: String, name: String, role: String) = organizationDAO.addProfile(email, name, role)
   def checkProfileOranization(email: String, id: UUID): Future[Boolean] = organizationDAO.checkProfileOranization(email, id)
+  def checkProfileOranization(email: String, name: String): Future[Boolean] = organizationDAO.checkProfileOranization(email, name)
   def withProfile(id: UUID) = organizationDAO.withProfile(id)
   def withProfileByRole(id: UUID, role: String) = organizationDAO.withProfileByRole(id, role)
   def delete(id: UUID) = organizationDAO.delete(id)
   def deleteProfile(id: UUID, email: String) = organizationDAO.deleteProfile(id, email)
   def addBankaccount(bankaccount: Bankaccount, organizationId: UUID) = organizationDAO.addBankaccount(bankaccount, organizationId)
+  def addBankaccount(bankaccount: Bankaccount, organizationName: String) = organizationDAO.addBankaccount(bankaccount, organizationName)
   def withBankaccounts(publicId: UUID) = organizationDAO.withBankaccounts(publicId)
+  def withBankaccounts(name: String) = organizationDAO.withBankaccounts(name)
 }
 

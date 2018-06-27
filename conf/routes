@@ -85,6 +85,8 @@ POST    /oauth2/access_token                                controllers.OAuth2Co
 GET     /oauth2/register                                    controllers.Application.registration
 POST    /oauth2/register                                    controllers.Application.registerOAuth2Client
 
+# Imprint
+#GET 	/impressum																						controllers.ImprintController.imprint
 # Public assets
 GET     /assets/*file                                       controllers.Assets.versioned(path="/public", file: Asset)
 GET     /webjars/*file                                      controllers.WebJarAssets.at(file)

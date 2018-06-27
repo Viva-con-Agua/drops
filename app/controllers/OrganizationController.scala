@@ -66,6 +66,18 @@ class OrganizationController @Inject() (
       }
     }
 
+    def addProfileName = Action.async(validateJson[ProfileOrganizationName]) { implicit request =>
+      organizationService.checkProfileOranization(request.body.email, request.body.name).flatMap {
+        case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
+        case false => {
+          organizationService.addProfile(request.body.email, request.body.name, request.body.role).flatMap {
+            case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+            case _ => Future.successful(BadRequest("error"))
+          }
+        }
+      }
+    }
+
     def getOrganization = Action.async(validateJson[OrganizationUUID]) { implicit request => 
       organizationService.find(request.body.publicId).flatMap {
         case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
@@ -111,6 +123,15 @@ class OrganizationController @Inject() (
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
           organizationService.addBankaccount(request.body.bankaccount, request.body.publicId)
+          Future.successful(Ok)
+        }
+        case _ => Future.successful(BadRequest(Messages("error")))
+      }
+    }
+   def addBankaccountName = Action.async(validateJson[BankaccountOrganizationName]) { implicit request =>
+      organizationService.find(request.body.name).flatMap {
+        case Some (orga) => {
+          organizationService.addBankaccount(request.body.bankaccount, request.body.name)
           Future.successful(Ok)
         }
         case _ => Future.successful(BadRequest(Messages("error")))
