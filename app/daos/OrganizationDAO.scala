@@ -138,6 +138,7 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     dbConfig.db.run(action.result).map(p => {OrganizationConverter.buildOrganizationFromResult(p)})
   }
 
+
   def delete(id: UUID): Future[Int] = {
     val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === id).result).map( o =>{
       o.head.id}), 10 second)

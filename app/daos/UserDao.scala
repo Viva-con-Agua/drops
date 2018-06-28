@@ -39,6 +39,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def listOfStubs : Future[List[UserStub]]
   def delete (userId:UUID):Future[Boolean]
   def getProfile (email: String): Future[Option[Profile]]
+  def profileListByRole(id: UUID, role: String): Future[Option[List[Profile]]]
 
 
   trait UserWS {
@@ -121,6 +122,7 @@ class MongoUserDao extends UserDao {
     })
 
   def getProfile(email: String): Future[Option[Profile]] = ???
+  def profileListByRole(id: UUID, role: String): Future[Option[List[Profile]]] = ???
 
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
@@ -148,6 +150,8 @@ class MariadbUserDao extends UserDao{
   val passwordInfos = TableQuery[PasswordInfoTableDef]
   val supporters = TableQuery[SupporterTableDef]
   val oauth1Infos = TableQuery[OAuth1InfoTableDef]
+  val organizations = TableQuery[OrganizationTableDef]
+  val profileOrganizations = TableQuery[ProfileOrganizationTableDef]
 
   /** Find a user object by loginInfo providerId and providerKey
     *
@@ -388,7 +392,20 @@ class MariadbUserDao extends UserDao{
       UserConverter.buildProfileFromResult(result)
     })
   }
-
+  
+ def profileListByRole(id: UUID, role: String):Future[Option[List[Profile]]] = {
+    val action = for {
+      o <- organizations.filter(o => o.publicId === id)
+      op <- profileOrganizations.filter(po => po.organizationId === o.id && po.role == role)
+      ((profile, supporter), loginInfo) <- ( profiles.filter(p => p.id === op.profileId) 
+          join supporters on (_.id === _.profileId)
+          join loginInfos on (_._2.id === _.profileId)
+        )
+    } yield(profile, supporter, loginInfo)
+    dbConfig.db.run(action.result).map(result => {
+      UserConverter.buildProfileListFromResult(result)
+    })
+ }
   //Wenn er private ist kann ich ihn nutzen. Ansonsten muss ich schauen wo er verwendet wird
   class MariadbUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] = ???
