@@ -395,13 +395,16 @@ class MariadbUserDao extends UserDao{
   
  def profileListByRole(id: UUID, role: String):Future[Option[List[Profile]]] = {
     val action = for {
-      o <- organizations.filter(o => o.publicId === id)
-      op <- profileOrganizations.filter(po => po.organizationId === o.id && po.role == role)
-      ((profile, supporter), loginInfo) <- ( profiles.filter(p => p.id === op.profileId) 
-          join supporters on (_.id === _.profileId)
-          join loginInfos on (_._2.id === _.profileId)
+      //o <- organizations.filter(o => o.publicId === id)
+      //op <- profileOrganizations.filter(po => po.organizationId === o.id)
+      ((((organization, profileOrganization), profile), supporter), loginInfo) <- ( organizations.filter(o => o.publicId === id)
+        join profileOrganizations.filter(op => op.role === role) on (_.id === _.organizationId)
+          join profiles on (_._2.profileId === _.id)
+          join supporters on (_._1._2.profileId === _.profileId)
+          join loginInfos on (_._1._1._2.profileId === _.profileId)
         )
     } yield(profile, supporter, loginInfo)
+    action.result.statements.foreach(println)
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildProfileListFromResult(result)
     })

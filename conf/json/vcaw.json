@@ -4,7 +4,8 @@
 	"telefon": "+49 40 / 41 26 09 15",
 	"fax": "+49 (40) 320 86 905",
 	"email": "wasser[at]vivaconagua.com",
+	"typ": "GmbH",
 	"executive": "Amtsgericht Hamburg HRB 114140",
 	"abbreviation": "dummy",
-	"impressum": "true"
+	"impressum": true
 }

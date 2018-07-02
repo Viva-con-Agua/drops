@@ -70,13 +70,13 @@ GET     /auth/social/:providerId                            controllers.Auth.soc
 
 # Organizations
 POST   /organization/insert                                	controllers.OrganizationController.insert
-POST   /organization/addProfile    													controllers.OrganizationController.addProfile
+POST   /organization/addProfile    													controllers.OrganizationController.addProfileName
 DELETE   /organization/deleteProfile    											controllers.OrganizationController.deleteProfile
 DELETE   /organization/delete  																controllers.OrganizationController.delete
 POST   /organization/get																		controllers.OrganizationController.getOrganization
 POST   /organization/withProfile														controllers.OrganizationController.getOrganizationWithProfile
 POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
-POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankaccount
+POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankaccountName
 POST	 /organization/withBankaccounts												controllers.OrganizationController.withBankaccounts
 
 # OAuth 2 Server

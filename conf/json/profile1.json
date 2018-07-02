@@ -1,7 +1,10 @@
 {
 				"email": "benny@dummyconagua.org",
-				"name": {
-								"first": "Benjamin",
-								"last": "Adrion"
-				}
+				"firstName": "Benjamin",
+				"lastName": "Adrion",
+				"mobilePhone": "01730001111",
+				"placeOfResidence": "Hamburg",
+				"birthday": 1990-01-01,
+				"sex": "male"
+				
 }
