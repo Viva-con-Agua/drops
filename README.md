@@ -359,7 +359,10 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.26.22 (2018-04-23)
+## Version 0.27.24 (2018-06-27)
+* [[F] #93 - Add generic filter for Crews and Users](https://github.com/Viva-con-Agua/drops/issues/93)
+* [[F] #32 -  Organizations are configurable](https://github.com/Viva-con-Agua/drops/issues/32)
+* [[I] #222 - Allow simple filter OES](https://github.com/Viva-con-Agua/drops/issues/222)
 * [[B] #215 - OAuth 2 Provider does not implements query params](https://github.com/Viva-con-Agua/drops/issues/215)
 * [[B] #217 - Missing template on BadRequest](https://github.com/Viva-con-Agua/drops/issues/217)
 * [[B] #213 - OAuth Database bug](https://github.com/Viva-con-Agua/drops/issues/213)

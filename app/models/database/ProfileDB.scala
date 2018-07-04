@@ -16,7 +16,8 @@ case class ProfileDB(
                   confirmed: Boolean,
                   email: String,
                   userId: Long
-                )
+                ) 
+        
 
 
 object ProfileDB extends ((Long, Boolean , String, Long) => ProfileDB ){

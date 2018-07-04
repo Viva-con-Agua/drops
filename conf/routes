@@ -8,6 +8,8 @@ POST    /user/update                                        controllers.Applicat
 POST    /user/uploadAvatar                                  controllers.Files.uploadProfileImage
 GET     /file/get/:id                                       controllers.Files.get(id: String)
 
+GET     /delete                                             controllers.Application.userDelete
+
 
 GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
@@ -28,12 +30,12 @@ DELETE  /rest/user/:id                                     controllers.RestApi.d
 
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
-POST    /rest/crew                                         controllers.RestApi.crews
+POST    /rest/crew                                          controllers.RestApi.getCrews
 GET     /rest/task                                          controllers.RestApi.getTasks
 POST    /rest/task                                          controllers.RestApi.createTask
 GET     /rest/task/:id                                      controllers.RestApi.getTasksWithAccessRights(id: Long)
 DELETE  /rest/task/:id                                      controllers.RestApi.deleteTask(id: Long)
-GET     /rest/access                                        controllers.RestApi.getAccessRights(q: String, f: String)
+GET     /rest/access                                        controllers.RestApi.getAccessRights
 GET     /rest/access/:id                                    controllers.RestApi.findAccessRight(id: Long)
 DELETE  /rest/access/:id                                    controllers.RestApi.deleteAccessRight(id: Long)
 POST    /rest/access                                        controllers.RestApi.createAccessRight
@@ -65,6 +67,17 @@ GET     /auth/reset/:token                                  controllers.Auth.res
 POST    /auth/reset/:token                                  controllers.Auth.handleResetPassword(token:String)
 
 GET     /auth/social/:providerId                            controllers.Auth.socialAuthenticate(providerId:String)
+
+# Organizations
+POST   /organization/insert                                	controllers.OrganizationController.insert
+POST   /organization/addProfile    													controllers.OrganizationController.addProfile
+DELETE   /organization/deleteProfile    											controllers.OrganizationController.deleteProfile
+DELETE   /organization/delete  																controllers.OrganizationController.delete
+POST   /organization/get																		controllers.OrganizationController.getOrganization
+POST   /organization/withProfile														controllers.OrganizationController.getOrganizationWithProfile
+POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
+POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankaccount
+POST	 /organization/withBankaccounts												controllers.OrganizationController.withBankaccounts
 
 # OAuth 2 Server
 GET     /oauth2/access_token                                controllers.OAuth2Controller.accessToken

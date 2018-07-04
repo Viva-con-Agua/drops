@@ -55,6 +55,16 @@ class Application @Inject() (
     })
   }
 
+  /**
+    * Open todo: The part of DAO (removing the data from database) is not implemented yet. Take a look at the DAO and
+    * the service!
+    * @return
+    */
+  def userDelete = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
+    userService.delete(request.identity.id)
+    env.authenticatorService.discard(request.authenticator, Redirect(routes.Application.index()))
+  }
+
   def updateBase = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
     UserForms.userForm.bindFromRequest.fold(
       bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define)))),

@@ -26,22 +26,22 @@ class Nats @Inject() (
 
   def publishCreate(model: String, publicId: UUID) {
     val conn = Conn.connect(opts)
-    val msg = model + " " + publicId.toString
-    conn.publish("CREATE", msg)
+    val key = model + ".CREATE"
+    conn.publish(key, publicId.toString)
     conn.close
   }
 
   def publishUpdate(model: String, publicId: UUID) {
     val conn = Conn.connect(opts)
-    val msg = model + " " + publicId.toString
-    conn.publish("UPDATE", msg)
+    val key = model + ".UPDATE"
+    conn.publish(key, publicId.toString)
     conn.close
   }
 
   def publishDelete(model: String, publicId: UUID) {
     val conn = Conn.connect(opts)
-    val msg = model + " " + publicId.toString
-    conn.publish("DELETE", msg)
+    val key = model + ".DELETE"
+    conn.publish(key, publicId.toString)
     conn.close
   }
 
