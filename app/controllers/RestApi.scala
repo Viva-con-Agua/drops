@@ -25,20 +25,23 @@ import com.mohiva.play.silhouette.api.util.{PasswordHasher, PasswordInfo}
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
-import models.AccessRight
+import models.database.{AccessRight, TaskDB}
+import models.dbviews.{Crews, Users}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
-import utils.Query.{QueryAST, QueryLexer, QueryParser}
+import utils.Query._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
 import scala.util.parsing.json.JSONArray
 
+
+
 //import net.liftweb.json._
 
 class RestApi @Inject() (
-  val userDao : UserDao,
-  val crewDao: CrewDao,
+  val userDao : MariadbUserDao,
+  val crewDao: MariadbCrewDao,
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
@@ -56,12 +59,12 @@ class RestApi @Inject() (
 
   /** checks whether a json is validate or not
     *
-    *  @param A Reads json datatype and request.
+    *  @param B Reads json datatype and request.
     *  @return if the json in the request.body is  successful, return JsSuccess Type, else return BadRequest with json errors
     */
-  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e =>
-    responseError(play.api.mvc.Results.BadRequest, "InvalidJsonInRequestBody", JsError.toJson(e))
-  ))
+
+  def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
   
   def profile = SecuredAction.async { implicit request =>
     val json = Json.toJson(request.identity.profileFor(request.authenticator.loginInfo).get)
@@ -79,10 +82,44 @@ class RestApi @Inject() (
     Some(Future.successful(responseError(play.api.mvc.Results.Unauthorized, "UserNotAuthorized", Messages("error.profileUnauth"))))
   }
 
-  def getUsers = ApiAction.async { implicit request => {
-    userDao.list.map( userList => {
-      Ok(Json.toJson(userList.map(PublicUser(_))))
-    })
+  case class UsersFilterBody(
+                              query: Option[String],
+                              values: Option[Users],
+                              sort : Option[String],
+                              offset: Option[Long],
+                              limit: Option[Long]
+                            )
+
+  object UsersFilterBody {
+    implicit val filterBodyJsonFormat = Json.format[UsersFilterBody]
+  }
+
+  def getUsers = ApiAction.async(validateJson[UsersFilterBody]) { implicit request => {
+    try{
+      val query = request.body.query.get
+      val values = request.body.values.get
+      val tokensObj = QueryLexer(query)
+      if(tokensObj.isLeft){
+        throw tokensObj.left.get
+      }
+      val tokens = tokensObj.right.get
+
+      val p = QueryParser(tokens,values)
+      if(p.isLeft){
+        throw p.left.get
+      }
+      val ast = p.right.get
+      val statement = Converter.astToSQL(ast, "Users")
+      userDao.list_with_statement(statement).map(users => Ok(Json.toJson(users)))
+    }catch{
+      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case e: Exception => {
+        Future(InternalServerError(e.getMessage))
+      }
+      case e: Throwable => {
+        Future(InternalServerError)
+      }
+    }
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
@@ -232,16 +269,44 @@ class RestApi @Inject() (
     })
   }}
 
-  def crews = ApiAction.async { implicit request => {
-    def body(query: JsObject, limit: Int, sort: JsObject) = crewDao.ws.list(query, limit, sort).map((crews) => Ok(Json.toJson(crews)))
+  case class CrewsFilterBody(
+              query: Option[String],
+              values: Option[Crews],
+              sort : Option[String],
+              offset: Option[Long],
+              limit: Option[Long]
+           )
 
-    implicit val c: CrewDao = crewDao
-    implicit val config : RequestConfig = CrewRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) =>
-        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
-      )
-      case None => body(Json.obj(), 20, Json.obj())
+  object CrewsFilterBody {
+    implicit val filterBodyJsonFormat = Json.format[CrewsFilterBody]
+  }
+
+  def getCrews = ApiAction.async(validateJson[CrewsFilterBody]){ implicit request => {
+    try{
+
+      val query = request.body.query.get
+      val values = request.body.values.get
+      val tokensObj = QueryLexer(query)
+      if(tokensObj.isLeft){
+        throw tokensObj.left.get
+      }
+      val tokens = tokensObj.right.get
+
+      val p = QueryParser(tokens,values)
+      if(p.isLeft){
+        throw p.left.get
+      }
+      val ast = p.right.get
+      val statement = Converter.astToSQL(ast, "Crews")
+      crewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
+    }catch{
+      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case e: Exception => {
+        Future(InternalServerError(e.getMessage))
+      }
+      case e: Throwable => {
+        Future(InternalServerError)
+      }
     }
   }}
 
@@ -276,50 +341,7 @@ class RestApi @Inject() (
 
   //ToDo: Query parameter optional?
   def getAccessRights(query: String, f: String) = Action.async{ implicit  request => {
-    //Use the lexer to validate query syntax and extract tokens
-    val tokens = QueryLexer(query)
-    if(tokens.isLeft){
-      Future(BadRequest(Json.obj("error" -> Messages("rest.api.syntaxError"))))
-    }else {
-      //Use the parser to validate and extract grammar
-      val ast = QueryParser(tokens.right.get)
-      if (ast.isLeft) {
-        Future(InternalServerError(Json.obj("error" -> Messages("rest.api.syntaxGrammar"))))
-      }
-      else {
-
-
-        val query: QueryAST = ast.right.get
-        //validate if the desired functions exists in the query
-        query match {
-          case and : utils.Query.A => and.step1 match {
-            case step1: utils.Query.EQ => and.step2 match {
-              case step2: utils.Query.EQ => {
-                val and: utils.Query.A = query.asInstanceOf[utils.Query.A]
-
-                val step1 = and.step1
-                val step2 = and.step2
-                val filter: JsObject = Json.parse(f).as[JsObject]
-                //check, if there exists an filter value for the steps respectively the functions
-                if (QueryAST.validateStep(step1, filter) && QueryAST.validateStep(step2, filter)) {
-                  //Get the filter values
-                  //ToDo This should be generic
-                  val userId = UUID.fromString(filter.\("user").\("id").as[String])
-                  val service: String = filter.\("accessRight").\("service").as[String]
-
-                  accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
-                } else {
-                  Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-                }
-              }
-              case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-            }
-            case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-          }
-          case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-        }
-      }
-    }
+    accessRightDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
   def findAccessRight(id: Long) = Action.async{ implicit  request => {
