@@ -1,7 +1,7 @@
 package persistence.pool1
 
 import javax.inject.Inject
-
+import java.util.UUID
 import models.User
 import play.api.i18n.Messages
 
@@ -12,6 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait PoolService {
   def save(user: User)(implicit messages: Messages) : Future[Boolean]
+  def logout(user: User)(implicit messages: Messages) : Future[Boolean]
 }
 
 class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) extends PoolService {
@@ -20,6 +21,20 @@ class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) ext
   override def save(user: User)(implicit messages: Messages): Future[Boolean] = PoolAction(false, user) { user => {
     val container = PoolUserData(configuration.getString("pool1.hash").getOrElse(""), user)
     api.create[User](container).map(_ match {
+      case Left(v) => {
+        Logger.debug(Messages("pool1.debug.export.success", v.toString))
+        true
+      }
+      case Right(e) => {
+        Logger.debug(Messages("pool1.debug.export.failure", e.getMessage()))
+        false
+      }
+    })
+  }}
+
+  override def logout(user: User)(implicit messages: Messages): Future[Boolean] = PoolAction(false, user) { user => {
+    val container = PoolUserData(configuration.getString("pool1.hash").getOrElse(""), user)
+    api.logout[User](container).map(_ match {
       case Left(v) => {
         Logger.debug(Messages("pool1.debug.export.success", v.toString))
         true

@@ -22,6 +22,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer.MailerClient
 import play.api.libs.ws.WSClient
 import daos._
+import persistence.pool1._
 import models.User
 import persistence.pool1.{PoolService, PoolServiceImpl}
 import play.api.libs.json.JsObject
@@ -31,6 +32,7 @@ import utils.Mailer
 class Module extends AbstractModule with ScalaModule {
 
   def configure() {
+   // bind[PoolUUIDData].to[PoolUserUUIDData]
     bind[IdentityService[User]].to[UserService]
     bind[UserDao].to[MariadbUserDao]
 //    bind[UserApiQueryDao[JsObject]].to[MongoUserApiQueryDao]
