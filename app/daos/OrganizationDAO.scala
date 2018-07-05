@@ -27,8 +27,8 @@ trait OrganizationDAO {
   def update(organization: Organization): Future[Option[Organization]]
   def addProfile(profileEmail: String, organizationId: UUID, role: String): Future[Option[Organization]]
   def addProfile(profileEmail: String, organizationName: String, role: String): Future[Option[Organization]]
-  def checkProfileOranization(profileEmail: String, organizationId: UUID): Future[Boolean]
-  def checkProfileOranization(profileEmail: String, organizationName: String): Future[Boolean]
+  def checkProfileOrganization(profileEmail: String, organizationId: UUID): Future[Boolean]
+  def checkProfileOrganization(profileEmail: String, organizationName: String): Future[Boolean]
   def withProfile(id: Long): Future[Option[Organization]]
   def withProfile(id: UUID): Future[Option[Organization]]
   def withProfileByRole(id: UUID, role: String): Future[Option[Organization]]
@@ -88,14 +88,14 @@ class MariadbOrganizationDAO extends OrganizationDAO {
     })})
   }
   
-  def checkProfileOranization(profileEmail: String, organizationId:UUID): Future[Boolean] = {
+  def checkProfileOrganization(profileEmail: String, organizationId:UUID): Future[Boolean] = {
      dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o =>{
       dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).flatMap( p =>{
         dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === o.head.id && uo.profileId === p.head.id)).exists.result)
       })
     })
   }
-  def checkProfileOranization(profileEmail: String, organizationName:String): Future[Boolean] = {
+  def checkProfileOrganization(profileEmail: String, organizationName:String): Future[Boolean] = {
     dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).flatMap( o =>{
       dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).flatMap( p =>{
         dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === o.head.id && uo.profileId === p.head.id)).exists.result)
