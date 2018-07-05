@@ -75,36 +75,32 @@ class MariadbOrganizationDAO extends OrganizationDAO {
   }
   
   def addProfile(profileEmail: String, organizationId: UUID, role: String): Future[Option[Organization]] = {
-    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
-      o.head.id}), 10 second)
-    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
-      p.head.id }), 10 second )
-    val dummy = Await.result(dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId, po.role)) += ((profile_id, organization_id, role)))), 10 second)
-      find(organization_id) 
+    dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o =>{
+      dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).flatMap( p =>{
+        dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId, po.role)) += ((p.head.id, o.head.id, role)))).flatMap(op => withProfile(o.head.id))
+    })})
     }
 
   def addProfile(profileEmail: String, organizationName: String, role: String): Future[Option[Organization]] = {
-    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).map( o =>{
-      o.head.id}), 10 second)
-    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
-      p.head.id }), 10 second )
-    val dummy = Await.result(dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId, po.role)) += ((profile_id, organization_id, role)))), 10 second)
-      find(organization_id) 
-    }
+    dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).flatMap( o =>{
+      dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).flatMap( p =>{
+        dbConfig.db.run((profileOrganizations.map(po => (po.profileId, po.organizationId, po.role)) += ((p.head.id, o.head.id, role)))).flatMap(op => withProfile(o.head.id))
+    })})
+  }
   
   def checkProfileOranization(profileEmail: String, organizationId:UUID): Future[Boolean] = {
-    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).map( o =>{
-      o.head.id}), 10 second)
-    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
-      p.head.id }), 10 second )
-    dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === organization_id && uo.profileId === profile_id)).exists.result)
+     dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o =>{
+      dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).flatMap( p =>{
+        dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === o.head.id && uo.profileId === p.head.id)).exists.result)
+      })
+    })
   }
   def checkProfileOranization(profileEmail: String, organizationName:String): Future[Boolean] = {
-    val organization_id = Await.result(dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).map( o =>{
-      o.head.id}), 10 second)
-    val profile_id = Await.result(dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).map( p =>{
-      p.head.id }), 10 second )
-    dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === organization_id && uo.profileId === profile_id)).exists.result)
+    dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).flatMap( o =>{
+      dbConfig.db.run((profiles.filter(p => p.email === profileEmail)).result).flatMap( p =>{
+        dbConfig.db.run((profileOrganizations.filter(uo => uo.organizationId === o.head.id && uo.profileId === p.head.id)).exists.result)
+      })
+    })
   }
 
   def withProfile(id: Long): Future[Option[Organization]] = {
