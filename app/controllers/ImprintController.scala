@@ -17,6 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future, Await}
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import play.twirl.api.Html
 import models._
 class ImprintController @Inject()(
   val messagesApi: MessagesApi,
@@ -29,7 +30,7 @@ class ImprintController @Inject()(
 
   def imprint = Action.async { implicit request =>
     
-    val vcaSPHtml = Await.result(organizationService.withBankaccounts("Viva con Agua de Sankt Pauli e.V.").flatMap {
+    val vcaSPHtml:Future[Html] = organizationService.withBankaccounts("Viva con Agua de Sankt Pauli e.V.").flatMap {
       case Some(orga) => userService.profileListByRole(orga.publicId, "executive").flatMap {
         case Some(executive) => userService.profileListByRole(orga.publicId, "medien").flatMap {
           case Some(visdp) => userService.profileListByRole(orga.publicId, "representative").flatMap {
@@ -44,9 +45,9 @@ class ImprintController @Inject()(
         case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
       }
       case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
-    }, 10 second)
+    }
 
-    val vcaWaterHtml = Await.result(organizationService.find("Viva con Agua Wasser GmbH").flatMap {
+    val vcaWaterHtml:Future[Html] = organizationService.find("Viva con Agua Wasser GmbH").flatMap {
       case Some(orga) => {
         userService.profileListByRole(orga.publicId, "executive").flatMap {
           case Some(p) => Future.successful(views.html.imprints.imprintGMBH(orga, p))
@@ -54,13 +55,15 @@ class ImprintController @Inject()(
         } 
       }
       case _ => Future.successful(views.html.imprints.error("Vica con Agua Wasser GmbH"))
-    }, 10 second)
-
-    val vcaDataHtml = Await.result(organizationService.find("Herting Oberbeck Datenschutz GmbH").flatMap {
+    }
+    val vcaDataHtml:Future[Html] = organizationService.find("Herting Oberbeck Datenschutz GmbH").flatMap {
       case Some(orga) => Future.successful(views.html.imprints.imprintObDb(orga)) 
       case _ => Future.successful(views.html.imprints.error("Herting Oberbeck Datenschutz GmbH"))
-    }, 10 second)
-    
-    Future.successful(Ok(dispenserService.getTemplate(views.html.imprints.imprintBase(List(vcaSPHtml, vcaWaterHtml, vcaDataHtml)))))
+    }    
+
+    vcaSPHtml.flatMap(vca => vcaWaterHtml.flatMap(gmbh => vcaDataHtml.flatMap(data =>
+      Future.successful(Ok(dispenserService.getTemplate(views.html.imprints.imprintBase(List(vca, gmbh, data)))))
+      )))
+    //Future.successful(Ok(dispenserService.getTemplate(views.html.imprints.imprintBase(List(vcaSPHtml, vcaWaterHtml, vcaDataHtml)))))
   }
 }
