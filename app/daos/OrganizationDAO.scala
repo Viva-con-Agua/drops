@@ -183,14 +183,12 @@ class MariadbOrganizationDAO extends OrganizationDAO {
   def addBankaccount(bankaccount: Bankaccount, organizationId: UUID): Future[Option[Organization]] = {
     dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o => {
       dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
-    })
-    find(organizationId)
+    }).flatMap(ob => withBankaccounts(organizationId))
   }
    def addBankaccount(bankaccount: Bankaccount, organizationName: String): Future[Option[Organization]] = {
     dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).flatMap( o => {
       dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
-    })
-    find(organizationName)
+    }).flatMap(ob => withBankaccounts(organizationName))
   }
  
   /*  
