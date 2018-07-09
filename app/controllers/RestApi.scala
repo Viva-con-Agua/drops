@@ -25,7 +25,6 @@ import com.mohiva.play.silhouette.api.util.{PasswordHasher, PasswordInfo}
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 import daos._
-import models.database.{AccessRight, TaskDB}
 import models.dbviews.{Crews, Users}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
@@ -340,7 +339,7 @@ class RestApi @Inject() (
   }}
 
   //ToDo: Query parameter optional?
-  def getAccessRights(query: String, f: String) = Action.async{ implicit  request => {
+  def getAccessRights() = Action.async{ implicit  request => {
     accessRightDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
