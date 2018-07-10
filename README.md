@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.27.24 (2018-06-27)
+## Version 0.27.25 (2018-07-04)
+* [[I] #221 - Pool1 OES trouble](https://github.com/Viva-con-Agua/drops/issues/221)
 * [[F] #93 - Add generic filter for Crews and Users](https://github.com/Viva-con-Agua/drops/issues/93)
 * [[F] #32 -  Organizations are configurable](https://github.com/Viva-con-Agua/drops/issues/32)
 * [[I] #222 - Allow simple filter OES](https://github.com/Viva-con-Agua/drops/issues/222)

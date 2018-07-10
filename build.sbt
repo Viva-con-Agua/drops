@@ -4,7 +4,6 @@ name := """Drops"""
 
 version := "0.27.25"
 
-
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
 scalaVersion := "2.11.7"
