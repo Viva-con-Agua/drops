@@ -359,7 +359,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.27.25 (2018-07-04)
+## Version 0.28.25 (2018-07-10)
+* [[F] #227 - Impressum: Action for handling Impressum](https://github.com/Viva-con-Agua/drops/issues/227)
 * [[I] #221 - Pool1 OES trouble](https://github.com/Viva-con-Agua/drops/issues/221)
 * [[F] #93 - Add generic filter for Crews and Users](https://github.com/Viva-con-Agua/drops/issues/93)
 * [[F] #32 -  Organizations are configurable](https://github.com/Viva-con-Agua/drops/issues/32)
