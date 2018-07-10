@@ -2,10 +2,10 @@ package daos.schema
 
 import slick.driver.MySQLDriver.api._
 
-import models.database.BankaccountDB
+import models.database.BankAccountDB
 
 
-class BankaccountTableDef(tag: Tag) extends Table[BankaccountDB](tag, "Bankaccount") {
+class BankAccountTableDef(tag: Tag) extends Table[BankAccountDB](tag, "Bankaccount") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def bankName = column[String]("bankName")
   def number = column[Option[String]]("number")
@@ -15,7 +15,7 @@ class BankaccountTableDef(tag: Tag) extends Table[BankaccountDB](tag, "Bankaccou
   def organization_id = column[Long]("organization_id")
 
   def * =
-    (id, bankName, number, blz, iban, bic, organization_id) <> (BankaccountDB.tupled, BankaccountDB.unapply)
+    (id, bankName, number, blz, iban, bic, organization_id) <> (BankAccountDB.tupled, BankAccountDB.unapply)
   
   def organizationKey = foreignKey("organization_id", organization_id, TableQuery[OrganizationTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 }

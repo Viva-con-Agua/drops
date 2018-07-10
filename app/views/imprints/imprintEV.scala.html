@@ -1,0 +1,32 @@
+@(organization: Organization, executive: Profile, profiles: List[Profile], visdp: Profile, bankaccount: BankAccount)
+<p><span class="highlight blue">@organization.name</span><br>
+@organization.address</p>
+
+<p>Telefon: @organization.telefon<br>
+Telefax: @organization.fax<br>
+Email: @organization.email</p>
+
+<p>Gesch&auml;ftsf&uuml;hrung: @executive.supporter.name<br>
+@organization.executive</p>
+
+<p>Vertretungsberechtigter Vorstand:<br>
+@for(profile <- profiles){
+	@profile.supporter.name
+} 
+</p>
+
+<h2>Spendenkonto</h2>
+
+<p>Kontonummer @bankaccount.number<br>
+BLZ: @bankaccount.blz (@bankaccount.bankName) </p>
+
+<p>IBAN: @bankaccount.iban<br>
+BIC: @bankaccount.bic</p>
+
+<p style="padding-top: 0px; border-top-width: 0px;">Viva con Agua de Sankt Pauli e.V.&nbsp;verfolgt ausschlie&szlig;lich und unmittelbar gemeinn&uuml;tzige und mildt&auml;tige Zwecke im Sinne des Abschnitts 'steuerbeg&uuml;nstigte Zwecke' der Abgabenordnung und ist berechtigt, Spendenquittungen auszustellen.</p>
+
+<p style="padding-top: 0px; border-top-width: 0px;"><b>V.i.S.d.P.:</b><br>
+@visdp.supporter.name<br>
+@organization.name<br>
+Medien- &amp; &Ouml;ffentlichkeitsarbeit</p>
+<p>F&uuml;r redaktionelle Beitr&auml;ge, die namentlich gekennzeichnet sind, liegt die Verantwortung im Sinne des Presserechts bei der Autorin oder beim Autor.</p>

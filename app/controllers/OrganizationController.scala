@@ -55,10 +55,22 @@ class OrganizationController @Inject() (
     }
 
     def addProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
-      organizationService.checkProfileOranization(request.body.email, request.body.publicId).flatMap {
+      organizationService.checkProfileOrganization(request.body.email, request.body.publicId).flatMap {
         case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
         case false => {
-          organizationService.addProfile(request.body.email, request.body.publicId).flatMap {
+          organizationService.addProfile(request.body.email, request.body.publicId, request.body.role).flatMap {
+            case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
+            case _ => Future.successful(BadRequest("error"))
+          }
+        }
+      }
+    }
+
+    def addProfileName = Action.async(validateJson[ProfileOrganizationName]) { implicit request =>
+      organizationService.checkProfileOrganization(request.body.email, request.body.name).flatMap {
+        case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
+        case false => {
+          organizationService.addProfile(request.body.email, request.body.name, request.body.role).flatMap {
             case Some(orga) => Future.successful(Ok(Json.toJson(orga)))
             case _ => Future.successful(BadRequest("error"))
           }
@@ -98,7 +110,7 @@ class OrganizationController @Inject() (
     }
 
     def deleteProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
-      organizationService.checkProfileOranization(request.body.email, request.body.publicId).flatMap {
+      organizationService.checkProfileOrganization(request.body.email, request.body.publicId).flatMap {
         case false => Future.successful(BadRequest(Messages("organization.error.profileInv")))
         case true => {
           organizationService.deleteProfile(request.body.publicId, request.body.email)
@@ -107,20 +119,29 @@ class OrganizationController @Inject() (
       }
     }
 
-    def addBankaccount = Action.async(validateJson[BankaccountOrganization]) { implicit request =>
+    def addBankAccount = Action.async(validateJson[BankAccountOrganization]) { implicit request =>
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
-          organizationService.addBankaccount(request.body.bankaccount, request.body.publicId)
+          organizationService.addBankAccount(request.body.bankaccount, request.body.publicId)
+          Future.successful(Ok)
+        }
+        case _ => Future.successful(BadRequest(Messages("error")))
+      }
+    }
+   def addBankAccountName = Action.async(validateJson[BankAccountOrganizationName]) { implicit request =>
+      organizationService.find(request.body.name).flatMap {
+        case Some (orga) => {
+          organizationService.addBankAccount(request.body.bankaccount, request.body.name)
           Future.successful(Ok)
         }
         case _ => Future.successful(BadRequest(Messages("error")))
       }
     }
 
-    def withBankaccounts = Action.async(validateJson[OrganizationUUID]) { implicit request =>
+    def withBankAccounts = Action.async(validateJson[OrganizationUUID]) { implicit request =>
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
-          organizationService.withBankaccounts(request.body.publicId).flatMap {
+          organizationService.withBankAccounts(request.body.publicId).flatMap {
             case Some (orga) => Future.successful(Ok(Json.toJson(orga)))
             case _ => Future.successful(BadRequest("error"))
           }

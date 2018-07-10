@@ -13,9 +13,10 @@ class OrganizationTableDef(tag: Tag) extends Table[OrganizationDB](tag, "Organiz
   def telefon = column[String]("telefon")
   def fax = column[String]("fax")
   def email = column[String]("email")
+  def typ = column[String]("typ")
   def executive = column[String]("executive")
   def abbreviation = column[String]("abbreviation")
-  def impressum = column[String]("impressum")
+  def impressum = column[Boolean]("impressum")
 
-  def * = (id, publicId, name, address, telefon, fax, email, executive, abbreviation, impressum)<>((OrganizationDB.mapperTo _).tupled, OrganizationDB.unapply)
+  def * = (id, publicId, name, address, telefon, fax, email, typ, executive, abbreviation, impressum)<>((OrganizationDB.mapperTo _).tupled, OrganizationDB.unapply)
 }

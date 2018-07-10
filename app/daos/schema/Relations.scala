@@ -32,7 +32,8 @@ class UserTaskTableDef(tag: Tag) extends Table[(Long, Long)](tag, "User_Task"){
 class ProfileOrganizationTableDef(tag: Tag) extends Table[(Long, Long)](tag, "Profile_Organization"){
   def profileId = column[Long]("profile_id")
   def organizationId = column[Long]("organization_id") 
-  
+  def role = column[String]("role")
+
   def * = (profileId, organizationId)
   
   def pk = primaryKey("primaryKey", (profileId, organizationId))
