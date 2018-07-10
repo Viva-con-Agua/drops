@@ -7,7 +7,7 @@ import play.api.libs.json.Json
 
 
 
-trait BankaccountBase {
+trait BankAccountBase {
   val bankName: String
   val number: Option[String]
   val blz: Option[String]
@@ -15,16 +15,16 @@ trait BankaccountBase {
   val bic: String
 }
 
-case class Bankaccount(
+case class BankAccount(
   bankName: String,
   number: Option[String],
   blz: Option[String],
   iban: String,
   bic: String
-)extends BankaccountBase
+)extends BankAccountBase
 
-object Bankaccount {
-  implicit val bankaccountJsonFormat = Json.format[Bankaccount]
+object BankAccount {
+  implicit val bankaccountJsonFormat = Json.format[BankAccount]
 }
 
 trait OrganizationBase {
@@ -37,7 +37,7 @@ trait OrganizationBase {
   val executive: String
   val abbreviation: String
   val impressum: Boolean
-  val bankaccount: Option[Set[Bankaccount]]
+  val bankaccount: Option[Set[BankAccount]]
   val profile: Option[Set[String]]
 }
 
@@ -51,7 +51,7 @@ case class OrganizationStub(
   executive: String,
   abbreviation: String,
   impressum: Boolean,
-  bankaccount: Option[Set[Bankaccount]],
+  bankaccount: Option[Set[BankAccount]],
   profile: Option[Set[String]]
 
 ) extends OrganizationBase {
@@ -69,7 +69,7 @@ case class Organization(
   override val executive: String,
   override val abbreviation: String,
   override val impressum: Boolean,
-  override val bankaccount: Option[Set[Bankaccount]],
+  override val bankaccount: Option[Set[BankAccount]],
   override val profile: Option[Set[String]]
 ) extends OrganizationBase {
   def toOrganizationStub(): OrganizationStub =
@@ -128,34 +128,34 @@ object ProfileOrganization{
   implicit val profileOrganizationJsonFormat = Json.format[ProfileOrganization]
 }
 
-trait BankaccountOrganizationBase{
+trait BankAccountOrganizationBase{
   val publicId: UUID
-  val bankaccount: Bankaccount
+  val bankaccount: BankAccount
 }
 
-case class BankaccountOrganization(
+case class BankAccountOrganization(
   publicId: UUID,
-  bankaccount: Bankaccount
-  )extends BankaccountOrganizationBase
+  bankaccount: BankAccount
+  )extends BankAccountOrganizationBase
 
 
-object BankaccountOrganization{
-  implicit val bankaccountOrganizationJsonFormat = Json.format[BankaccountOrganization]
+object BankAccountOrganization{
+  implicit val bankaccountOrganizationJsonFormat = Json.format[BankAccountOrganization]
 }
 
-trait BankaccountOrganizationNameBase{
+trait BankAccountOrganizationNameBase{
   val name: String
-  val bankaccount: Bankaccount
+  val bankaccount: BankAccount
 }
 
-case class BankaccountOrganizationName(
+case class BankAccountOrganizationName(
   name: String,
-  bankaccount: Bankaccount
-  )extends BankaccountOrganizationNameBase
+  bankaccount: BankAccount
+  )extends BankAccountOrganizationNameBase
 
 
-object BankaccountOrganizationName{
-  implicit val bankaccountOrganizationJsonFormat = Json.format[BankaccountOrganizationName]
+object BankAccountOrganizationName{
+  implicit val bankaccountOrganizationJsonFormat = Json.format[BankAccountOrganizationName]
 }
 
 

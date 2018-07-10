@@ -7,10 +7,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import play.api.Play
 import play.api.Logger
-import models.{Organization, Profile, Bankaccount}
+import models.{Organization, Profile, BankAccount}
 import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB}
 import models.converter.{OrganizationConverter}
-import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef, BankaccountTableDef }
+import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef, BankAccountTableDef }
 
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile

@@ -1,8 +1,8 @@
 package models.database
 
-import models.Bankaccount
+import models.BankAccount
 
-case class BankaccountDB(
+case class BankAccountDB(
     id: Long,
     bankName: String,
     number: Option[String],
@@ -11,7 +11,7 @@ case class BankaccountDB(
     bic: String,
     organization_id: Long
   ){
-    def toBankaccount : Bankaccount = Bankaccount(this.bankName, this.number, this.blz, this.iban, this.bic)
+    def toBankAccount : BankAccount = BankAccount(this.bankName, this.number, this.blz, this.iban, this.bic)
   }
-object BankaccountDB extends ((Long, String, Option[String], Option[String], String, String, Long) => BankaccountDB){
+object BankAccountDB extends ((Long, String, Option[String], Option[String], String, String, Long) => BankAccountDB){
 }

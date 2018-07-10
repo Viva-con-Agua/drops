@@ -7,10 +7,10 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import play.api.Play
 import play.api.Logger
-import models.{Organization, Profile, Bankaccount}
-import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB, BankaccountDB}
+import models.{Organization, Profile, BankAccount}
+import models.database.{OrganizationDB, ProfileDB, ProfileOrganizationDB, BankAccountDB}
 import models.converter.{OrganizationConverter}
-import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef, BankaccountTableDef }
+import daos.schema.{OrganizationTableDef, ProfileTableDef, ProfileOrganizationTableDef, BankAccountTableDef }
 
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
@@ -34,11 +34,11 @@ trait OrganizationDAO {
   def withProfileByRole(id: UUID, role: String): Future[Option[Organization]]
   def delete(id: UUID): Future[Int]
   def deleteProfile(id: UUID, email: String): Future[Int]
-  def withBankaccounts(id: Long): Future[Option[Organization]]
-  def withBankaccounts(publicId: UUID): Future[Option[Organization]]
-  def withBankaccounts(name: String): Future[Option[Organization]]
-  def addBankaccount(bankaccount: Bankaccount, publicId: UUID): Future[Option[Organization]]
-  def addBankaccount(bankaccount: Bankaccount, name: String): Future[Option[Organization]]
+  def withBankAccounts(id: Long): Future[Option[Organization]]
+  def withBankAccounts(publicId: UUID): Future[Option[Organization]]
+  def withBankAccounts(name: String): Future[Option[Organization]]
+  def addBankAccount(bankaccount: BankAccount, publicId: UUID): Future[Option[Organization]]
+  def addBankAccount(bankaccount: BankAccount, name: String): Future[Option[Organization]]
 }
 
 class MariadbOrganizationDAO extends OrganizationDAO {
@@ -46,7 +46,7 @@ class MariadbOrganizationDAO extends OrganizationDAO {
   val organizations = TableQuery[OrganizationTableDef]
   val profileOrganizations = TableQuery[ProfileOrganizationTableDef]
   val profiles = TableQuery[ProfileTableDef]
-  val bankaccounts = TableQuery[BankaccountTableDef]
+  val bankaccounts = TableQuery[BankAccountTableDef]
 
   def all(): Future[Seq[Organization]] = ???
  
@@ -153,42 +153,42 @@ class MariadbOrganizationDAO extends OrganizationDAO {
    *
    */
   
-  def withBankaccounts(id: Long): Future[Option[Organization]] = {
+  def withBankAccounts(id: Long): Future[Option[Organization]] = {
     val action = for {
       o <- organizations.filter(o => o.id === id)
       b <- bankaccounts.filter(b => b.organization_id === id)
 
     }yield (o, b)
-    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
+    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankAccountFromResult(ob)})
   }
   
-  def withBankaccounts(publicId: UUID): Future[Option[Organization]] = {
+  def withBankAccounts(publicId: UUID): Future[Option[Organization]] = {
     val action = for {
       o <- organizations.filter(o => o.publicId === publicId)
       b <- bankaccounts.filter(b => b.organization_id === o.id)
 
     }yield (o, b)
-    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
+    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankAccountFromResult(ob)})
   }
-  def withBankaccounts(name: String): Future[Option[Organization]] = {
+  def withBankAccounts(name: String): Future[Option[Organization]] = {
     val action = for {
       o <- organizations.filter(o => o.name === name)
       b <- bankaccounts.filter(b => b.organization_id === o.id)
 
     }yield (o, b)
-    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankaccountFromResult(ob)})
+    dbConfig.db.run(action.result).map(ob => {OrganizationConverter.buildOrganizationBankAccountFromResult(ob)})
   }
 
 
-  def addBankaccount(bankaccount: Bankaccount, organizationId: UUID): Future[Option[Organization]] = {
+  def addBankAccount(bankaccount: BankAccount, organizationId: UUID): Future[Option[Organization]] = {
     dbConfig.db.run(organizations.filter(o => o.publicId === organizationId).result).flatMap( o => {
-      dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
-    }).flatMap(ob => withBankaccounts(organizationId))
+      dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankAccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
+    }).flatMap(ob => withBankAccounts(organizationId))
   }
-   def addBankaccount(bankaccount: Bankaccount, organizationName: String): Future[Option[Organization]] = {
+   def addBankAccount(bankaccount: BankAccount, organizationName: String): Future[Option[Organization]] = {
     dbConfig.db.run(organizations.filter(o => o.name === organizationName).result).flatMap( o => {
-      dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankaccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
-    }).flatMap(ob => withBankaccounts(organizationName))
+      dbConfig.db.run((bankaccounts returning bankaccounts.map(_.id) +=  BankAccountDB(0, bankaccount.bankName, bankaccount.number, bankaccount.blz, bankaccount.iban, bankaccount.bic, o.head.id)))
+    }).flatMap(ob => withBankAccounts(organizationName))
   }
  
   /*  

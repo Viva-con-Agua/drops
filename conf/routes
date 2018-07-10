@@ -77,8 +77,8 @@ DELETE   /organization/delete  																controllers.OrganizationControlle
 POST   /organization/get																		controllers.OrganizationController.getOrganization
 POST   /organization/withProfile														controllers.OrganizationController.getOrganizationWithProfile
 POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
-POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankaccountName
-POST	 /organization/withBankaccounts												controllers.OrganizationController.withBankaccounts
+POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankAccountName
+POST	 /organization/withBankaccounts												controllers.OrganizationController.withBankAccounts
 
 # OAuth 2 Server
 GET     /oauth2/access_token                                controllers.OAuth2Controller.accessToken

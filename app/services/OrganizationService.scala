@@ -13,7 +13,7 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, TaskDao, OrganizationDAO}
 import models.AccessRight
-import models.{Organization, Bankaccount}
+import models.{Organization, BankAccount}
 import models.database.OrganizationDB
 import utils.Nats
 
@@ -31,9 +31,9 @@ class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: Nats
   def withProfileByRole(id: UUID, role: String) = organizationDAO.withProfileByRole(id, role)
   def delete(id: UUID) = organizationDAO.delete(id)
   def deleteProfile(id: UUID, email: String) = organizationDAO.deleteProfile(id, email)
-  def addBankaccount(bankaccount: Bankaccount, organizationId: UUID) = organizationDAO.addBankaccount(bankaccount, organizationId)
-  def addBankaccount(bankaccount: Bankaccount, organizationName: String) = organizationDAO.addBankaccount(bankaccount, organizationName)
-  def withBankaccounts(publicId: UUID) = organizationDAO.withBankaccounts(publicId)
-  def withBankaccounts(name: String) = organizationDAO.withBankaccounts(name)
+  def addBankAccount(bankaccount: BankAccount, organizationId: UUID) = organizationDAO.addBankAccount(bankaccount, organizationId)
+  def addBankAccount(bankaccount: BankAccount, organizationName: String) = organizationDAO.addBankAccount(bankaccount, organizationName)
+  def withBankAccounts(publicId: UUID) = organizationDAO.withBankAccounts(publicId)
+  def withBankAccounts(name: String) = organizationDAO.withBankAccounts(name)
 }
 

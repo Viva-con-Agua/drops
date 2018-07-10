@@ -30,7 +30,7 @@ class ImprintController @Inject()(
 
   def imprint = Action.async { implicit request =>
     
-    val vcaSPHtml:Future[Html] = organizationService.withBankaccounts("Viva con Agua de Sankt Pauli e.V.").flatMap {
+    val vcaSPHtml:Future[Html] = organizationService.withBankAccounts("Viva con Agua de Sankt Pauli e.V.").flatMap {
       case Some(orga) => userService.profileListByRole(orga.publicId, "executive").flatMap {
         case Some(executive) => userService.profileListByRole(orga.publicId, "medien").flatMap {
           case Some(visdp) => userService.profileListByRole(orga.publicId, "representative").flatMap {

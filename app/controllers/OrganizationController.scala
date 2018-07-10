@@ -119,29 +119,29 @@ class OrganizationController @Inject() (
       }
     }
 
-    def addBankaccount = Action.async(validateJson[BankaccountOrganization]) { implicit request =>
+    def addBankAccount = Action.async(validateJson[BankAccountOrganization]) { implicit request =>
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
-          organizationService.addBankaccount(request.body.bankaccount, request.body.publicId)
+          organizationService.addBankAccount(request.body.bankaccount, request.body.publicId)
           Future.successful(Ok)
         }
         case _ => Future.successful(BadRequest(Messages("error")))
       }
     }
-   def addBankaccountName = Action.async(validateJson[BankaccountOrganizationName]) { implicit request =>
+   def addBankAccountName = Action.async(validateJson[BankAccountOrganizationName]) { implicit request =>
       organizationService.find(request.body.name).flatMap {
         case Some (orga) => {
-          organizationService.addBankaccount(request.body.bankaccount, request.body.name)
+          organizationService.addBankAccount(request.body.bankaccount, request.body.name)
           Future.successful(Ok)
         }
         case _ => Future.successful(BadRequest(Messages("error")))
       }
     }
 
-    def withBankaccounts = Action.async(validateJson[OrganizationUUID]) { implicit request =>
+    def withBankAccounts = Action.async(validateJson[OrganizationUUID]) { implicit request =>
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
-          organizationService.withBankaccounts(request.body.publicId).flatMap {
+          organizationService.withBankAccounts(request.body.publicId).flatMap {
             case Some (orga) => Future.successful(Ok(Json.toJson(orga)))
             case _ => Future.successful(BadRequest("error"))
           }

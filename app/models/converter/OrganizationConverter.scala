@@ -37,12 +37,12 @@ object OrganizationConverter {
     }
   }
 
-  def buildOrganizationBankaccountFromResult(result: Seq[(OrganizationDB, BankaccountDB)]) : Option[Organization] = {
+  def buildOrganizationBankAccountFromResult(result: Seq[(OrganizationDB, BankAccountDB)]) : Option[Organization] = {
     if(result.headOption.isDefined) {
       val organization = result.headOption.get._1
-      val bankaccountList = result.seq.foldLeft(Set[Bankaccount]()) { 
+      val bankaccountList = result.seq.foldLeft(Set[BankAccount]()) { 
         (bankaccountList, dbEntry) => {
-          bankaccountList ++ List(dbEntry._2.toBankaccount)
+          bankaccountList ++ List(dbEntry._2.toBankAccount)
         }
       }
       Option(
