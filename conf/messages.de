@@ -121,6 +121,7 @@ error.profileUnauth=Auf das Tropfenprofil kann erst nach dem reinloggen zugegrif
 error.sex.notAllowed=Deine Sexualität kennt das System noch nicht. Gib bitte eine bekannte an (männlich, weiblich, weitere) und rege eine Diskussion im Kosmos an.
 error.telphone.wrongFormat=Formatfehler, erlaubt sind beispielsweise: 0167/123456 oder +176/123456
 error.profile.image.upload=Das neue Tropfenbild des Profils konnte nicht hochgeladen werden! Versuche es nochmal!
+error.oauth2.not.authenticated=Kein Tropfen zu finden! Hier ist keiner angemeldet.
 
 
 success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!
@@ -148,6 +149,10 @@ oauth2server.clientId.notFound=Keinen OAuth 2 Client gefunden, der zu der angege
 oauth2server.clientSecret.missing=Kein OAuth 2 Client Secret angegeben!
 oauth2server.clientId.missing=Keine OAuth 2 Client ID angegeben!
 oauth2server.security.method.notImplemented=Konfigurierte Methode zur Absicherung der Webservices ''{0}'' ist bisher nicht implementiert. Bitte ändere den Wert der Variablen ''drops.ws.security'' in deiner application.conf.
+oauth2server.responseTypeUnsupported=Der erwartete Response Type wird nicht unterstützt. 
+oauth2server.redirectUriDoesNotMatch=Die Redirect URI ist falsch!
+oauth2server.clientHasNoRedirectURI=Die Redirect URI für den angegebenen Client fehlt. Diese ist aber erforderlich für den gewählten Grant type.
+oauth2server.generic.error=Generischer Fehler der OAuth2 Bibliothek. Beachte die zusätzlich angefügte Fehlerbeschreibung.
 
 oauth2.register.title=Registriere Oauth2 Client
 oauth2.register.legend=Registriere Oauth2 Client

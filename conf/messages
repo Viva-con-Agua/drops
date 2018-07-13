@@ -122,6 +122,7 @@ error.sex.notAllowed=Given sexuality is unknown, please enter a known one (male,
 error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123456 or +176/123456
 error.profile.image.upload=Profile image has not been uploaded! Try again!
 error.pool1userinit=We send a mail for rest your passwort.
+error.oauth2.not.authenticated=Currently, there is no authenticated user.
 
 success.profile.image.upload=Profile image was successfully uploaded!
 
@@ -147,6 +148,10 @@ oauth2server.clientId.notFound=No client application is registered with the give
 oauth2server.clientSecret.missing=No client secret is given.
 oauth2server.clientId.missing=No client ID is given.
 oauth2server.security.method.notImplemented=Configured security method ''{0}'' is not implemented yet. Please change ''drops.ws.security'' in your application.conf.
+oauth2server.responseTypeUnsupported=The expected response type is not supported.
+oauth2server.redirectUriDoesNotMatch=Wrong redirect URI!
+oauth2server.clientHasNoRedirectURI=Redirect URI for the selected client is missing, but required for the selected grant type.
+oauth2server.generic.error=Generic error from OAuth2 library. See additional key for further information.
 
 oauth2.register.title=Register Oauth2 Client
 oauth2.register.legend=Register Oauth2 Client
