@@ -68,19 +68,15 @@ class OAuth2Controller @Inject() (
       case Some(user) => oauthClientDao.find(clientId, None, "authorization_code").flatMap(_ match {
         case Some(client) => oauthCodeDao.save(OauthCode(user, client)).map(
           code => code.client.redirectUri.map((uri) => Redirect(uri + code.code)).getOrElse(
-            BadRequest(Messages("oauth2server.clientHasNoRedirectURI"))
+            generateJsonErrorMsg(request, play.api.mvc.Results.BadRequest, "oauth2server.clientHasNoRedirectURI")
           )
         )
-        case _ => Future.successful(BadRequest(Messages("oauth2server.clientId.notFound")))
+        case _ => Future.successful(generateJsonErrorMsg(request, play.api.mvc.Results.BadRequest, "oauth2server.clientId.notFound"))
       })
       case _ => ajax match {
-        case Some(flag) if flag => Future.successful(Unauthorized(Json.obj(
-          "http_error_code" -> 401,
-          "internal_error_code" -> "401.OAuth2Server",
-          "msg" -> "Currently, there is no authenticated user.",
-          "msg_i18n" -> "error.oauth2.not.authenticated",
-          "additional_information" -> Json.obj()
-        )))
+        case Some(flag) if flag => Future.successful(
+          generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, "error.oauth2.not.authenticated", Map("oauth2_client" -> clientId))
+        )
         case _ => Future.successful(Redirect(routes.Auth.signIn))
       }
     }
@@ -115,48 +111,39 @@ class OAuth2Controller @Inject() (
                   val queryStringState = "state=" + state
                   Redirect(uri + "?" + queryStringCode + "&" + queryStringState)
                 }).getOrElse(
-                  generateErrorMsg(request, play.api.mvc.Results.BadRequest, "Incomplete OAuth Client", Messages("oauth2server.clientHasNoRedirectURI"))
+                  generateJsonErrorMsg(request, play.api.mvc.Results.BadRequest, "oauth2server.clientHasNoRedirectURI")
                 )
               )
-              case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.Forbidden, "Invalid OAuth Client", Messages("oauth2server.redirectUriDoesNotMatch")))
+              case _ => Future.successful(generateJsonErrorMsg(request, play.api.mvc.Results.Forbidden, "oauth2server.redirectUriDoesNotMatch"))
             }
-            case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.NotFound, "Invalid OAuth Client", Messages("oauth2server.clientId.notFound")))
+            case _ => Future.successful(generateJsonErrorMsg(request, play.api.mvc.Results.NotFound, "oauth2server.clientId.notFound"))
           })
-          case _ => Future.successful(generateErrorMsg(request, play.api.mvc.Results.BadRequest, "Unsupported Response Type", Messages("oauth2server.responseTypeUnsupported", "code")))
+          case _ => Future.successful(generateJsonErrorMsg(request, play.api.mvc.Results.BadRequest, "oauth2server.responseTypeUnsupported"))
         }
         case _ => ajax match {
-          case Some(flag) if flag => Future.successful(Unauthorized(Json.obj(
-            "http_error_code" -> 401,
-            "internal_error_code" -> "401.OAuth2Server",
-            "msg" -> "Currently, there is no authenticated user.",
-            "msg_i18n" -> "error.oauth2.not.authenticated",
-            "additional_information" -> Json.obj()
-          )))
+          case Some(flag) if flag => Future.successful(
+            generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, "error.oauth2.not.authenticated", Map("oauth2_client" -> client_id))
+          )
           case _ => Future.successful(Redirect(routes.Auth.signIn))
         }
       }
     }
 
-  protected def generateJsonErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+  protected def generateJsonErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, additional: Map[String, String] = Map()) : Result =
     request.accepts("application/json") match {
       case true => code(Json.obj(
-        "status" -> "error",
-        "code" -> code.header.status,
-        "type" -> typ,
-        "msg" -> msg
+        "internal_error_code" -> (code.header.status + ".OAuth2Server"),
+        "http_error_code" -> code.header.status,
+        "msg_i18n" -> msg,
+        "msg" -> Messages(msg),
+        "additional_information" -> Json.toJson(additional)
       )).as("application/json")
-      case _ => generateErrorMsg(request, code, typ, msg)
+      case _ => generateErrorMsg(request, code, msg, additional)
     }
 
-  protected def generateErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
-//    request.accepts("application/json") match {
-//      case true => code(Json.obj(
-//        "status" -> "error",
-//        "code" -> code.header.status,
-//        "type" -> typ,
-//        "msg" -> msg
-//      )).as("application/json")
-//      case _ =>
-//    }
-    code(msg)
+  protected def generateJsonErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+    generateJsonErrorMsg(request, code, "oauth2server.generic.error", Map("type" -> typ, "description" -> msg))
+
+  protected def generateErrorMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, additional: Map[String, String] = Map()) : Result =
+    code(Messages(msg))
 }

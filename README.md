@@ -316,12 +316,18 @@ Implementation
 --------------
 Implementing the handshake is very simple and consists of three steps:
 
-1.  Implement an URL path pointing to an action of your service that redirects 
-(<code>HTTP 303</code> or <code>HTTP 302</code>) to <code>``<drops_url>/oauth2/code/get/<client_id>``</code>. 
-The variables <code>``<drops_url>``</code> and <code>``<client_id>``</code> 
-have been defined during preparation phase.
+(1)  Implement an URL path pointing to an action of your service that redirects 
+(<code>HTTP 303</code> or <code>HTTP 302</code>) to: 
+```
+<drops_url>/oauth2/code/get?client_id=<client_id>&response_type=code&state=<state>&redirect_uri=<redirect_uri>
+``` 
+The variables <code>``<drops_url>``</code>, <code>``<client_id>``</code> and <code>``<redirect_uri>``</code> 
+have been defined during preparation phase. <code>``state``</code> can be used to save the current state of the OAuth2 
+client across redirects. Additionally, you can add the query paramater <code>``ajax``</code> indicating if the current 
+redirects was issued by an ajax request. In that case no login screen will be shown, but a JSON encoded error message is 
+returned.
 
-2.  The action handling the <code>redirectUri</code> has to be implemented. 
+(2)  The action handling the <code>redirectUri</code> has to be implemented. 
 This action will be accessed by an HTTP redirect initiated by the Drops service.
 It receives a code by a query parameter or inside the URL path and uses this code
 to receive an OAuth 2 <code>AccessToken</code>. For this purpose it calls the 
@@ -332,7 +338,7 @@ and the following query parameter:
   *  <code>``code=<received_code>``</code>
   *  <code>``redirect_uri=<redirectUri>``</code>
 
-3.  The responded <code>AccessToken</code> can be used to request the users profile,
+(3)  The responded <code>AccessToken</code> can be used to request the users profile,
 by requesting another webservice supplied by the Drops service:
   *  endpoint: <code>``<drops_url>/oauth2/rest/profile``</code>
   *  query string: <code>``access_token=<access_token>``</code>
