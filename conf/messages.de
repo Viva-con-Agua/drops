@@ -87,6 +87,8 @@ signin.signup=Du hast noch keinen Account? Du kannst jederzeit <a href="{0}">Mit
 signin.resetPassword=Passwort vergessen? Das kannst du <a href="{0}">neu setzen</a>.
 signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
 
+signout.msg=Du bist rausgeloggt!
+
 reset.title=Passwort zurücksetzen
 reset.startLegend=Hast du dein Passwort vergessen??
 reset.email=Email
@@ -102,6 +104,11 @@ reset.doneTitle=Neues Passwort
 reset.done=Dein password wurde erfolgreich neu gesetzt.
 reset.gotoIndex=Gehe auf die <a href={0}>Startseite</a>.
 
+status.pool1PasswordResetMailSend=Es wurde eine Email an {0} gesendet, die den Reset-Link enthält.
+
+error.noAuthenticatedUser=Es ist kein Nutzer eingeloggt.
+error.bogusAuthenticationData=Die übergebenen Daten können nicht interpretiert werden.
+error.missingUserForPool1User=Für die Emailadresse {0} existiert ein Pool 1 Nutzer ohne, dass zu diesem ein Drops Nutzer zugeordnet werden kann.
 error.accessDenied=Du musst dich reinloggen, um die aufgerufene Seite sehen zu können.
 error.notFound=Nicht gefunden!
 error.notFound.details=Aufgerufen: {0}
@@ -122,6 +129,7 @@ error.sex.notAllowed=Deine Sexualität kennt das System noch nicht. Gib bitte ei
 error.telphone.wrongFormat=Formatfehler, erlaubt sind beispielsweise: 0167/123456 oder +176/123456
 error.profile.image.upload=Das neue Tropfenbild des Profils konnte nicht hochgeladen werden! Versuche es nochmal!
 error.oauth2.not.authenticated=Kein Tropfen zu finden! Hier ist keiner angemeldet.
+error.reset.toToken=Kein Token für das aufgerufene gefunden: {0}
 
 
 success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!

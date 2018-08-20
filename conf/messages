@@ -87,6 +87,8 @@ signin.signup=Don''t have an account? <a href="{0}">Sign up</a> now.
 signin.resetPassword=Forgot your password? <a href="{0}">Reset</a> it.
 signin.social=Or use one of the following services to sign in:
 
+signout.msg=You has been logged off.
+
 reset.title=Reset password
 reset.startLegend=Have you forgot your password?
 reset.email=Email
@@ -102,6 +104,11 @@ reset.doneTitle=Password reset completed
 reset.done=Your password has been reset.
 reset.gotoIndex=Goto to the <a href={0}>main page</a>.
 
+status.pool1PasswordResetMailSend=Email containing the reset link, was sent to {0}.
+
+error.noAuthenticatedUser=Currently, there is no user logged in.
+error.bogusAuthenticationData=There is something wrong with the submitted data.
+error.missingUserForPool1User=For {0} exists a Pool 1 user without associated Drops user.
 error.accessDenied=You need to log in to access the requested page
 error.notFound=Not found
 error.notFound.details=Requested: {0}
@@ -123,6 +130,7 @@ error.telphone.wrongFormat=You're using the wrong format. Examples are: 0167/123
 error.profile.image.upload=Profile image has not been uploaded! Try again!
 error.pool1userinit=We send a mail for rest your passwort.
 error.oauth2.not.authenticated=Currently, there is no authenticated user.
+error.reset.toToken=No token found for the given one: {0}
 
 success.profile.image.upload=Profile image was successfully uploaded!
 
