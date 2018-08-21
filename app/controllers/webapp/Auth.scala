@@ -42,7 +42,11 @@ import play.api.libs.json.{JsError, JsObject, JsValue, Json}
 object AuthForms {
 
   // Sign up
-  case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, placeOfResidence: String, birthday:Date, sex:String)
+  case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, placeOfResidence: String, birthday:Date, gender:String)
+
+  object SignUpData {
+    implicit val signUpDataJsonFormat = Json.format[SignUpData]
+  }
 //  def signUpForm(implicit messages:Messages) = Form(mapping(
 //      "email" -> email,
 //      "password" -> tuple(
@@ -118,73 +122,72 @@ class Auth @Inject() (
 
   override val logger: Logger = Logger(this.getClass())
 
-//  def startSignUp = UserAwareAction.async { implicit request =>
-//    Future.successful(request.identity match {
-//      case Some(user) => redirectAfterLogin
-//      case None => {
-//        Ok(dispenserService.getTemplate(views.html.auth.startSignUp(signUpForm)))
-//    }})
-//  }
-//
-//  def handleStartSignUp = Action.async { implicit request =>
-//    signUpForm.bindFromRequest.fold(
-//      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.startSignUp(bogusForm)))),
-//      signUpData => {
-//        val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
-//        userService.retrieve(loginInfo).flatMap {
-//          case Some(_) =>
-//            Future.successful(Redirect(routes.Auth.startSignUp()).flashing(
-//              "error" -> Messages("error.userExists", signUpData.email)))
-//          case None =>
-//            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
-//            for {
-//              avatarUrl <- avatarService.retrieveURL(signUpData.email)
-//              user <- userService.save(User(id = UUID.randomUUID(), profiles =
-//                avatarUrl match {
-//                  case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url),new DefaultProfileImage)))
-//                  case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-//                }))
-//              _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
-//              token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
-//            } yield {
-//              mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
-//              Ok(dispenserService.getTemplate(views.html.auth.finishSignUp(profile)))
-//            }
-//        }
-//      }
-//    )
-//  }
-//
-//  def signUp(tokenId:String) = Action.async { implicit request =>
-//    val id = UUID.fromString(tokenId)
-//    userTokenService.find(id).flatMap {
-//      case None =>
-//        Future.successful(NotFound(views.html.errors.notFound(request)))
-//      case Some(token) if token.isSignUp && !token.isExpired =>
-//        userService.find(token.userId).flatMap {
-//          case None => Future.failed(new IdentityNotFoundException(Messages("error.noUser")))
-//          case Some(user) =>
-//            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
-//            for {
-//              authenticator <- env.authenticatorService.create(loginInfo)
-//              value <- env.authenticatorService.init(authenticator)
-//              _ <- userService.confirm(loginInfo)
-//              _ <- userTokenService.remove(id)
-//              _ <- pool.save(user)    // SEND USER TO POOL 1!
-//              result <- env.authenticatorService.embed(value, redirectAfterLogin)
-//            } yield result
-//        }
-//      case Some(token) =>
-//        // maybe different error message should be implemented for the case that the given token is expired or not a
-//        // signUp token.
-//        userTokenService.remove(id).map {_ => NotFound(views.html.errors.notFound(request))}
-//    }
-//  }
-  
-  /** Pool1 function
-  def pool1SignIn = Action.async { implicit request =>
-  }*/
+  def handleStartSignUp = Action.async(parse.json) { implicit request => {
+    val data = request.body.validate[SignUpData]
+    data.fold(
+      errors => Future.successful(generateBogusJson(request, "error.bogusSignUpData", Nil, "AuthProvider.SignUp", JsError.toJson(errors))),
+      signUpData => {
+        val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
+        userService.retrieve(loginInfo).flatMap {
+          case Some(_) =>
+            Future.successful(generateBogusJson(request, "error.userExists", List(signUpData.email), "AuthProvider.SignUp.UserExists", Json.toJson(Map[String, String]())))
+          case None =>
+            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender, List(new DefaultProfileImage))
+            for {
+              avatarUrl <- avatarService.retrieveURL(signUpData.email)
+              user <- userService.save(User(id = UUID.randomUUID(), profiles =
+                avatarUrl match {
+                  case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url), new DefaultProfileImage)))
+                  case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
+                }))
+              _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
+              token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
+            } yield {
+              mailer.welcome(profile, link = controllers.webapp.routes.Auth.signUp(token.id.toString).absoluteURL())
+              generateOkJson(request, "signup.created", Nil, "AuthProvider.SignUp.UserCreated", Json.toJson(profile))
+            }
+        }
+      }
+    )
+    }
+  }
 
+  def signUp(tokenId:String) = Action.async { implicit request =>
+    val id = UUID.fromString(tokenId)
+    userTokenService.find(id).flatMap {
+      case None =>
+        Future.successful(
+          generateJsonStatusMsg(request, play.api.mvc.Results.NotFound, "error.noToken", List(tokenId), "AuthProvider.SignUp", Map(
+            "tokenId" -> tokenId
+          ))
+        )
+      case Some(token) if token.isSignUp && !token.isExpired =>
+        userService.find(token.userId).flatMap {
+          case None => //Future.failed(new IdentityNotFoundException(Messages("error.noUser")))
+            Future.successful(
+              generateJsonStatusMsg(request, play.api.mvc.Results.InternalServerError, "error.noUser", Nil, "AuthProvider.NoUserForToken", Map[String, String]())
+            )
+          case Some(user) =>
+            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
+            for {
+              authenticator <- env.authenticatorService.create(loginInfo)
+              value <- env.authenticatorService.init(authenticator)
+              _ <- userService.confirm(loginInfo)
+              _ <- userTokenService.remove(id)
+              _ <- pool.save(user)    // SEND USER TO POOL 1!
+              result <- env.authenticatorService.embed(value, Ok(Json.obj("uuid" -> user.id)))
+            } yield result
+        }
+      case Some(token) =>
+        // maybe different error message should be implemented for the case that the given token is expired or not a
+        // signUp token.
+        userTokenService.remove(id).map {_ =>
+          generateJsonStatusMsg(request, play.api.mvc.Results.NotFound, "error.expiredToken", List(tokenId), "AuthProvider.SignUp", Map(
+            "tokenId" -> tokenId
+          ))
+        }
+    }
+  }
 
   def identity = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
@@ -279,23 +282,6 @@ class Auth @Inject() (
     env.authenticatorService.discard(request.authenticator, generateOkJson(request, "signout.msg", Nil, "AuthProvider.UserLoggedOut"))
   }
 
-//  def startResetPassword = Action { implicit request =>
-//    Ok(dispenserService.getTemplate(views.html.auth.startResetPassword(emailForm)))
-//  }
-//
-//  def handlePool1StartResetPassword(email64: String) = Action.async { implicit request =>
-//    val email = new String(java.util.Base64.getDecoder.decode(email64), "UTF-8")
-//    userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
-//        case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
-//        case Some(user) => for {
-//          token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
-//        } yield {
-//          mailer.resetPasswordPool1(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
-//          Ok(views.html.auth.resetPasswordInstructionsPool1(email))
-//        }
-//      }
-//  }
-//
   def handleResetPasswordStartData = Action.async(parse.json) { implicit request =>
       val data = request.body.validate[Email]
       data.fold(
@@ -309,7 +295,7 @@ class Auth @Inject() (
           case Some(user) => for {
             token <- userTokenService.save(UserToken.create(user.id, email.address, isSignUp = false))
           } yield {
-            mailer.resetPassword(email.address, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
+            mailer.resetPassword(email.address, link = controllers.webapp.routes.Auth.resetPassword(token.id.toString).absoluteURL())
             generateOkJson(request, "reset.instructions", List(email.address), "AuthProvider.ResetPassword")
           }
         }
@@ -371,6 +357,10 @@ class Auth @Inject() (
     generateJsonStatusMsg(request, play.api.mvc.Results.Ok, msg, msgValues, internalStatusCode, additional)
   }
 
+  protected def generateOkJson(request: RequestHeader, msg: String, msgValues: List[String], internalStatusCode: String, additional : JsValue): Result = {
+    generateJsonStatusMsg(request, play.api.mvc.Results.Ok, msg, msgValues, internalStatusCode, additional)
+  }
+
   protected def generateJsonStatusMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, msgValues: List[String], internalErrorCode: String, additional: Map[String, String] = Map()) : Result =
     generateJsonStatusMsg(request, code, msg, msgValues, internalErrorCode, Json.toJson(additional))
 
@@ -412,34 +402,5 @@ class Auth @Inject() (
 //        Redirect(request.identity.fold(routes.Auth.signIn())(_ => routes.Application.profile()))
 //          .flashing("error" -> Messages("error.notAuthenticated", providerId))
 //    }
-//  }
-//
-//  /**
-//    * Defines the URL that is used after login.
-//    *
-//    * @return
-//    */
-//  def redirectAfterLogin : Result = {
-//    val default = Redirect(routes.Application.index())
-//
-//    configuration.getBoolean("login.flow.ms.switch").map(_ match {
-//      case true => configuration.getString("login.flow.ms.url").map(
-//        (url) => Redirect( url )
-//      ).getOrElse(
-//        default
-//      )
-//      case false => default
-//    }).getOrElse(
-//      default
-//    )
-//  }
-//
-//  /**
-//    * Defines the URL that is used after logout.
-//    *
-//    * @return
-//    */
-//  def redirectAfterLogout : Result = {
-//    Redirect(routes.Auth.signIn)
 //  }
 }
