@@ -19,7 +19,7 @@ import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.services.AvatarService
 import com.mohiva.play.silhouette.api.util.{Credentials, PasswordHasher}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
-import com.mohiva.play.silhouette.impl.exceptions.IdentityNotFoundException
+import com.mohiva.play.silhouette.impl.exceptions.{IdentityNotFoundException, InvalidPasswordException}
 import com.mohiva.play.silhouette.impl.providers._
 import play.api._
 import play.api.Logger
@@ -203,10 +203,14 @@ class Auth @Inject() (
       errors => Future.successful(generateBogusJson(request, "error.bogusAuthenticationData", Nil, "AuthProvider.Authenticate", JsError.toJson(errors))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
+        println(signInData.email)
+        println(signInData.password)
+        // Handle Pool 1 users
         pool1Service.pool1user(signInData.email).flatMap {
           case Some(pooluser) if !pooluser.confirmed =>
             userService.retrieve(LoginInfo(CredentialsProvider.ID, signInData.email)).flatMap {
               case None => Future.successful(
+                // Possible Result: Internal error. because user was suddenly deleted
                 generateJsonStatusMsg(request, play.api.mvc.Results.InternalServerError, "error.missingUserForPool1User", List(signInData.email), "AuthProvider.NoUserForPool1User", Map[String, String]())
               )
               case Some(user) => for {
@@ -214,23 +218,26 @@ class Auth @Inject() (
               } yield {
                 // Todo: the link should target a drops endpoint that is able to interpretate the token and calls an Arise page afterwards
                 mailer.resetPasswordPool1(signInData.email, link = controllers.webapp.routes.Auth.resetPassword(token.id.toString).absoluteURL())
+                // Possible Result: User has been migrated from Pool 1 and has not saved a new passwort since migration. Mail was send and user needs further instructions.
                 generateOkJson(request, "status.pool1PasswordResetMailSend", List(signInData.email), "AuthProvider.Pool1PasswordResetMailSend", Map(
                   "user" -> user.id.toString,
                   "email" -> signInData.email
                 ))
               }
             }
-          case (_) => {
+          case _ => {
             credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
               userService.retrieve(loginInfo).flatMap {
                 case None =>
                   Future.successful(
+                    // Possible Result: There is no user inside the database for the given email address and password combination
                     generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.noUser", Nil, "AuthProvider.AuthenticateUserNotFound", Map(
                       "email" -> signInData.email
                     ))
                   )
                 case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) => //"error.unregistered", signInData.email
                   Future.successful(
+                    // Possible Result: Found a user, but s/he has not confirmed the regestration until now (by a link send after sign up)
                     generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.unregistered", Nil, "AuthProvider.AuthenticateUserNotConfirmed", Map(
                       "user" -> user.id.toString,
                       "email" -> signInData.email
@@ -248,16 +255,29 @@ class Auth @Inject() (
                     case authenticator => authenticator
                   }
                   value <- env.authenticatorService.init(authenticator)
+                  // Possible Result: Success! Valid users uuid and there is a session inside the cookie now!
                   result <- env.authenticatorService.embed(value, Ok(Json.obj("uuid" -> user.id)))
                 } yield result
               }.recover {
-                case e:ProviderException =>
+                case e:ProviderException => {
+                  // Possible Result: The selected social provider (Facebook, Google, Amazon, ...) is not available.
                   generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.invalidCredentials", Nil, "AuthProvider.ProviderException", Map(
                     "email" -> signInData.email,
                     "providerKey" -> loginInfo.providerKey,
                     "providerID" -> loginInfo.providerID
                   ))
                 }
+              }
+            }.recover {
+              case e: IdentityNotFoundException =>
+                generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.noUser", Nil, "AuthProvider.AuthenticateUserNotFound", Map(
+                  "email" -> signInData.email
+                ))
+              //                  }.recover {
+              case e: InvalidPasswordException =>
+                generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.invalidCredentials", Nil, "AuthProvider.AuthenticateInvalidPassword", Map(
+                  "email" -> signInData.email
+                ))
             }
           }
         }
