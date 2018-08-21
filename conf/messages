@@ -136,6 +136,12 @@ error.reset.toToken=No token found for the given one: {0}
 error.expiredToken=Token {0} has been expired or is not for signing up!
 error.noToken=Given token {0} can not be found in our database.
 
+error.webapp.missing.config=Configuration of Arise is missing!
+error.webapp.missing.base=Base URL of arise has not been configured!
+error.webapp.missing.notFound=The path for the ''Not Found'' page of arise has not been configured!
+error.webapp.missing.resetPassword=The path for the ''Reset Password'' page of arise has not been configured!
+error.webapp.missing.tokenidentifier=The token identifier used inside the query string of the reset password page is missing!
+
 success.profile.image.upload=Profile image was successfully uploaded!
 
 mail.welcome.subject=Welcome

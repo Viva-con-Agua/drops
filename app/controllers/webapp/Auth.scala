@@ -302,16 +302,27 @@ class Auth @Inject() (
       )
   }
 
+  /**
+    * Reset password will be called by a link automatically generated and send to the user by an email. Thus, it is
+    * required to redirect the user back to the WebApp after the tokens validation. Therefor, all routes required will be
+    * read from the configuration ([arise]) and redirects will be executed.
+    *
+    * @param tokenId
+    * @return
+    */
   def resetPassword(tokenId:String) = Action.async { implicit request =>
     val id = UUID.fromString(tokenId)
-    userTokenService.find(id).flatMap {
-      case None =>
-        Future.successful(Redirect("https://localhost/arise#notFound"))
-      case Some(token) if !token.isSignUp && !token.isExpired =>
-        Future.successful(Redirect("https://localhost/arise#resetPassword?token=" + tokenId))
-      case _ => for {
-        _ <- userTokenService.remove(id)
-      } yield Redirect("https://localhost/arise#notFound")
+    getWebApp match {
+      case Left(message) => Future.successful(NotFound(message))
+      case Right(webapp) => userTokenService.find(id).flatMap {
+        case None =>
+          Future.successful(Redirect(webapp.getNotFound))
+        case Some(token) if !token.isSignUp && !token.isExpired =>
+          Future.successful(Redirect(webapp.getResetPassword(tokenId)))
+        case _ => for {
+          _ <- userTokenService.remove(id)
+        } yield Redirect(webapp.getNotFound)
+      }
     }
   }
 
@@ -378,6 +389,24 @@ class Auth @Inject() (
 
   protected def generateStatusMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, additional: JsValue) : Result =
     code(Messages(msg))
+
+  private case class WebApp(base: String, notFound: String, resetPassword: String, tokenIdentifier: String) {
+    def getNotFound: String = base + notFound
+    def getResetPassword(token: String): String = base + resetPassword + "?" + tokenIdentifier + "=" + token
+  }
+  private def getWebApp : Either[String, WebApp] = {
+    configuration.getConfig("webapp").map(
+      (webapp) => webapp.getString("base").map(
+        (base) => webapp.getString("notFound.path").map(
+          (notFound) => webapp.getString("resetPassword.path").map(
+            (resetPassword) => webapp.getString("resetPassword.tokenIdentifier").map(
+              (tokenIdentifier) => Right(WebApp(base, notFound, resetPassword, tokenIdentifier))
+            ).getOrElse(Left(Messages("error.webapp.missing.tokenidentifier")))
+          ).getOrElse(Left(Messages("error.webapp.missing.resetPassword")))
+        ).getOrElse(Left(Messages("error.webapp.missing.notFound")))
+      ).getOrElse(Left(Messages("error.webapp.missing.base")))
+    ).getOrElse(Left(Messages("error.webapp.missing.config")))
+  }
 //
 //  def socialAuthenticate(providerId:String) = UserAwareAction.async { implicit request =>
 //    (socialProviderRegistry.get[SocialProvider](providerId) match {
