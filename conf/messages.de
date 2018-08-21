@@ -108,6 +108,7 @@ status.pool1PasswordResetMailSend=Es wurde eine Email an {0} gesendet, die den R
 
 error.noAuthenticatedUser=Es ist kein Nutzer eingeloggt.
 error.bogusAuthenticationData=Die übergebenen Daten können nicht interpretiert werden.
+error.bogusResetPasswordData=Die übergebenen Daten können nicht interpretiert werden.
 error.missingUserForPool1User=Für die Emailadresse {0} existiert ein Pool 1 Nutzer ohne, dass zu diesem ein Drops Nutzer zugeordnet werden kann.
 error.accessDenied=Du musst dich reinloggen, um die aufgerufene Seite sehen zu können.
 error.notFound=Nicht gefunden!

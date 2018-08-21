@@ -38,7 +38,7 @@ import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import java.util.Base64
 
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.{JsError, JsObject, JsValue, Json}
 object AuthForms {
 
   // Sign up
@@ -77,9 +77,19 @@ object AuthForms {
 //  )
 
   // Start password recovery
+  case class Email(address: String)
+  object Email {
+    implicit val emailJsonFormat = Json.format[Email]
+  }
 //  val emailForm = Form(single("email" -> email))
 
   // Passord recovery
+  case class Password(password1: String, password2: String) {
+    def valid : Boolean = password1 == password2
+  }
+  object Password {
+    implicit val passwordJsonFormat = Json.format[Password]
+  }
 //  def resetPasswordForm(implicit messages:Messages) = Form(tuple(
 //    "password1" -> nonEmptyText.verifying(minLength(6)),
 //    "password2" -> nonEmptyText
@@ -179,56 +189,31 @@ class Auth @Inject() (
   def identity = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
       case Some(user) => Ok(Json.obj("uuid" -> user.id)).as("application/json")
-      case _ => Unauthorized(Json.obj(
-        "internal_error_code" -> (Unauthorized.header.status + ".AuthProvider"),
-        "http_error_code" -> Unauthorized.header.status,
-        "msg_i18n" -> "error.noAuthenticatedUser",
-        "msg" -> Messages("error.noAuthenticatedUser"),
-        "additional_information" -> Json.toJson(Map[String, String]())
-      )).as("application/json")
+      case _ => generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.noAuthenticatedUser", Nil, "AuthProvider", Map[String, String]())
+
     })
   }
 
   def authenticate = Action.async(parse.json) { implicit request =>
     val data = request.body.validate[SignInData]
     data.fold(
-      errors => Future.successful(BadRequest(Json.obj(
-        "internal_error_code" -> (BadRequest.header.status + ".AuthProvider.Authenticate"),
-        "http_error_code" -> BadRequest.header.status,
-        "msg_i18n" -> "error.bogusAuthenticationData",
-        "msg" -> Messages("error.bogusAuthenticationData"),
-        "additional_information" -> JsError.toJson(errors)
-      )).as("application/json")),
+      errors => Future.successful(generateBogusJson(request, "error.bogusAuthenticationData", Nil, "AuthProvider.Authenticate", JsError.toJson(errors))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
         pool1Service.pool1user(signInData.email).flatMap {
           case Some(pooluser) if !pooluser.confirmed =>
             userService.retrieve(LoginInfo(CredentialsProvider.ID, signInData.email)).flatMap {
               case None => Future.successful(
-                InternalServerError(
-                  Json.obj(
-                    "internal_error_code" -> (InternalServerError.header.status + ".AuthProvider.NoUserForPool1User"),
-                    "http_error_code" -> InternalServerError.header.status,
-                    "msg_i18n" -> "error.missingUserForPool1User",
-                    "msg" -> Messages("error.missingUserForPool1User", signInData.email),
-                    "additional_information" -> Json.toJson(Map[String, String]())
-                  )
-                ).as("application/json")
+                generateJsonStatusMsg(request, play.api.mvc.Results.InternalServerError, "error.missingUserForPool1User", List(signInData.email), "AuthProvider.NoUserForPool1User", Map[String, String]())
               )
               case Some(user) => for {
                 token <- userTokenService.save(UserToken.create(user.id, signInData.email, isSignUp = false))
               } yield {
                 // Todo: the link should target a drops endpoint that is able to interpretate the token and calls an Arise page afterwards
                 mailer.resetPasswordPool1(signInData.email, link = controllers.webapp.routes.Auth.resetPassword(token.id.toString).absoluteURL())
-                Ok(Json.obj(
-                  "internal_status_code" -> (Ok.header.status + ".AuthProvider.Pool1PasswordResetMailSend"),
-                  "http_status_code" -> Ok.header.status,
-                  "msg_i18n" -> "status.pool1PasswordResetMailSend",
-                  "msg" -> Messages("status.pool1PasswordResetMailSend", signInData.email),
-                  "additional_information" -> Json.toJson(Map(
-                    "user" -> user.id.toString,
-                    "email" -> signInData.email
-                  ))
+                generateOkJson(request, "status.pool1PasswordResetMailSend", List(signInData.email), "AuthProvider.Pool1PasswordResetMailSend", Map(
+                  "user" -> user.id.toString,
+                  "email" -> signInData.email
                 ))
               }
             }
@@ -236,26 +221,18 @@ class Auth @Inject() (
             credentialsProvider.authenticate(credentials).flatMap { loginInfo =>
               userService.retrieve(loginInfo).flatMap {
                 case None =>
-                  Future.successful(Unauthorized(Json.obj(
-                    "internal_status_code" -> (Unauthorized.header.status + ".AuthProvider.AuthenticateUserNotFound"),
-                    "http_status_code" -> Unauthorized.header.status,
-                    "msg_i18n" -> "error.noUser",
-                    "msg" -> Messages("error.noUser"),
-                    "additional_information" -> Json.toJson(Map(
+                  Future.successful(
+                    generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.noUser", Nil, "AuthProvider.AuthenticateUserNotFound", Map(
                       "email" -> signInData.email
                     ))
-                  )).as("application/json"))
+                  )
                 case Some(user) if !user.profileFor(loginInfo).map(_.confirmed).getOrElse(false) => //"error.unregistered", signInData.email
-                  Future.successful(Unauthorized(Json.obj(
-                    "internal_status_code" -> (Unauthorized.header.status + ".AuthProvider.AuthenticateUserNotConfirmed"),
-                    "http_status_code" -> Unauthorized.header.status,
-                    "msg_i18n" -> "error.unregistered",
-                    "msg" -> Messages("error.unregistered", signInData.email),
-                    "additional_information" -> Json.toJson(Map(
+                  Future.successful(
+                    generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.unregistered", Nil, "AuthProvider.AuthenticateUserNotConfirmed", Map(
                       "user" -> user.id.toString,
                       "email" -> signInData.email
                     ))
-                  )).as("application/json"))
+                  )
                 case Some(user) => for {
                   authenticator <- env.authenticatorService.create(loginInfo).map {
                     case authenticator if signInData.rememberMe =>
@@ -272,13 +249,11 @@ class Auth @Inject() (
                 } yield result
               }.recover {
                 case e:ProviderException =>
-                  Unauthorized(Json.obj(
-                    "internal_status_code" -> (Unauthorized.header.status + ".AuthProvider.ProviderException"),
-                    "http_status_code" -> Unauthorized.header.status,
-                    "msg_i18n" -> "error.invalidCredentials",
-                    "msg" -> Messages("error.invalidCredentials"),
-                    "additional_information" -> Json.toJson(Map[String, String]())
-                  )).as("application/json")
+                  generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.invalidCredentials", Nil, "AuthProvider.ProviderException", Map(
+                    "email" -> signInData.email,
+                    "providerKey" -> loginInfo.providerKey,
+                    "providerID" -> loginInfo.providerID
+                  ))
                 }
             }
           }
@@ -289,29 +264,19 @@ class Auth @Inject() (
 
   def signOut = SecuredAction.async { implicit request =>
     userService.retrieve(request.authenticator.loginInfo).flatMap {
-      case None => 
-        Future.successful(Unauthorized(Json.obj(
-          "internal_status_code" -> (Unauthorized.header.status + ".AuthProvider.AuthenticateUserNotFound"),
-          "http_status_code" -> Unauthorized.header.status,
-          "msg_i18n" -> "error.noUser",
-          "msg" -> Messages("error.noUser"),
-          "additional_information" -> Json.toJson(Map(
-            "provider" -> request.authenticator.loginInfo.providerID,
-            "key" -> request.authenticator.loginInfo.providerKey
+      case None =>
+        Future.successful(
+          generateJsonStatusMsg(request, play.api.mvc.Results.Unauthorized, "error.noUser", Nil, "AuthProvider.AuthenticateUserNotFound", Map(
+            "providerKey" -> request.authenticator.loginInfo.providerKey,
+            "providerID" -> request.authenticator.loginInfo.providerID
           ))
-        )).as("application/json"))
+        )
       case Some(user) => {
         pool.logout(user)
         Future.successful(nats.publishLogout(user.id))
       }
     }
-    env.authenticatorService.discard(request.authenticator, Ok(Json.obj(
-      "internal_status_code" -> (Ok.header.status + ".AuthProvider.UserLoggedOut"),
-      "http_status_code" -> Ok.header.status,
-      "msg_i18n" -> "signout.msg",
-      "msg" -> Messages("signout.msg"),
-      "additional_information" -> Json.toJson(Map[String, String]())
-    )))
+    env.authenticatorService.discard(request.authenticator, generateOkJson(request, "signout.msg", Nil, "AuthProvider.UserLoggedOut"))
   }
 
 //  def startResetPassword = Action { implicit request =>
@@ -331,21 +296,26 @@ class Auth @Inject() (
 //      }
 //  }
 //
-//  def handleStartResetPassword = Action.async { implicit request =>
-//    emailForm.bindFromRequest.fold(
-//      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.startResetPassword(bogusForm)))),
-//      email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
-//        case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
-//        case Some(user) => for {
-//          token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
-//        } yield {
-//          mailer.resetPassword(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
-//          Ok(dispenserService.getTemplate(views.html.auth.resetPasswordInstructions(email)))
-//        }
-//      }
-//    )
-//  }
-//
+  def handleResetPasswordStartData = Action.async(parse.json) { implicit request =>
+      val data = request.body.validate[Email]
+      data.fold(
+        errors => Future.successful(generateBogusJson(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleStartResetPassword", JsError.toJson(errors))),
+        email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address)).flatMap {
+          case None => Future.successful(
+            generateJsonStatusMsg(request, play.api.mvc.Results.NotFound, "error.noUser", Nil, "AuthProvider.ResetPassword", Map(
+              "email" -> email.address
+            ))
+          )
+          case Some(user) => for {
+            token <- userTokenService.save(UserToken.create(user.id, email.address, isSignUp = false))
+          } yield {
+            mailer.resetPassword(email.address, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
+            generateOkJson(request, "reset.instructions", List(email.address), "AuthProvider.ResetPassword")
+          }
+        }
+      )
+  }
+
   def resetPassword(tokenId:String) = Action.async { implicit request =>
     val id = UUID.fromString(tokenId)
     userTokenService.find(id).flatMap {
@@ -358,31 +328,66 @@ class Auth @Inject() (
       } yield Redirect("https://localhost/arise#notFound")
     }
   }
-//
-//  def handleResetPassword(tokenId:String) = Action.async { implicit request =>
-//    resetPasswordForm.bindFromRequest.fold(
-//      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.resetPassword(tokenId, bogusForm)))),
-//      passwords => {
-//        val id = UUID.fromString(tokenId)
-//        userTokenService.find(id).flatMap {
-//          case None =>
-//            Future.successful(NotFound(views.html.errors.notFound(request)))
-//          case Some(token) if !token.isSignUp && !token.isExpired =>
-//            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
-//            for {
-//              _ <- authInfoRepository.save(loginInfo, passwordHasher.hash(passwords._1))
-//              authenticator <- env.authenticatorService.create(loginInfo)
-//              value <- env.authenticatorService.init(authenticator)
-//              _ <- userTokenService.remove(id)
-//              //pool1 user
-//              _ <- pool1Service.confirmed(token.email)
-//              _ <- userService.confirm(loginInfo)
-//              result <- env.authenticatorService.embed(value, Ok(dispenserService.getTemplate(views.html.auth.resetPasswordDone())))
-//            } yield result
-//        }
-//      }
-//    )
-//  }
+
+  def handleResetPassword(tokenId:String) = Action.async(parse.json) { implicit request =>
+    val data = request.body.validate[Password]
+    data.fold(
+      errors => Future.successful(generateBogusJson(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword", JsError.toJson(errors))),
+      passwords => {
+        val id = UUID.fromString(tokenId)
+        userTokenService.find(id).flatMap {
+          case None =>
+            Future.successful(
+              generateJsonStatusMsg(request, play.api.mvc.Results.NotFound, "error.reset.toToken", List(tokenId), "AuthProvider.ResetPassword", Map(
+                "tokenId" -> tokenId
+              ))
+            )
+          case Some(token) if !passwords.valid =>
+            Future.successful(
+              generateBogusJson(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword", Json.toJson(Map("error" -> "not valid")))
+            )
+          case Some(token) if !token.isSignUp && !token.isExpired =>
+            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
+            for {
+              _ <- authInfoRepository.save(loginInfo, passwordHasher.hash(passwords.password1))
+              authenticator <- env.authenticatorService.create(loginInfo)
+              value <- env.authenticatorService.init(authenticator)
+              _ <- userTokenService.remove(id)
+              //pool1 user
+              _ <- pool1Service.confirmed(token.email)
+              _ <- userService.confirm(loginInfo)
+              result <- env.authenticatorService.embed(value, generateOkJson(request, "reset.done", Nil, "AuthProvider.ResetPassword"))
+            } yield result
+        }
+      }
+    )
+  }
+
+  protected def generateBogusJson(request: RequestHeader, msg: String, msgValues: List[String], internalErrorCode: String, errors: JsValue): Result = {
+    generateJsonStatusMsg(request, play.api.mvc.Results.BadRequest, msg, msgValues, internalErrorCode, errors)
+  }
+
+  protected def generateOkJson(request: RequestHeader, msg: String, msgValues: List[String], internalStatusCode: String, additional : Map[String, String] = Map()): Result = {
+    generateJsonStatusMsg(request, play.api.mvc.Results.Ok, msg, msgValues, internalStatusCode, additional)
+  }
+
+  protected def generateJsonStatusMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, msgValues: List[String], internalErrorCode: String, additional: Map[String, String] = Map()) : Result =
+    generateJsonStatusMsg(request, code, msg, msgValues, internalErrorCode, Json.toJson(additional))
+
+  protected def generateJsonStatusMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, msgValues: List[String], internalErrorCode: String, additional: JsValue) : Result =
+    request.accepts("application/json") match {
+      case true => code(Json.obj(
+        "internal_error_code" -> (code.header.status + "." + internalErrorCode),
+        "http_error_code" -> code.header.status,
+        "msg_i18n" -> msg,
+        "msg" -> Messages(msg, msgValues:_*),
+        "additional_information" -> additional
+      )).as("application/json")
+      case _ => generateStatusMsg(request, code, msg, additional)
+    }
+
+  protected def generateStatusMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, additional: JsValue) : Result =
+    code(Messages(msg))
 //
 //  def socialAuthenticate(providerId:String) = UserAwareAction.async { implicit request =>
 //    (socialProviderRegistry.get[SocialProvider](providerId) match {

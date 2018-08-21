@@ -108,6 +108,7 @@ status.pool1PasswordResetMailSend=Email containing the reset link, was sent to {
 
 error.noAuthenticatedUser=Currently, there is no user logged in.
 error.bogusAuthenticationData=There is something wrong with the submitted data.
+error.bogusResetPasswordData=There is something wrong with the submitted data.
 error.missingUserForPool1User=For {0} exists a Pool 1 user without associated Drops user.
 error.accessDenied=You need to log in to access the requested page
 error.notFound=Not found
