@@ -86,6 +86,7 @@ signin.rememberMe=Merke dir meine Daten!
 signin.signup=Du hast noch keinen Account? Du kannst jederzeit <a href="{0}">Mitmachen</a>.
 signin.resetPassword=Passwort vergessen? Das kannst du <a href="{0}">neu setzen</a>.
 signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
+signin.success=Du bist ringeloggt!
 
 signout.msg=Du bist rausgeloggt!
 

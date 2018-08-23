@@ -86,6 +86,7 @@ signin.rememberMe=Remember me
 signin.signup=Don''t have an account? <a href="{0}">Sign up</a> now.
 signin.resetPassword=Forgot your password? <a href="{0}">Reset</a> it.
 signin.social=Or use one of the following services to sign in:
+signin.success=You''re successfully logged in!
 
 signout.msg=You has been logged off.
 
