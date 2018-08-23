@@ -203,8 +203,6 @@ class Auth @Inject() (
       errors => Future.successful(generateBogusJson(request, "error.bogusAuthenticationData", Nil, "AuthProvider.Authenticate", JsError.toJson(errors))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
-        println(signInData.email)
-        println(signInData.password)
         // Handle Pool 1 users
         pool1Service.pool1user(signInData.email).flatMap {
           case Some(pooluser) if !pooluser.confirmed =>
@@ -219,7 +217,7 @@ class Auth @Inject() (
                 // Todo: the link should target a drops endpoint that is able to interpretate the token and calls an Arise page afterwards
                 mailer.resetPasswordPool1(signInData.email, link = controllers.webapp.routes.Auth.resetPassword(token.id.toString).absoluteURL())
                 // Possible Result: User has been migrated from Pool 1 and has not saved a new passwort since migration. Mail was send and user needs further instructions.
-                generateOkJson(request, "status.pool1PasswordResetMailSend", List(signInData.email), "AuthProvider.Pool1PasswordResetMailSend", Map(
+                generatedPasswordLink(request, "status.pool1PasswordResetMailSend", List(signInData.email), "AuthProvider.Pool1PasswordResetMailSend", Map(
                   "user" -> user.id.toString,
                   "email" -> signInData.email
                 ))
@@ -380,6 +378,10 @@ class Auth @Inject() (
     )
   }
 
+  protected def generatedPasswordLink(request: RequestHeader, msg: String, msgValues: List[String], internalStatusCode: String, additional : Map[String, String] = Map()) : Result = {
+    generateJsonStatusMsg(request, play.api.mvc.Results.PreconditionFailed, msg, msgValues, internalStatusCode, additional)
+  }
+
   protected def generateBogusJson(request: RequestHeader, msg: String, msgValues: List[String], internalErrorCode: String, errors: JsValue): Result = {
     generateJsonStatusMsg(request, play.api.mvc.Results.BadRequest, msg, msgValues, internalErrorCode, errors)
   }
@@ -398,8 +400,8 @@ class Auth @Inject() (
   protected def generateJsonStatusMsg(request: RequestHeader, code: play.api.mvc.Results.Status, msg: String, msgValues: List[String], internalErrorCode: String, additional: JsValue) : Result =
     request.accepts("application/json") match {
       case true => code(Json.obj(
-        "internal_error_code" -> (code.header.status + "." + internalErrorCode),
-        "http_error_code" -> code.header.status,
+        "internal_status_code" -> (internalErrorCode),
+        "http_status_code" -> code.header.status,
         "msg_i18n" -> msg,
         "msg" -> Messages(msg, msgValues:_*),
         "additional_information" -> additional
