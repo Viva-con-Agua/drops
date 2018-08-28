@@ -153,6 +153,11 @@ class Auth @Inject() (
     }
   }
 
+  /**
+    * Todo: This is called from an email! Thus, it has to redirect to a resulting page of Arise!
+    * @param tokenId
+    * @return
+    */
   def signUp(tokenId:String) = Action.async { implicit request =>
     val id = UUID.fromString(tokenId)
     userTokenService.find(id).flatMap {
