@@ -53,7 +53,7 @@ profile.submit=Update
 profile.update.legend=Change yourself
 profile.upload.msg=Click to upload
 profile.upload.hint=Hover here to change the image
-
+profile.get=Return current Profile
 task.title=Task Overview
 
 signup.title=Sign up

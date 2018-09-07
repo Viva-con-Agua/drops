@@ -28,6 +28,9 @@ POST    /webapp/reset/:tokenId                              controllers.webapp.A
 POST    /webapp/reset                                       controllers.webapp.Auth.handleResetPasswordStartData
 POST    /webapp/signup                                      controllers.webapp.Auth.handleStartSignUp
 GET     /webapp/signup/:tokenId                             controllers.webapp.Auth.signUp(tokenId)
+# WebApp profile
+GET     /webapp/profile/get                                 controllers.webapp.Profile.get
+#POST    /webapp/profile/update                              controllers.webapp.Profile.update
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
