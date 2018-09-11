@@ -104,10 +104,21 @@ class Profile @Inject() (
           case Some(email) => {
             userService.getProfile(email).flatMap {
               case Some(profile) => {
+                val fullName = request.body.firstName match {
+                  case Some(first) => {
+                    val firstName = first
+                    request.body.lastName match {
+                      case Some(last) => s"${firstName} ${last}"
+                      case None => "" 
+                    }
+                  }
+                  case None => ""
+                }
+
                 val supporter = Supporter(
                   request.body.firstName,
                   request.body.lastName,
-                  None,
+                  Option(fullName),
                   request.body.mobilePhone,
                   request.body.placeOfResidence,
                   request.body.birthday,
