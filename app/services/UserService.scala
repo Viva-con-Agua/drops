@@ -24,6 +24,11 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
     nats.publishUpdate("USER", updatedUser.id) 
     userDao.replace(updatedUser)
   }
+
+  def updateProfile(id: UUID, profile: Profile) = {
+    //nats.publishUpdate("USER", id)
+    userDao.updateProfile(profile)
+  }
   def find(id:UUID) = userDao.find(id)
   def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)
   def link(user:User, socialProfile:CommonSocialProfile) = {
@@ -49,7 +54,7 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
   def delete(userId: UUID) = {
     nats.publishDelete("USER", userId)
   }
-
+  
   def getProfile(email: String) = userDao.getProfile(email)
   def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
 

@@ -39,7 +39,7 @@ import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import java.util.Base64
 import play.api.libs.ws._
-import play.api.libs.json.{JsError, JsObject, JsValue, Json}
+import play.api.libs.json.{JsError, JsObject, JsValue, Json, Reads}
 
 // UserData for Profile Page
 case class ProfileData(email: Option[String], firstName : Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday:Option[Long], sex:Option[String])
@@ -67,6 +67,8 @@ class Profile @Inject() (
   /*def get = SecuredAction.async { implicit request =>
     WebAppResult.Ok(userService.getProfile(request.authenticator.loginInfo.email))
   }*/
+  
+  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
 
   def get = UserAwareAction.async { implicit request =>
     request.identity match {
@@ -92,6 +94,40 @@ class Profile @Inject() (
         }
       }
       case _ => Future.successful(Ok("blabla"))
+    }
+  }
+  
+  def update = UserAwareAction.async(validateJson[ProfileData]) { implicit request =>
+    request.identity match {
+      case Some(currentUser) =>{
+        request.body.email match {
+          case Some(email) => {
+            userService.getProfile(email).flatMap {
+              case Some(profile) => {
+                val supporter = Supporter(
+                  request.body.firstName,
+                  request.body.lastName,
+                  None,
+                  request.body.mobilePhone,
+                  request.body.placeOfResidence,
+                  request.body.birthday,
+                  request.body.sex,
+                  profile.supporter.crew,
+                  profile.supporter.pillars
+                )
+                val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
+                userService.updateProfile(currentUser.id, newProfile).map({
+                  case Some(profile) => WebAppResult.Ok(request, "profile.update", Nil, "AuthProvider.Identity.Success", Json.toJson(request.body)).getResult
+                  case None => Ok("will nicht")
+                })
+              }
+              case _ => Future.successful(Ok("will nicht"))
+            }
+          }
+          case _ => Future.successful(Ok("will nicht"))
+       }
+      }
+    case _ => Future.successful(Ok("will nicht"))
     }
   }
 }

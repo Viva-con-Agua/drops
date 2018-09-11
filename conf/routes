@@ -30,7 +30,7 @@ POST    /webapp/signup                                      controllers.webapp.A
 GET     /webapp/signup/:tokenId                             controllers.webapp.Auth.signUp(tokenId)
 # WebApp profile
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
-#POST    /webapp/profile/update                              controllers.webapp.Profile.update
+POST    /webapp/profile/update                              controllers.webapp.Profile.update
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
