@@ -54,6 +54,8 @@ profile.update.legend=Change yourself
 profile.upload.msg=Click to upload
 profile.upload.hint=Hover here to change the image
 profile.get=Return current Profile
+profile.notExist=Profile not exist
+profile.emailNotExist=There is no Email for searching Profile
 task.title=Task Overview
 
 signup.title=Sign up

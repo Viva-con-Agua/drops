@@ -136,7 +136,7 @@ class Profile @Inject() (
                   case None => WebAppResult.Bogus(request, "profile.notExist", Nil, "402", Json.toJson(request.body)).getResult
                 })
               }
-              case _ => Future.successful(WebAppResult.Bogus(request, "profile.profileNotExist", Nil, "402", Json.toJson(request.body)).getResult)
+              case _ => Future.successful(WebAppResult.Bogus(request, "profile.NotExist", Nil, "402", Json.toJson(request.body)).getResult)
             }
           }
           case _ => Future.successful(WebAppResult.Bogus(request, "profile.emailNotExist", Nil, "402", Json.toJson(request.body)).getResult)

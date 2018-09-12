@@ -53,6 +53,9 @@ profile.submit=Ändern
 profile.update.legend=Du kannst alle Infos über dich bearbeiten
 profile.upload.msg=Für Upload klicken
 profile.upload.hint=Bewege die Maus hier rüber, um das Bild zu ändern.
+profile.notExist=Profile konnte nicht gefunden werden.
+profile.emailNotExist=Die Email ist nicht angegeben.
+
 
 task.title=Todo Übersicht
 
