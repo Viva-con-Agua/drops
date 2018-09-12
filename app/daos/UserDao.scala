@@ -41,7 +41,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def delete (userId:UUID):Future[Boolean]
   def getProfile (email: String): Future[Option[Profile]]
   def profileListByRole(id: UUID, role: String): Future[Option[List[Profile]]]
-  def updateProfile(updated: Profile):Future[Option[Profile]] 
+  def updateSupporter(updated: Profile):Future[Option[Profile]] 
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -124,7 +124,7 @@ class MongoUserDao extends UserDao {
 
   def getProfile(email: String): Future[Option[Profile]] = ???
   def profileListByRole(id: UUID, role: String): Future[Option[List[Profile]]] = ???
-  def updateProfile(updated: Profile):Future[Option[Profile]] = ???
+  def updateSupporter(updated: Profile):Future[Option[Profile]] = ???
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 
@@ -427,7 +427,7 @@ class MariadbUserDao extends UserDao{
     })
   }
  
- def updateProfile(updated: Profile):Future[Option[Profile]] = {
+ def updateSupporter(updated: Profile):Future[Option[Profile]] = {
   val action = for { 
     p <- profiles.filter(p => p.email === updated.email)
     s <- supporters.filter(s => s.profileId === p.id)

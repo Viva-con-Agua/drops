@@ -25,9 +25,9 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
     userDao.replace(updatedUser)
   }
 
-  def updateProfile(id: UUID, profile: Profile) = {
+  def updateSupporter(id: UUID, profile: Profile) = {
     //nats.publishUpdate("USER", id)
-    userDao.updateProfile(profile)
+    userDao.updateSupporter(profile)
   }
   def find(id:UUID) = userDao.find(id)
   def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)

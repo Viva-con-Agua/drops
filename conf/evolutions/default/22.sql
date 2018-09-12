@@ -28,4 +28,3 @@ CREATE TABLE Organization(
 
 DROP FUNCTION uuid_of;
 DROP TABLE Organization;
-DROP FOREIGN KEY FK_Profile_Organization;

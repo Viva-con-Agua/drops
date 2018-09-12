@@ -88,13 +88,12 @@ class Profile @Inject() (
               ) 
               profiles = entry :: profiles
             })
-            Future.successful(WebAppResult.Ok(request, "profile.get", Nil, "AuthProvider.Identity.Success", Json.toJson(profiles)).getResult)
+            Future.successful(WebAppResult.Ok(request, "profile.get", Nil, "Profile.get.successful", Json.toJson(profiles)).getResult)
           }
-          case _ => Future.successful(Ok("blabla"))
+          case _ => Future.successful(WebAppResult.Bogus(request, "profile.get", Nil, "Profile.get.profileNotFound", Json.obj("user" -> "error")).getResult)
         }
       }
       case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
-
     }
   }
   
@@ -106,14 +105,18 @@ class Profile @Inject() (
             userService.getProfile(email).flatMap {
               case Some(profile) => {
                 val fullName = request.body.firstName match {
-                  case Some(first) => {
-                    val firstName = first
+                  case Some(firstName) => {
                     request.body.lastName match {
-                      case Some(last) => s"${firstName} ${last}"
-                      case None => "" 
+                      case Some(lastName) => s"${firstName} ${lastName}"
+                      case None => firstName
                     }
                   }
-                  case None => ""
+                  case None => {
+                    request.body.lastName match {
+                      case Some(lastName) => lastName
+                      case None => ""
+                    }
+                  }
                 }
                 val supporter = Supporter(
                   request.body.firstName,
@@ -126,9 +129,10 @@ class Profile @Inject() (
                   profile.supporter.crew,
                   profile.supporter.pillars
                 )
-                val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
-                userService.updateProfile(currentUser.id, newProfile).map({
-                  case Some(profile) => WebAppResult.Ok(request, "profile.update", Nil, "AuthProvider.Identity.Success", Json.toJson(request.body)).getResult
+                val newProfile = profile.copy(supporter = supporter)
+                //val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
+                userService.updateSupporter(currentUser.id, newProfile).map({
+                  case Some(profile) => WebAppResult.Ok(request, "profile.update", Nil, "AuthProvider.Identity.Success", Json.toJson(profile)).getResult
                   case None => WebAppResult.Bogus(request, "profile.notExist", Nil, "402", Json.toJson(request.body)).getResult
                 })
               }
