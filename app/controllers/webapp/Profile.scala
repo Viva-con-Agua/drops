@@ -93,7 +93,8 @@ class Profile @Inject() (
           case _ => Future.successful(Ok("blabla"))
         }
       }
-      case _ => Future.successful(Ok("blabla"))
+      case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+
     }
   }
   
@@ -114,7 +115,6 @@ class Profile @Inject() (
                   }
                   case None => ""
                 }
-
                 val supporter = Supporter(
                   request.body.firstName,
                   request.body.lastName,
@@ -129,16 +129,16 @@ class Profile @Inject() (
                 val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
                 userService.updateProfile(currentUser.id, newProfile).map({
                   case Some(profile) => WebAppResult.Ok(request, "profile.update", Nil, "AuthProvider.Identity.Success", Json.toJson(request.body)).getResult
-                  case None => Ok("will nicht")
+                  case None => WebAppResult.Bogus(request, "profile.notExist", Nil, "402", Json.toJson(request.body)).getResult
                 })
               }
-              case _ => Future.successful(Ok("will nicht"))
+              case _ => Future.successful(WebAppResult.Bogus(request, "profile.profileNotExist", Nil, "402", Json.toJson(request.body)).getResult)
             }
           }
-          case _ => Future.successful(Ok("will nicht"))
+          case _ => Future.successful(WebAppResult.Bogus(request, "profile.emailNotExist", Nil, "402", Json.toJson(request.body)).getResult)
        }
       }
-    case _ => Future.successful(Ok("will nicht"))
+    case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
 }
