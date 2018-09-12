@@ -365,7 +365,9 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.28.26 (2018-07-13)
+## Version 0.28.28 (2018-09-12)
+* [[I] #245 - Frontend Controller SignUp](https://github.com/Viva-con-Agua/drops/issues/245)
+* [[I] #244 - FrontendController SignIn](https://github.com/Viva-con-Agua/drops/issues/244)
 * [[I] #241 - OAuth2 redirect to HTML during Ajax request](https://github.com/Viva-con-Agua/drops/issues/241)
 * [[F] #227 - Impressum: Action for handling Impressum](https://github.com/Viva-con-Agua/drops/issues/227)
 * [[I] #221 - Pool1 OES trouble](https://github.com/Viva-con-Agua/drops/issues/221)
