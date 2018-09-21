@@ -197,3 +197,8 @@ pool1.debug.export.failure=Failure on export!\n{0}
 organization.error.exist=Organization already exist
 organization.error.notFound=Organization not found
 organization.error.profileInv=Profile is part of the organization
+
+widgets.user.found=User has been found!
+widgets.user.notFound=The user has not been found.
+widgets.forbidden=You have no permissions to see this data.
+widgets.notAuthenticated=Please, log in first.

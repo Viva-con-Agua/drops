@@ -19,6 +19,9 @@ GET     /users/init/:number/:specialRoleUsers               controllers.Applicat
 GET     /roles                                              controllers.Roles.index
 POST    /roles/update                                       controllers.Roles.update
 
+# Widgets
+GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
+
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
 POST    /rest/user/create                                  controllers.RestApi.createUser
