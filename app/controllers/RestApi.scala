@@ -175,7 +175,7 @@ class RestApi @Inject() (
               case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
               case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
               case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            })).map((user) => Ok(Json.toJson(user)))
+            }, updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
         })
       }
     }

@@ -33,7 +33,7 @@ object UserConverter {
       }else{
         var roles = Set[Role]()
         dbEntry._1.roles.split(",").foreach(role => {roles += Role(role)})
-        userList ++ List(User(dbEntry._1.publicId, List(profile), roles))
+        userList ++ List(User(dbEntry._1.publicId, List(profile), dbEntry._1.updated, dbEntry._1.created, roles))
       }
     })
     userList

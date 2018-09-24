@@ -61,7 +61,9 @@ object DummyUser {
             case false => resRoles
           }
         )
-      }
+      },
+      updated = System.currentTimeMillis(),
+      created = System.currentTimeMillis()
     )
     DummyUser(supporter, profile, user)
   }

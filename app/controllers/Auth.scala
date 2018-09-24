@@ -123,7 +123,7 @@ class Auth @Inject() (
           List(new DefaultProfileImage)
         )
         for {
-          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatar = List(new DefaultProfileImage))), roles = Set(RoleAdmin)))
+          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatar = List(new DefaultProfileImage))), roles = Set(RoleAdmin), updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
           _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(config.get.getString("password").get))
           token <- userTokenService.save(UserToken.create(user.id, config.get.getString("email").get, true))
         } yield {
@@ -159,7 +159,7 @@ class Auth @Inject() (
                 avatarUrl match {
                   case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url),new DefaultProfileImage)))
                   case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-                }))
+                }, updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
               _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
             } yield {
