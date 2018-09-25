@@ -21,6 +21,7 @@ POST    /roles/update                                       controllers.Roles.up
 
 # Widgets
 GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
+POST    /widgets/users                                      controllers.widgets.Users.getUsers
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile

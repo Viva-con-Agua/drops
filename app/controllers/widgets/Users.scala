@@ -7,20 +7,26 @@ import javax.inject.Inject
 import scala.concurrent.Future
 import com.mohiva.play.silhouette.api.{Environment, SecuredErrorHandler, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import controllers.rest._
+import daos.MariadbUserDao
 import play.api._
 import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
-import models.{User, PublicUser}
+import models.{PublicUser, User}
 import services.UserService
-import play.api.libs.json.{JsPath, JsValue, Json, Reads}
+import play.api.libs.json._
+import utils.Query.QueryParserError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class Users @Inject() (
                        userService: UserService,
+                       userDao: MariadbUserDao,
                        val messagesApi: MessagesApi,
                        val env:Environment[User,CookieAuthenticator],
                        configuration: Configuration) extends Silhouette[User,CookieAuthenticator] {
+
+  def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
 
   implicit val m = messagesApi
   override def onNotAuthenticated(request: RequestHeader): Option[Future[Result]] = {
@@ -42,5 +48,14 @@ class Users @Inject() (
     )
   }
 
+  def getUsers = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
+    implicit val ud = userDao
+    QueryBody.asUserRequest(request.body).map(_ match {
+      case Left(e : QueryParserError) => WidgetResult.Bogus(request, "widgets.users.queryParser", Nil, "Widgets.GetUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
+      case Left(e : QueryBody.NoValuesGiven) => WidgetResult.Bogus(request, "widgets.users.noValues", Nil, "Widgets.GetUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
+      case Left(e) => WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+      case Right(users) => WidgetResult.Ok(request, "widgets.user.found", Nil, "Widgets.GetUsers.Success", Json.toJson(users.map((u) => PublicUser(u)))).getResult
+    })
+  }
 
 }
