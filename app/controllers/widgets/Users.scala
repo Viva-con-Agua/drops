@@ -58,4 +58,13 @@ class Users @Inject() (
     })
   }
 
+  def getCountUsers = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
+    implicit val ud = userDao
+    QueryBody.getUsersCount(request.body).map(_ match {
+      case Left(e : QueryParserError) => WidgetResult.Bogus(request, "widgets.users.queryParser", Nil, "Widgets.GetCountUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
+      case Left(e : QueryBody.NoValuesGiven) => WidgetResult.Bogus(request, "widgets.users.noValues", Nil, "Widgets.GetCountUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
+      case Left(e) => WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.generic", Nil, "Widgets.GetCountUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+      case Right(count) => WidgetResult.Ok(request, "widgets.count.found", Nil, "Widgets.GetCountUsers.Success", Json.obj("count" -> count)).getResult
+    })
+  }
 }

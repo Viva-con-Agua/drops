@@ -359,6 +359,11 @@ class MariadbUserDao extends UserDao{
     dbConfig.db.run(sql_action).map(UserConverter.buildUserListFromResult(_))
   }
 
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long] = {
+    val sql_action = statement.as[Long]
+    dbConfig.db.run(sql_action).map(_.head)
+  }
+
   override def listOfStubs: Future[List[UserStub]] = {
     list.map(userList => {
       UserConverter.buildUserStubListFromUserList(userList)

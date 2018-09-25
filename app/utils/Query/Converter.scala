@@ -15,17 +15,22 @@ case class Page(limit: Long, offset: Option[Long] = None) {
 }
 
 case class Converter(view: String, ast: Option[QueryAST], page: Option[Page]) {
-  def toStatement : SQLActionBuilder = {
-    val viewSQL = sql"""SELECT * FROM #$view"""
+  private val SELECT = sql"""SELECT * FROM #$view"""
+  private val COUNT = sql"""SELECT COUNT(*) AS User_count FROM #$view"""
+
+  private def generate(function: SQLActionBuilder) : SQLActionBuilder = {
     val filtered = ast.map((f) => Converter.concat(sql""" WHERE """, f.toSqlStatement)) match {
-      case Some(f) => Converter.concat(viewSQL, f)
-      case None => viewSQL
+      case Some(f) => Converter.concat(function, f)
+      case None => function
     }
     page match {
       case Some(p) => Converter.concat(filtered, p.toSqlStatement)
       case _ => filtered
     }
   }
+
+  def toStatement : SQLActionBuilder = generate(SELECT)
+  def toCountStatement : SQLActionBuilder = generate(COUNT)
 }
 
 object Converter {
