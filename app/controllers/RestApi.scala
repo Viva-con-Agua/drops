@@ -94,29 +94,53 @@ class RestApi @Inject() (
   }
 
   def getUsers = ApiAction.async(validateJson[UsersFilterBody]) { implicit request => {
-    try{
-      val query = request.body.query.get
-      val values = request.body.values.get
-      val tokensObj = QueryLexer(query)
-      if(tokensObj.isLeft){
-        throw tokensObj.left.get
-      }
-      val tokens = tokensObj.right.get
+    case class NoValuesGiven(msg: String) extends Exception(msg)
+    case class NoQueryGiven(msg: String) extends Exception(msg)
 
-      val p = QueryParser(tokens,values)
-      if(p.isLeft){
-        throw p.left.get
+    val page = request.body.limit.map((l) => Page(l, request.body.offset))
+
+    request.body.query.map(QueryLexer( _ ) match {
+      case Left(error) => Left(error)
+      case Right(tokens) => request.body.values.map(QueryParser(tokens, _ ) match {
+        case Left(error) => Left(error)
+        case Right(ast) => Right(ast)
+      }).getOrElse(Left(NoValuesGiven("There are no values")))
+    }).getOrElse(Left(NoQueryGiven("There is no query"))) match { // got either an error or an AST
+      case Left(error: NoQueryGiven) => {
+        val stmt = Converter("Users", None, page)
+        try {
+          println(stmt.toStatement.toString)
+          userDao.list_with_statement(stmt.toStatement).map(users => Ok(Json.toJson(users)))
+        } catch {
+          case e: java.sql.SQLException => {
+            Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+          }
+          case e: Exception => {
+            Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+          }
+          case e: Throwable => {
+            Future.successful(InternalServerError(Json.obj("error" -> "Unknown error occured")))
+          }
+        }
       }
-      val ast = p.right.get
-      val statement = Converter.astToSQL(ast, "Users")
-      userDao.list_with_statement(statement).map(users => Ok(Json.toJson(users)))
-    }catch{
-      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-      case e: Exception => {
-        Future(InternalServerError(e.getMessage))
-      }
-      case e: Throwable => {
-        Future(InternalServerError)
+      case Left(error: NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> error.getMessage)))
+      case Left(error: QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case Left(error) => Future.successful(InternalServerError(Json.obj("error" -> error.getMessage)))
+      case Right(ast) => {
+        val stmt = Converter("Users", Some(ast), page)
+        try {
+          userDao.list_with_statement(stmt.toStatement).map(users => Ok(Json.toJson(users)))
+        } catch {
+          case e: java.sql.SQLException => {
+            Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+          }
+          case e: Exception => {
+            Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+          }
+          case e: Throwable => {
+            Future.successful(InternalServerError(Json.obj("error" -> "Unknown error occured")))
+          }
+        }
       }
     }
   }}

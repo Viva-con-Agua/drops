@@ -51,12 +51,16 @@ object Users{
 
 case class UserView(
                    publicId : Option[Map[String, UUID]],
-                   roles : Option[Map[String, String]]
+                   roles : Option[Map[String, String]],
+                   updated: Option[Map[String, Long]],
+                   created: Option[Map[String, Long]]
                    ) extends ViewBase {
-  def getValue(fieldname: String, index: Int): Object = {
+  def getValue(fieldname: String, index: Int): Any = {
     fieldname match {
       case "publicId" => publicId.get.get(index.toString).get
       case "roles" => roles.get.get(index.toString).get
+      case "updated" => updated.get.get(index.toString).get
+      case "created" => created.get.get(index.toString).get
     }
   }
 
@@ -74,24 +78,40 @@ case class UserView(
           case false => false
         }
       }
+      case "updated" =>
+        updated.isDefined match {
+          case true => updated.get.keySet.contains(index.toString)
+          case false => false
+        }
+      case "created" =>
+        created.isDefined match {
+          case true => created.get.keySet.contains(index.toString)
+          case false => false
+        }
     }
   }
 }
 
 object UserView{
-  def apply(tuple: (Option[Map[String, UUID]], Option[Map[String, String]])) : UserView =
-    UserView(tuple._1, tuple._2)
+  def apply(tuple: (Option[Map[String, UUID]], Option[Map[String, String]], Option[Map[String, Long]], Option[Map[String, Long]])) : UserView =
+    UserView(tuple._1, tuple._2, tuple._3, tuple._4)
 
   implicit val userViewWrites : OWrites[UserView] = (
     (JsPath \ "publicId").writeNullable[Map[String, UUID]] and
-      (JsPath \ "roles").writeNullable[Map[String, String]]
+      (JsPath \ "roles").writeNullable[Map[String, String]] and
+      (JsPath \ "updated").writeNullable[Map[String, Long]] and
+      (JsPath \ "created").writeNullable[Map[String, Long]]
     )(unlift(UserView.unapply))
 
   implicit val userViewReads: Reads[UserView] = (
     (JsPath \ "publicId").readNullable[Map[String, UUID]].orElse(
-      (JsPath \ "publicId").readNullable[UUID].map(_.map(p => Map("0" -> p))))and
+      (JsPath \ "publicId").readNullable[UUID].map(_.map(p => Map("0" -> p)))) and
       (JsPath \ "roles").readNullable[Map[String, String]].orElse(
-        (JsPath \ "roles").readNullable[String].map(_.map(n => Map("0" -> n))))
+        (JsPath \ "roles").readNullable[String].map(_.map(n => Map("0" -> n)))) and
+      (JsPath \ "updated").readNullable[Map[String, Long]].orElse(
+        (JsPath \ "updated").readNullable[Long].map(_.map(p => Map("0" -> p)))) and
+      (JsPath \ "created").readNullable[Map[String, Long]].orElse(
+        (JsPath \ "created").readNullable[Long].map(_.map(p => Map("0" -> p))))
   ).tupled.map(UserView( _ ))
 }
 
