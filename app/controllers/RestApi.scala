@@ -81,27 +81,25 @@ class RestApi @Inject() (
     Some(Future.successful(responseError(play.api.mvc.Results.Unauthorized, "UserNotAuthorized", Messages("error.profileUnauth"))))
   }
 
-  case class UsersFilterBody(
-                              query: Option[String],
-                              values: Option[Users],
-                              sort : Option[String],
-                              offset: Option[Long],
-                              limit: Option[Long]
-                            )
-
-  object UsersFilterBody {
-    implicit val filterBodyJsonFormat = Json.format[UsersFilterBody]
-  }
-
   def getUsers = ApiAction.async(validateJson[rest.QueryBody]) { implicit request => {
-    implicit val ud = userDao
     implicit val m = messagesApi
-    rest.QueryBody.asUserRequest(request.body).map(_ match {
-      case Left(e : QueryParserError) => BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue")))
-      case Left(e : rest.QueryBody.NoValuesGiven) => BadRequest(Json.obj("error" -> e.getMessage))
-      case Left(e) => InternalServerError(Json.obj("error" -> e.getMessage))
-      case Right(users) => Ok(Json.toJson(users))
-    })
+    rest.QueryBody.asUsersQuery(request.body) match {
+      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case Left(e : rest.QueryBody.NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
+      case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+      case Right(converter) => try {
+        userDao.list_with_statement(converter.toStatement).map((users) =>
+          Ok(Json.toJson(users))
+        )
+      } catch {
+        case e: java.sql.SQLException => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+        case e: Exception => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+      }
+    }
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
@@ -251,43 +249,23 @@ class RestApi @Inject() (
     })
   }}
 
-  case class CrewsFilterBody(
-              query: Option[String],
-              values: Option[Crews],
-              sort : Option[String],
-              offset: Option[Long],
-              limit: Option[Long]
-           )
-
-  object CrewsFilterBody {
-    implicit val filterBodyJsonFormat = Json.format[CrewsFilterBody]
-  }
-
-  def getCrews = ApiAction.async(validateJson[CrewsFilterBody]){ implicit request => {
-    try{
-
-      val query = request.body.query.get
-      val values = request.body.values.get
-      val tokensObj = QueryLexer(query)
-      if(tokensObj.isLeft){
-        throw tokensObj.left.get
-      }
-      val tokens = tokensObj.right.get
-
-      val p = QueryParser(tokens,values)
-      if(p.isLeft){
-        throw p.left.get
-      }
-      val ast = p.right.get
-      val statement = Converter.astToSQL(ast, "Crews")
-      crewDao.list_with_statement(statement).map(crews => Ok(Json.toJson(crews)))
-    }catch{
-      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-      case e: Exception => {
-        Future(InternalServerError(e.getMessage))
-      }
-      case e: Throwable => {
-        Future(InternalServerError)
+  def getCrews = ApiAction.async(validateJson[rest.QueryBody]){ implicit request => {
+    implicit val m = messagesApi
+    rest.QueryBody.asCrewsQuery(request.body) match {
+      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case Left(e : rest.QueryBody.NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
+      case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+      case Right(converter) => try {
+        crewDao.list_with_statement(converter.toStatement).map((crews) =>
+          Ok(Json.toJson(crews))
+        )
+      } catch {
+        case e: java.sql.SQLException => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+        case e: Exception => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
       }
     }
   }}
