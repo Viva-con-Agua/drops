@@ -140,7 +140,7 @@ class Auth @Inject() (
                 avatarUrl match {
                   case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url), new DefaultProfileImage)))
                   case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-                }))
+                }, updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
               _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
             } yield {
