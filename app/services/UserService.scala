@@ -39,7 +39,7 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
   def save(socialProfile:CommonSocialProfile) = {
     val profile = Profile(socialProfile)
     userDao.find(profile.loginInfo).flatMap {
-      case None => userDao.save(User(UUID.randomUUID(), List(profile)))
+      case None => userDao.save(User(UUID.randomUUID(), List(profile), System.currentTimeMillis(), System.currentTimeMillis()))
       case Some(user) => userDao.update(profile)
     }
   }

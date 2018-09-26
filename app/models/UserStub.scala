@@ -116,8 +116,8 @@ object ProfileStub {
     ).tupled.map(ProfileStub( _ ))
 }
 
-case class UserStub(id: UUID, profiles: List[ProfileStub], roles: Set[Role] = Set(RoleSupporter)) extends Identity {
-  def toUser(p: List[Profile]) = User(id, p, roles)
+case class UserStub(id: UUID, profiles: List[ProfileStub], updated : Long, created : Long, roles: Set[Role] = Set(RoleSupporter)) extends Identity {
+  def toUser(p: List[Profile]) = User(id, p, updated, created, roles)
 }
 object UserStub {
   implicit val passwordInfoJsonFormat = Json.format[PasswordInfo]

@@ -14,33 +14,39 @@ import play.api.libs.json.{JsPath, Reads, _}
 case class UserDB(
   id: Long,
   publicId: UUID,
-  roles: String
+  roles: String,
+  updated: Long,
+  created: Long
                 )
 
 
-object UserDB extends ((Long, UUID, String) => UserDB ){
-  def apply(tuple: (Long, UUID, String)): UserDB =
-    UserDB(tuple._1, tuple._2, tuple._3)
+object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
+  def apply(tuple: (Long, UUID, String, Long, Long)): UserDB =
+    UserDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
 
   def apply(user: User): UserDB={
     var roles = Set[String]()
     user.roles.foreach(role =>
       roles += role.name
     )
-    UserDB(0, user.id, roles.mkString(","))
+    UserDB(0, user.id, roles.mkString(","), user.updated, user.created)
   }
 
   implicit val userWrites : OWrites[UserDB] = (
     (JsPath \ "id").write[Long] and
       (JsPath \ "publicId").write[UUID] and
-      (JsPath \ "roles").write[String]
+      (JsPath \ "roles").write[String] and
+      (JsPath \ "updated").write[Long] and
+      (JsPath \ "created").write[Long]
     )(unlift(UserDB.unapply))
 
   implicit val userReads : Reads[UserDB] = (
     (JsPath \ "id").readNullable[Long] and
       (JsPath \ "publicId").read[UUID] and
-      (JsPath \ "roles").read[String]
+      (JsPath \ "roles").read[String] and
+      (JsPath \ "updated").readNullable[Long] and
+      (JsPath \ "created").readNullable[Long]
     ).tupled.map((user) => if(user._1.isEmpty)
-    UserDB(0, user._2, user._3)
-  else UserDB(user._1.get, user._2, user._3))
+    UserDB(0, user._2, user._3, user._4.getOrElse(System.currentTimeMillis), user._5.getOrElse(System.currentTimeMillis))
+  else UserDB(user._1.get, user._2, user._3, user._4.getOrElse(System.currentTimeMillis), user._5.getOrElse(System.currentTimeMillis)))
 }

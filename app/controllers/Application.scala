@@ -175,7 +175,7 @@ class Application @Inject() (
     ).map(UserWsResults(_))
 
     implicit val pw : PasswordHasher = passwordHasher
-    crewDao.ws.list(Json.obj(),150,Json.obj()).flatMap((crews) =>
+    crewDao.list.flatMap((crews) =>
       wsRequest.get().flatMap((response) => {
         val users = (response.json.as[UserWsResults]).results.zipWithIndex.foldLeft[List[DummyUser]](List())(
           (l, userJsonIndex) => l :+ DummyUser(

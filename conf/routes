@@ -19,6 +19,11 @@ GET     /users/init/:number/:specialRoleUsers               controllers.Applicat
 GET     /roles                                              controllers.Roles.index
 POST    /roles/update                                       controllers.Roles.update
 
+# Widgets
+GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
+POST    /widgets/users                                      controllers.widgets.Users.getUsers
+POST    /widgets/users/count                                controllers.widgets.Users.getCountUsers
+
 # WebApp endpoints
 GET     /webapp/identity                                    controllers.webapp.Auth.identity
 POST    /webapp/authenticate                                controllers.webapp.Auth.authenticate
@@ -33,6 +38,7 @@ GET     /webapp/profile/get                                 controllers.webapp.P
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewController.socket
+
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile

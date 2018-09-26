@@ -204,3 +204,8 @@ rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage
 rest.api.givenClientNotFound=Es konnte der angebenen ID kein valider Client zugeordnet werden.
 rest.api.noClientSecretGiven=Methode zur Absicherung der Webservices ist momentan ''secret'', aber es wurde kein Client Secret angegeben.
 rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der Webservices ist derzeit nicht implementiert, bitte ändere ''drops.ws.security'' in deiner application.conf
+
+widgets.user.found=Supporter gefunden!
+widgets.user.notFound=Der Supporter konnte nicht gefunden werden.
+widgets.forbidden=Du darfst dies nicht sehen.
+widgets.notAuthenticated=Log dich erst ein.

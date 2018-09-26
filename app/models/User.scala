@@ -186,11 +186,11 @@ object PublicProfile {
     ).tupled.map(PublicProfile( _ ))
 }
 
-case class User(id: UUID, profiles: List[Profile], roles: Set[Role] = Set(RoleSupporter)) extends Identity {
+case class User(id: UUID, profiles: List[Profile], updated: Long, created: Long, roles: Set[Role] = Set(RoleSupporter)) extends Identity {
   def updateProfile(updatedProfile: Profile) = User(this.id, profiles.map(p => p.loginInfo match {
     case updatedProfile.loginInfo => updatedProfile
     case _ => p
-  }), this.roles)
+  }), this.updated, this.created, this.roles)
   def profileFor(loginInfo:LoginInfo) = profiles.find(_.loginInfo == loginInfo)
   def fullName(loginInfo:LoginInfo) = profileFor(loginInfo).flatMap(_.supporter.fullName)
   def setRoles(roles : Set[Role]) = this.copy(roles = roles)
@@ -201,7 +201,7 @@ case class User(id: UUID, profiles: List[Profile], roles: Set[Role] = Set(RoleSu
     profiles.foreach(profile => {
       profileStubList ++ List(profile.toProfileStub)
     })
-    UserStub(id, profileStubList, roles)
+    UserStub(id, profileStubList, updated, created, roles)
   }
 
 }
@@ -212,27 +212,33 @@ object User {
   implicit val userJsonFormat = Json.format[User]
 }
 
-case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role])
+case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role], updated: Long, created: Long)
 
 object PublicUser {
   def apply(user : User) : PublicUser = PublicUser(
     user.id,
     // select the first profile as the primary profile:
     user.profiles.headOption.map(PublicProfile(_, true)).toList ++ user.profiles.tail.map(PublicProfile(_)),
-    user.roles
+    user.roles,
+    user.updated,
+    user.created
   )
-  def apply(tuple : (UUID, List[PublicProfile], Set[Role])) : PublicUser = PublicUser(
-    tuple._1, tuple._2, tuple._3
+  def apply(tuple : (UUID, List[PublicProfile], Set[Role], Long, Long)) : PublicUser = PublicUser(
+    tuple._1, tuple._2, tuple._3, tuple._4, tuple._5
   )
 
   implicit val publicUserWrites : OWrites[PublicUser] = (
     (JsPath \ "id").write[UUID] and
       (JsPath \ "profiles").write[List[PublicProfile]] and
-      (JsPath \ "roles").write[Set[Role]]
+      (JsPath \ "roles").write[Set[Role]] and
+      (JsPath \ "updated").write[Long] and
+      (JsPath \ "created").write[Long]
     )(unlift(PublicUser.unapply))
   implicit val publicUserReads : Reads[PublicUser] = (
     (JsPath \ "id").read[UUID] and
       (JsPath \ "profiles").read[List[PublicProfile]] and
-      (JsPath \ "roles").read[Set[Role]]
+      (JsPath \ "roles").read[Set[Role]] and
+      (JsPath \ "updated").read[Long] and
+      (JsPath \ "created").read[Long]
     ).tupled.map(PublicUser( _ ))
 }

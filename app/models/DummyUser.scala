@@ -24,8 +24,8 @@ object DummyUser {
       mobilePhone = Some((json \ "cell").as[String]),
       placeOfResidence = Some((json \ "location" \ "city").as[String].capitalize),
       birthday = {
-        val dateString = (json \ "dob").as[String]
-        val format: DateFormat = new SimpleDateFormat("yyyy-MM-d hh:mm:ss", Locale.ENGLISH)
+        val dateString = (json \ "dob" \ "date").as[String].replaceAll("T", " ").replaceAll("Z", "")
+        val format: DateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ENGLISH)
         val date: Date = format.parse(dateString)
         Some(date.getTime())
       },
@@ -46,7 +46,7 @@ object DummyUser {
       supporter = supporter,
       passwordInfo = Some(passwordHasher.hash((json \ "login" \ "password").as[String])),
       oauth1Info = None,
-      avatar = List(GravatarProfileImage((json \ "picture" \ "medium").as[String]), new DefaultProfileImage)
+      avatar = List(GravatarProfileImage((json \ "picture" \ "large").as[String]), new DefaultProfileImage)
     )
 
     val user = User(
@@ -61,7 +61,9 @@ object DummyUser {
             case false => resRoles
           }
         )
-      }
+      },
+      updated = System.currentTimeMillis(),
+      created = System.currentTimeMillis()
     )
     DummyUser(supporter, profile, user)
   }

@@ -93,32 +93,15 @@ class RestApi @Inject() (
     implicit val filterBodyJsonFormat = Json.format[UsersFilterBody]
   }
 
-  def getUsers = ApiAction.async(validateJson[UsersFilterBody]) { implicit request => {
-    try{
-      val query = request.body.query.get
-      val values = request.body.values.get
-      val tokensObj = QueryLexer(query)
-      if(tokensObj.isLeft){
-        throw tokensObj.left.get
-      }
-      val tokens = tokensObj.right.get
-
-      val p = QueryParser(tokens,values)
-      if(p.isLeft){
-        throw p.left.get
-      }
-      val ast = p.right.get
-      val statement = Converter.astToSQL(ast, "Users")
-      userDao.list_with_statement(statement).map(users => Ok(Json.toJson(users)))
-    }catch{
-      case e: QueryParserError => Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-      case e: Exception => {
-        Future(InternalServerError(e.getMessage))
-      }
-      case e: Throwable => {
-        Future(InternalServerError)
-      }
-    }
+  def getUsers = ApiAction.async(validateJson[rest.QueryBody]) { implicit request => {
+    implicit val ud = userDao
+    implicit val m = messagesApi
+    rest.QueryBody.asUserRequest(request.body).map(_ match {
+      case Left(e : QueryParserError) => BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue")))
+      case Left(e : rest.QueryBody.NoValuesGiven) => BadRequest(Json.obj("error" -> e.getMessage))
+      case Left(e) => InternalServerError(Json.obj("error" -> e.getMessage))
+      case Right(users) => Ok(Json.toJson(users))
+    })
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
@@ -175,7 +158,7 @@ class RestApi @Inject() (
               case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
               case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
               case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            })).map((user) => Ok(Json.toJson(user)))
+            }, updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
         })
       }
     }
