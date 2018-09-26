@@ -31,6 +31,8 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 # WebApp profile
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
+#WebApp crew
+GET     /webapp/crew/ws                                     controllers.webapp.CrewController.socket
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
