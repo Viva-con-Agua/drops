@@ -41,7 +41,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def delete (userId:UUID):Future[Boolean]
   def getProfile (email: String): Future[Option[Profile]]
   def profileListByRole(id: UUID, role: String): Future[Option[List[Profile]]]
-
+  def updateSupporter(updated: Profile):Future[Option[Profile]] 
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -124,7 +124,7 @@ class MongoUserDao extends UserDao {
 
   def getProfile(email: String): Future[Option[Profile]] = ???
   def profileListByRole(id: UUID, role: String): Future[Option[List[Profile]]] = ???
-
+  def updateSupporter(updated: Profile):Future[Option[Profile]] = ???
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 
@@ -272,6 +272,10 @@ class MariadbUserDao extends UserDao{
     * @param profileObjects
     * @return
     */
+  
+  //def replaceProfile(profile: Profile) : Future[Option[Profile]] ={
+    
+  //}
   private def addProfiles(userDB : UserDB, profileObjects: List[Profile]) : Future[User] = {
 
     profileObjects.foreach(profile => {
@@ -298,6 +302,7 @@ class MariadbUserDao extends UserDao{
     find(userDB.id).map(_.get)
   }
 
+  
   override def confirm(loginInfo: LoginInfo): Future[User] = {
     val getLoginInfo = loginInfos.filter(_.providerKey === loginInfo.providerKey)
     val updateProfile = for{p <- profiles.filter(_.id in getLoginInfo.map(_.profileId))} yield p.confirmed
@@ -328,17 +333,16 @@ class MariadbUserDao extends UserDao{
     find(profile.loginInfo).flatMap(user => {
       findDBUserModel(user.get.id).flatMap(userDB => {
         //Delete Profile
-        val deleteLoginInfo = loginInfos.filter(_.providerId === profile.loginInfo.providerKey)
+        val deleteLoginInfo = loginInfos.filter(_.providerKey === profile.loginInfo.providerKey)
         val deleteProfile = profiles.filter(_.id in (deleteLoginInfo.map(_.profileId)))
         val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
         val deletePasswordInfo = passwordInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
         dbConfig.db.run((deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteSupporter.delete andThen deleteProfile.delete).transactionally)
-
         addProfiles(userDB, List(profile))
       })
     })
   }
-
+  
   override def list: Future[List[User]] = {
     val action = for{
       (((((user, profile), supporter), loginInfo),passwordInfo), oauth1Info) <- (users
@@ -426,6 +430,20 @@ class MariadbUserDao extends UserDao{
     dbConfig.db.run(action.result).map(result => {
       UserConverter.buildProfileListFromResult(result)
     })
+  }
+ 
+ def updateSupporter(updated: Profile):Future[Option[Profile]] = {
+  val action = for { 
+    p <- profiles.filter(p => p.email === updated.email)
+    s <- supporters.filter(s => s.profileId === p.id)
+  } yield (s)
+  dbConfig.db.run(action.result).map( result => {
+    dbConfig.db.run(supporters.insertOrUpdate(SupporterDB(result.head.id, updated.supporter, result.head.profileId)))
+  })
+  updated.email match {
+    case Some(email) => getProfile(email)
+    case None => Future.successful(None)
+  }
  }
   //Wenn er private ist kann ich ihn nutzen. Ansonsten muss ich schauen wo er verwendet wird
   class MariadbUserWS extends UserWS {
