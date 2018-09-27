@@ -51,13 +51,13 @@ class Users @Inject() (
   def getUsers = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
     QueryBody.asUsersQuery(request.body) match {
       case Left(e : QueryParserError) => Future.successful(
-        WidgetResult.Bogus(request, "error.widgets.users.queryParser", Nil, "Widgets.GetUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
+        WidgetResult.Bogus(request, "widgets.users.error.queryParser", Nil, "Widgets.GetUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
       )
       case Left(e : QueryBody.NoValuesGiven) => Future.successful(
-        WidgetResult.Bogus(request, "error.widgets.users.noValues", Nil, "Widgets.GetUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
+        WidgetResult.Bogus(request, "widgets.users.error.noValues", Nil, "Widgets.GetUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
       )
       case Left(e) => Future.successful(
-        WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.widgets.users.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+        WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.error.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
       )
       case Right(converter) => try {
         userDao.list_with_statement(converter.toStatement).map((users) =>
@@ -66,12 +66,12 @@ class Users @Inject() (
       } catch {
         case e: java.sql.SQLException => {
           Future.successful(
-            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.widgets.users.sql", Nil, "Widgets.GetUsers.SQLException", Json.obj("error" -> e.getMessage)).getResult
+            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.error.sql", Nil, "Widgets.GetUsers.SQLException", Json.obj("error" -> e.getMessage)).getResult
           )
         }
         case e: Exception => {
           Future.successful(
-            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.widgets.users.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.error.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
           )
         }
       }
@@ -82,13 +82,13 @@ class Users @Inject() (
     implicit val ud = userDao
     QueryBody.asUsersCountQuery(request.body) match {
       case Left(e : QueryParserError) => Future.successful(
-        WidgetResult.Bogus(request, "error.widgets.users.queryParser", Nil, "Widgets.GetCountUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
+        WidgetResult.Bogus(request, "widgets.users.error.queryParser", Nil, "Widgets.GetCountUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
       )
       case Left(e : QueryBody.NoValuesGiven) => Future.successful(
-        WidgetResult.Bogus(request, "error.widgets.users.noValues", Nil, "Widgets.GetCountUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
+        WidgetResult.Bogus(request, "widgets.users.error.noValues", Nil, "Widgets.GetCountUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
       )
       case Left(e) => Future.successful(
-        WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.widgets.users.generic", Nil, "Widgets.GetCountUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+        WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.error.generic", Nil, "Widgets.GetCountUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
       )
       case Right(converter) => try {
         userDao.count_with_statement(converter.toCountStatement).map((count) =>
@@ -97,12 +97,12 @@ class Users @Inject() (
       } catch {
         case e: java.sql.SQLException => {
           Future.successful(
-            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.widgets.users.sql", Nil, "Widgets.GetUsers.SQLException", Json.obj("error" -> e.getMessage)).getResult
+            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.error.sql", Nil, "Widgets.GetUsers.SQLException", Json.obj("error" -> e.getMessage)).getResult
           )
         }
         case e: Exception => {
           Future.successful(
-            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.widgets.users.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+            WidgetResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.users.error.generic", Nil, "Widgets.GetUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
           )
         }
       }

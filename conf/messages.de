@@ -204,8 +204,16 @@ rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage
 rest.api.givenClientNotFound=Es konnte der angebenen ID kein valider Client zugeordnet werden.
 rest.api.noClientSecretGiven=Methode zur Absicherung der Webservices ist momentan ''secret'', aber es wurde kein Client Secret angegeben.
 rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der Webservices ist derzeit nicht implementiert, bitte ändere ''drops.ws.security'' in deiner application.conf
+rest.api.converter.no.view=Es gibt keine SQL View mit dem Namen ''{1}''
+rest.api.noValuesGiven=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
+rest.api.noQueryGiven=Es wurde keine Query angegeben.
 
 widgets.user.found=Supporter gefunden!
+widgets.count.found=Anzahl der Nutzer konnte berechnet werden.
 widgets.user.notFound=Der Supporter konnte nicht gefunden werden.
 widgets.forbidden=Du darfst dies nicht sehen.
 widgets.notAuthenticated=Log dich erst ein.
+widgets.users.error.queryParser=Die gegebene Query kann nicht geparsed werden.
+widgets.users.error.noValues=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
+widgets.users.error.generic=Die Query enthält einen Fehler.
+widgets.users.error.sql=Die Query verursacht einen SQL Fehler.
