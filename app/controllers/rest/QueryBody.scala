@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 case class QueryBody(
                  query: Option[String],
                  values: Option[Users],
-                 sort : Option[String],
+                 sort : Option[Sort],
                  offset: Option[Long],
                  limit: Option[Long]
                     )
@@ -35,11 +35,11 @@ object QueryBody {
       }).getOrElse(Left(NoValuesGiven(Messages("rest.api.noValuesGiven"))))
     }).getOrElse(Left(NoQueryGiven(Messages("rest.api.noQueryGiven")))) match { // got either an error or an AST
       case Left(error: NoQueryGiven) => {
-        Right(Converter(view, None, page))
+        Right(Converter(view, None, page, body.sort))
       }
       case Left(error : Exception) => Left(error)
       case Right(ast) => {
-        Right(Converter(view, Some(ast), page))
+        Right(Converter(view, Some(ast), page, body.sort))
       }
     }
   }

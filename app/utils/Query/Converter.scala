@@ -2,7 +2,7 @@ package utils.Query
 
 import play.Logger
 import play.api.i18n.Messages
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, Json}
 import slick.driver.MySQLDriver.api._
 import slick.jdbc.{PositionedParameters, SQLActionBuilder, SetParameter}
 
@@ -31,6 +31,10 @@ case class Sort(attributes: List[String], dir: String = "ASC") {
   }
 }
 
+object Sort {
+  implicit val sortFormat = Json.format[Sort]
+}
+
 case class Converter(view: View, ast: Option[QueryAST], page: Option[Page]) {
   private val SELECT = view.getSelectSQL
   private val COUNT = view.getCountSQL
@@ -53,9 +57,9 @@ case class Converter(view: View, ast: Option[QueryAST], page: Option[Page]) {
 
 object Converter {
 
-  def apply(view: String, ast: Option[QueryAST], page: Option[Page])(implicit messages: Messages) : Converter = view match {
-    case "Users" => Converter(View(view, Sort(List("User_id"))), ast, page)
-    case "Crews" => Converter(View(view, Sort(List("Crew_id"))), ast, page)
+  def apply(view: String, ast: Option[QueryAST], page: Option[Page], sort: Option[Sort])(implicit messages: Messages) : Converter = view match {
+    case "Users" => Converter(View(view, sort.getOrElse(Sort(List("User_id")))), ast, page)
+    case "Crews" => Converter(View(view, sort.getOrElse(Sort(List("Crew_id")))), ast, page)
     case _ => throw ConverterException(Messages("rest.api.converter.no.view", view))
   }
 
