@@ -17,35 +17,66 @@ import com.mohiva.play.silhouette.impl.exceptions.{IdentityNotFoundException, In
 import com.mohiva.play.silhouette.impl.providers._
 import play.api._
 import akka.actor._
+import services._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import services.{UserService}
-
-object CrewWebSocketActor {
-  def props(out: ActorRef) = Props(new CrewWebSocketActor(out))
-}
-
-class CrewWebSocketActor(out: ActorRef) extends Actor {
-  def receive = {
-    case msg: String =>
-      out ! (s"Hi" + msg)
-  }
-}
+import play.api.mvc.WebSocket.FrameFormatter
+import play.api.libs.iteratee._
+import play.api.libs.json._
 
 
 class CrewController @Inject() (
   userService: UserService,
+  crewService: CrewService,
   val messagesApi: MessagesApi,
   val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
     implicit val mApi = messagesApi
     
-    def socket = WebSocket.tryAcceptWithActor[String, String] { request =>
-      implicit val req = Request(request, AnyContentAsEmpty)
-      SecuredRequestHandler { securedRequest =>
+    //def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+    
+
+
+    def insertCrew(event: WebSocketEvent): WebSocketEvent = {
+      event.query match {
+        case Some(query) => {
+            val crewJsonResult: JsResult[CrewStub] = query.head.validate[CrewStub]
+            crewJsonResult match {
+              case s: JsSuccess[CrewStub] => {
+                crewService.save(s.get)
+                WebSocketEvent("SUCCESS", None, Option("save crew"))
+              }
+              case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option("Not a Crew object"))  
+            }
+          
+        }
+        case _ => WebSocketEvent("ERROR", None, Option("Query is not a Crew object"))
+      }
+
+    }
+
+    def webSocketEventHandler(event: WebSocketEvent): WebSocketEvent = {
+      event.operation match {
+        case "INSERT" => insertCrew(event)
+        case _ => WebSocketEvent("ERROR", None, Option("Operation not suppported"))
+      }
+    }
+
+    def socket = WebSocket.tryAccept[WebSocketEvent] { request =>
+       implicit val req = Request(request, AnyContentAsEmpty)
+        SecuredRequestHandler { securedRequest =>
         Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
       }.map {
-        case HandlerResult(r, Some(user)) => Right(CrewWebSocketActor.props _)
+        case HandlerResult(r, Some(_)) => Right({
+          val (out, channel) = Concurrent.broadcast[WebSocketEvent]
+
+          val in = Iteratee.foreach[WebSocketEvent] {
+            event => 
+            channel push(webSocketEventHandler(event))
+          }
+          (in, out)
+        })
         case HandlerResult(r, None) => Left(r)
       }
     }
