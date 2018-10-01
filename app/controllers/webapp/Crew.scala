@@ -41,7 +41,8 @@ class CrewController @Inject() (
     def insertCrew(event: WebSocketEvent): WebSocketEvent = {
       event.query match {
         case Some(query) => {
-            val crewJsonResult: JsResult[CrewStub] = query.head.validate[CrewStub]
+            val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option("query is empty")))
+            val crewJsonResult: JsResult[CrewStub] = firstElement.validate[CrewStub]
             crewJsonResult match {
               case s: JsSuccess[CrewStub] => {
                 crewService.save(s.get)
@@ -67,17 +68,17 @@ class CrewController @Inject() (
        implicit val req = Request(request, AnyContentAsEmpty)
         SecuredRequestHandler { securedRequest =>
         Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
-      }.map {
-        case HandlerResult(r, Some(_)) => Right({
-          val (out, channel) = Concurrent.broadcast[WebSocketEvent]
+        }.map {
+          case HandlerResult(r, Some(_)) => Right({
+            val (out, channel) = Concurrent.broadcast[WebSocketEvent]
 
-          val in = Iteratee.foreach[WebSocketEvent] {
-            event => 
-            channel push(webSocketEventHandler(event))
-          }
-          (in, out)
-        })
-        case HandlerResult(r, None) => Left(r)
+            val in = Iteratee.foreach[WebSocketEvent] {
+              event => 
+              channel push(webSocketEventHandler(event))
+            }
+            (in, out)
+          })
+          case HandlerResult(r, None) => Left(r)
       }
     }
   }
