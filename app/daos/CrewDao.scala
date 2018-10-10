@@ -30,6 +30,7 @@ trait CrewDao extends ObjectIdResolver with CountResolver {
   def update(crew: Crew):Future[Crew]
   def listOfStubs : Future[List[CrewStub]]
   def list : Future[List[Crew]]
+  def list_with_statement(statement : SQLActionBuilder):  Future[List[Crew]]
 
   trait CrewWS {
     def listOfStubs(queryExtension: JsObject, limit : Int, sort: JsObject):Future[List[CrewStub]]
@@ -83,6 +84,7 @@ class MongoCrewDao extends CrewDao {
       crews.find(queryExtension).sort(sort).cursor[CrewStub]().collect[List](limit)
   }
 
+  def list_with_statement(statement : SQLActionBuilder): Future[List[Crew]] = ???
   val ws = new MongoCrewWS
 }
 

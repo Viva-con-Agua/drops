@@ -37,7 +37,10 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
 #WebApp crew
-GET     /webapp/crew/ws                                     controllers.webapp.CrewController.socket
+GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
+GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
+GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.get(name: String)
+GET     /webapp/crew/list                                   controllers.webapp.CrewController.list
 
 
 # Rest api

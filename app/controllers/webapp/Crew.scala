@@ -19,67 +19,90 @@ import play.api._
 import akka.actor._
 import services._
 import models._
+import daos.CrewDao
 import play.api.libs.concurrent.Execution.Implicits._
 import services.{UserService}
 import play.api.mvc.WebSocket.FrameFormatter
 import play.api.libs.iteratee._
 import play.api.libs.json._
-
+import java.util.UUID
+import utils.Query.QueryParserError
+import controllers.rest._
 
 class CrewController @Inject() (
   userService: UserService,
   crewService: CrewService,
+  crewDao: CrewDao,
   val messagesApi: MessagesApi,
   val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
     implicit val mApi = messagesApi
     
-    //def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+    def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
     
-
-
-    def insertCrew(event: WebSocketEvent): WebSocketEvent = {
-      event.query match {
-        case Some(query) => {
-            val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option("query is empty")))
-            val crewJsonResult: JsResult[CrewStub] = firstElement.validate[CrewStub]
-            crewJsonResult match {
-              case s: JsSuccess[CrewStub] => {
-                crewService.save(s.get)
-                WebSocketEvent("SUCCESS", None, Option("save crew"))
-              }
-              case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option("Not a Crew object"))  
-            }
-          
+    def get(id: UUID) = SecuredAction.async { implicit request =>
+      userService.retrieve(request.authenticator.loginInfo).flatMap {
+        case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+        case Some(user) => {
+          crewService.get(id).map {
+            case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
+            case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
+          }   
         }
-        case _ => WebSocketEvent("ERROR", None, Option("Query is not a Crew object"))
-      }
-
-    }
-
-    def webSocketEventHandler(event: WebSocketEvent): WebSocketEvent = {
-      event.operation match {
-        case "INSERT" => insertCrew(event)
-        case _ => WebSocketEvent("ERROR", None, Option("Operation not suppported"))
       }
     }
-
-    def socket = WebSocket.tryAccept[WebSocketEvent] { request =>
-       implicit val req = Request(request, AnyContentAsEmpty)
-        SecuredRequestHandler { securedRequest =>
-        Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
-        }.map {
-          case HandlerResult(r, Some(_)) => Right({
-            val (out, channel) = Concurrent.broadcast[WebSocketEvent]
-
-            val in = Iteratee.foreach[WebSocketEvent] {
-              event => 
-              channel push(webSocketEventHandler(event))
-            }
-            (in, out)
-          })
-          case HandlerResult(r, None) => Left(r)
+    def get(name: String) = SecuredAction.async { implicit request => 
+      userService.retrieve(request.authenticator.loginInfo).flatMap {
+        case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+        case Some(user) => {
+          crewService.get(name).map {
+            case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
+            case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
+          }
+        }
       }
     }
+    //def list(event: WebSocketEvent): WebSocketEvent = ???
+    def list = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
+      QueryBody.asCrewsQuery(request.body) match {
+      case Left(e : QueryParserError) => Future.successful(
+        WebAppResult.Bogus(
+          request, 
+          "error.webapp.crew.queryParser", 
+          Nil, 
+          "", 
+          Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
+        ).getResult)
+      case Left(e : QueryBody.NoValuesGiven) => Future.successful(
+         WebAppResult.Bogus(
+          request, 
+          "error.webapp.crew.queryParser", 
+          Nil, 
+          "", 
+          Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
+        ).getResult)
+      case Left(e) => Future.successful(
+        WebAppResult.Generic(
+          request, 
+          play.api.mvc.Results.InternalServerError,
+          "error.webapp.crew.noValues", 
+          Nil, 
+          "WebApp.list.NoValues",
+          Json.obj("error" -> e.getMessage)
+        ).getResult)
+      case Right(converter) => try {
+        crewDao.list_with_statement(converter.toStatement).map((crews) =>
+          WebAppResult.Ok(request, "webapp.crew.found", Nil, "WebApp.GetCrews.Success", Json.toJson(crews)).getResult
+          )
+      } catch {
+        case e: java.sql.SQLException => {
+          Future.successful(
+            WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.webapp.crew.sql", Nil, "Webapp.GetCrews.SQLException", Json.obj("error" -> e.getMessage)).getResult
+            )
+          }
+        }
+      }  
+    }
+
   }
   
