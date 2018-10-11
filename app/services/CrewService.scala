@@ -19,8 +19,8 @@ import utils.Nats
 class CrewService @Inject() (crewDao: CrewDao, nats: Nats) {
   def save(crewStub: CrewStub) = crewDao.save(crewStub.toCrew)
   def update(crew: Crew) = crewDao.update(crew)
-  def delete(crew: Crew) = ???
+  def delete(crew: Crew):Future[Boolean] = ???
   def get(id: UUID) = crewDao.find(id)
   def get(name: String) = crewDao.find(name)
-  def list(queryBody: QueryBody) = crewDao.list
+  def list(queryBody: QueryBody) = ???
 }

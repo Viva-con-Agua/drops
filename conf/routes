@@ -42,6 +42,8 @@ GET     /webapp/crew/get/:id                                controllers.webapp.C
 GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.get(name: String)
 GET     /webapp/crew/list                                   controllers.webapp.CrewController.list
 
+GET     /webapp/oauthclient/ws                              controllers.webapp.OauthClientSocketController.socket
+
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile

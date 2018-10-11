@@ -223,3 +223,11 @@ widgets.user.found=User has been found!
 widgets.user.notFound=The user has not been found.
 widgets.forbidden=You have no permissions to see this data.
 widgets.notAuthenticated=Please, log in first.
+
+socket.error.ops=Operation {0} is not supported
+socket.error.queryEmpty=Query is empty. The Socket requires a {0} model as Json.
+socket.error.model=Query is not a {0}. The Socket requires a {0} model as Json.
+socket.success.insert=save {0}
+
+socket.success.update={0} successful updated
+socket.success.delete={0} is deleted

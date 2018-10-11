@@ -32,8 +32,8 @@ import controllers.rest._
 import play.api.libs.concurrent.InjectedActorSupport
 import scala.util.control.NonFatal
 
-class CrewSocketController @Inject() (
-  crewService: CrewService,
+class OauthClientSocketController @Inject() (
+  oauthService: OAuthService,
   val messagesApi: MessagesApi,
    val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
@@ -45,25 +45,25 @@ class CrewSocketController @Inject() (
     SecuredRequestHandler { securedRequest =>
       Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
     }.map {
-      case HandlerResult(r, Some(user)) => Right(CrewWebSocketActor.props(_))
+      case HandlerResult(r, Some(user)) => Right(OauthClientSocketActor.props(_))
       case HandlerResult(r, None) => Left(r)
     }
   }
 
-  object CrewWebSocketActor {
-    def props(out: ActorRef) = Props(new CrewWebSocketActor(out))
+  object OauthClientSocketActor {
+    def props(out: ActorRef) = Props(new OauthClientSocketActor(out))
   }
   
-  class CrewWebSocketActor (out: ActorRef)extends Actor {
+  class OauthClientSocketActor (out: ActorRef)extends Actor {
     
-    implicit val socketModel: String = "Crew"
+    implicit val socketModel: String = "OauthClient"
 
     def handleWebSocketEvent(msg: WebSocketEvent): WebSocketEvent = {
       //lazy val responseTimestamp = currentTime
       msg.operation match {
         case "INSERT" => insert(msg)
         case "UPDATE" => update(msg)
-       // case "DELETE" => delete(msg)
+        case "DELETE" => delete(msg)
         case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", msg.operation)))
       }
     }
@@ -79,11 +79,11 @@ class CrewSocketController @Inject() (
         //
         case Some(query) => {
             val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
-            val crewJsonResult: JsResult[CrewStub] = firstElement.validate[CrewStub]
-            crewJsonResult match {
-              case s: JsSuccess[CrewStub] => {
-                crewService.save(s.get)
-                WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.insert", s.get.name)))
+            val oauthJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
+            oauthJsonResult match {
+              case s: JsSuccess[OauthClient] => {
+                oauthService.save(s.get)
+                WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.insert", s.get.id)))
               }
               case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))  
             }
@@ -91,7 +91,6 @@ class CrewSocketController @Inject() (
         }
         case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
       }
-  
     }
     //handle socket event for update crew
     def update(event: WebSocketEvent): WebSocketEvent = {
@@ -101,11 +100,11 @@ class CrewSocketController @Inject() (
           // get first element of query. If the list is nil return WebSocketEvent error
           val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
           // validate Json as Crew. If there is no Crew return WebSocketEvent error.
-          val crewJsonResult: JsResult[Crew] = firstElement.validate[Crew]
-          crewJsonResult match {
-            case s: JsSuccess[Crew] => {
-              crewService.update(s.get)
-              WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.update", s.get.name)))
+          val oauthJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
+          oauthJsonResult match {
+            case s: JsSuccess[OauthClient] => {
+              oauthService.update(s.get)
+              WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.update", s.get.id)))
             }
             case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
           }
@@ -114,27 +113,25 @@ class CrewSocketController @Inject() (
       }
     }
   
-  
-  def delete(event: WebSocketEvent): WebSocketEvent = { 
+    def delete(event: WebSocketEvent): WebSocketEvent = { 
     //check if there is a query, else return WebSocketEvent with error
     event.query match {
       case Some(query) => {
         // get first element of query. If the list is nil return WebSocketEvent error
         val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
         // validate Json as Crew. If there is no Crew return WebSocketEvent error.
-        val crewJsonResult: JsResult[Crew] = firstElement.validate[Crew]
+        val crewJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
         crewJsonResult match {
-          case s: JsSuccess[Crew] => {
-            crewService.delete(s.get)
-            WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.name)))
+          case s: JsSuccess[OauthClient] => {
+            oauthService.delete(s.get)
+            WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.id)))
           }
           case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
         }
       }
       case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
     }
-  }
+    }
   }
 }
-    
 
