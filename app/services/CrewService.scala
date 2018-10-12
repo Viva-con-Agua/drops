@@ -15,6 +15,7 @@ import daos.{AccessRightDao, CrewDao, UserDao}
 import models._
 import controllers.rest.QueryBody
 import utils.Nats
+import slick.jdbc.SQLActionBuilder
 
 class CrewService @Inject() (crewDao: CrewDao, nats: Nats) {
   def save(crewStub: CrewStub) = crewDao.save(crewStub.toCrew)
@@ -22,5 +23,5 @@ class CrewService @Inject() (crewDao: CrewDao, nats: Nats) {
   def delete(crew: Crew):Future[Boolean] = ???
   def get(id: UUID) = crewDao.find(id)
   def get(name: String) = crewDao.find(name)
-  def list(queryBody: QueryBody) = ???
+  def list_with_statement(statement: SQLActionBuilder) = crewDao.list_with_statement(statement)
 }

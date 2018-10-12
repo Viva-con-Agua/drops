@@ -6,14 +6,16 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import daos._
 import models._
+import controllers.rest.QueryBody
 import utils.Nats
+import slick.jdbc.SQLActionBuilder
 
-
-class OAuthService @Inject() (oauthClientDao: OauthClientDao) {
+class OauthClientService @Inject() (oauthClientDao: OauthClientDao) {
   def save(client: OauthClient): Future[OauthClient] = oauthClientDao.save(client)
   def update(client: OauthClient): Future[OauthClient] = ???
-  def find(id: String): Future[Option[OauthClient]] = oauthClientDao.find(id)
-  def find(id: String, secret: String): Future[Option[OauthClient]] = oauthClientDao.find(id, secret)
-  def find(id: String, secret: Option[String], grandType: String): Future[Option[OauthClient]] = oauthClientDao.find(id, secret, grandType)
+  def get(id: String): Future[Option[OauthClient]] = oauthClientDao.find(id)
+  def get(id: String, secret: String): Future[Option[OauthClient]] = oauthClientDao.find(id, secret)
+  def get(id: String, secret: Option[String], grandType: String): Future[Option[OauthClient]] = oauthClientDao.find(id, secret, grandType)
   def delete(client: OauthClient): Future[Boolean] = ???
+  def list_with_statement(statement: SQLActionBuilder): Future[List[OauthClient]] = ???
 }

@@ -33,7 +33,7 @@ import play.api.libs.concurrent.InjectedActorSupport
 import scala.util.control.NonFatal
 
 class OauthClientSocketController @Inject() (
-  oauthService: OAuthService,
+  oauthClientService: OauthClientService,
   val messagesApi: MessagesApi,
    val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
@@ -82,7 +82,7 @@ class OauthClientSocketController @Inject() (
             val oauthJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
             oauthJsonResult match {
               case s: JsSuccess[OauthClient] => {
-                oauthService.save(s.get)
+                oauthClientService.save(s.get)
                 WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.insert", s.get.id)))
               }
               case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))  
@@ -103,7 +103,7 @@ class OauthClientSocketController @Inject() (
           val oauthJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
           oauthJsonResult match {
             case s: JsSuccess[OauthClient] => {
-              oauthService.update(s.get)
+              oauthClientService.update(s.get)
               WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.update", s.get.id)))
             }
             case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
@@ -123,7 +123,7 @@ class OauthClientSocketController @Inject() (
         val crewJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
         crewJsonResult match {
           case s: JsSuccess[OauthClient] => {
-            oauthService.delete(s.get)
+            oauthClientService.delete(s.get)
             WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.id)))
           }
           case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))

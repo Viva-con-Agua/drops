@@ -91,7 +91,7 @@ class CrewController @Inject() (
           Json.obj("error" -> e.getMessage)
         ).getResult)
       case Right(converter) => try {
-        crewDao.list_with_statement(converter.toStatement).map((crews) =>
+        crewService.list_with_statement(converter.toStatement).map((crews) =>
           WebAppResult.Ok(request, "webapp.crew.found", Nil, "WebApp.GetCrews.Success", Json.toJson(crews)).getResult
           )
       } catch {
