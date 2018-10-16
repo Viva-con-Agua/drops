@@ -51,7 +51,7 @@ class Users @Inject() (
   def getUsers = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
     QueryBody.asUsersQuery(request.body) match {
       case Left(e : QueryParserError) => Future.successful(
-        WidgetResult.Bogus(request, "widgets.users.error.queryParser", Nil, "Widgets.GetUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
+        WidgetResult.Bogus(request, "widgets.users.error.queryParser", Nil, "Widgets.GetUsers.QueryParsingError", Json.obj("error" -> e.getMessage)).getResult
       )
       case Left(e : QueryBody.NoValuesGiven) => Future.successful(
         WidgetResult.Bogus(request, "widgets.users.error.noValues", Nil, "Widgets.GetUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
@@ -82,7 +82,7 @@ class Users @Inject() (
     implicit val ud = userDao
     QueryBody.asUsersCountQuery(request.body) match {
       case Left(e : QueryParserError) => Future.successful(
-        WidgetResult.Bogus(request, "widgets.users.error.queryParser", Nil, "Widgets.GetCountUsers.QueryParsingError", Json.obj("error" -> Messages("rest.api.missingFilterValue"))).getResult
+        WidgetResult.Bogus(request, "widgets.users.error.queryParser", Nil, "Widgets.GetCountUsers.QueryParsingError", Json.obj("error" -> e.getMessage)).getResult
       )
       case Left(e : QueryBody.NoValuesGiven) => Future.successful(
         WidgetResult.Bogus(request, "widgets.users.error.noValues", Nil, "Widgets.GetCountUsers.NoValues", Json.obj("error" -> e.getMessage)).getResult
