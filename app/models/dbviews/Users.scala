@@ -52,8 +52,8 @@ object Users{
 case class UserView(
                    publicId : Option[Map[String, UUID]],
                    roles : Option[Map[String, String]],
-                   updated: Option[Map[String, Long]],
-                   created: Option[Map[String, Long]]
+                   updated: Option[Map[String, List[Long]]],
+                   created: Option[Map[String, List[Long]]]
                    ) extends ViewBase {
   def getValue(fieldname: String, index: Int): Any = {
     fieldname match {
@@ -93,14 +93,14 @@ case class UserView(
 }
 
 object UserView{
-  def apply(tuple: (Option[Map[String, UUID]], Option[Map[String, String]], Option[Map[String, Long]], Option[Map[String, Long]])) : UserView =
+  def apply(tuple: (Option[Map[String, UUID]], Option[Map[String, String]], Option[Map[String, List[Long]]], Option[Map[String, List[Long]]])) : UserView =
     UserView(tuple._1, tuple._2, tuple._3, tuple._4)
 
   implicit val userViewWrites : OWrites[UserView] = (
     (JsPath \ "publicId").writeNullable[Map[String, UUID]] and
       (JsPath \ "roles").writeNullable[Map[String, String]] and
-      (JsPath \ "updated").writeNullable[Map[String, Long]] and
-      (JsPath \ "created").writeNullable[Map[String, Long]]
+      (JsPath \ "updated").writeNullable[Map[String, List[Long]]] and
+      (JsPath \ "created").writeNullable[Map[String, List[Long]]]
     )(unlift(UserView.unapply))
 
   implicit val userViewReads: Reads[UserView] = (
@@ -108,10 +108,14 @@ object UserView{
       (JsPath \ "publicId").readNullable[UUID].map(_.map(p => Map("0" -> p)))) and
       (JsPath \ "roles").readNullable[Map[String, String]].orElse(
         (JsPath \ "roles").readNullable[String].map(_.map(n => Map("0" -> n)))) and
-      (JsPath \ "updated").readNullable[Map[String, Long]].orElse(
-        (JsPath \ "updated").readNullable[Long].map(_.map(p => Map("0" -> p)))) and
-      (JsPath \ "created").readNullable[Map[String, Long]].orElse(
-        (JsPath \ "created").readNullable[Long].map(_.map(p => Map("0" -> p))))
+      (JsPath \ "updated").readNullable[Map[String, List[Long]]].orElse(
+        (JsPath \ "updated").readNullable[Map[String, Long]].map(_.map(p => p.mapValues((v) => List(v)))).orElse(
+          (JsPath \ "updated").readNullable[List[Long]].map(_.map(p => Map("0" -> p))).orElse(
+        (JsPath \ "updated").readNullable[Long].map(_.map(p => Map("0" -> List(p))))))) and
+      (JsPath \ "created").readNullable[Map[String, List[Long]]].orElse(
+        (JsPath \ "created").readNullable[Map[String, Long]].map(_.map(p => p.mapValues((v) => List(v)))).orElse(
+          (JsPath \ "created").readNullable[List[Long]].map(_.map(p => Map("0" -> p))).orElse(
+        (JsPath \ "created").readNullable[Long].map(_.map(p => Map("0" -> List(p)))))))
   ).tupled.map(UserView( _ ))
 }
 
@@ -215,7 +219,7 @@ case class SupporterView(
                         fullName : Option[Map[String, String]],
                         mobilePhone: Option[Map[String, String]],
                         placeOfResidence: Option[Map[String, String]],
-                        birthday: Option[Map[String, Long]],
+                        birthday: Option[Map[String, List[Long]]],
                         sex: Option[Map[String, String]]
                         ) extends ViewBase {
   def getValue(fieldname: String, index: Int): Any = {
@@ -285,7 +289,7 @@ case class SupporterView(
 }
 
 object SupporterView{
-  def apply(tuple: (Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, Long]], Option[Map[String, String]])): SupporterView =
+  def apply(tuple: (Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, List[Long]]], Option[Map[String, String]])): SupporterView =
     SupporterView(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
 
   implicit val supporterViewWrites : OWrites[SupporterView] = (
@@ -294,7 +298,7 @@ object SupporterView{
       (JsPath \ "fullName").writeNullable[Map[String, String]] and
       (JsPath \ "mobilePhone").writeNullable[Map[String, String]] and
       (JsPath \ "placeOfResidence").writeNullable[Map[String, String]] and
-      (JsPath \ "birthday").writeNullable[Map[String, Long]] and
+      (JsPath \ "birthday").writeNullable[Map[String, List[Long]]] and
       (JsPath \ "sex").writeNullable[Map[String, String]]
     )(unlift(SupporterView.unapply))
 
@@ -309,8 +313,10 @@ object SupporterView{
         (JsPath \ "mobilePhone").readNullable[String].map(_.map(c => Map("0" -> c))))and
       (JsPath \ "placeOfResidence").readNullable[Map[String, String]].orElse(
         (JsPath \ "placeOfResidence").readNullable[String].map(_.map(c => Map("0" -> c))))and
-      (JsPath \ "birthday").readNullable[Map[String, Long]].orElse(
-        (JsPath \ "birthday").readNullable[Long].map(_.map(c => Map("0" -> c))))and
+      (JsPath \ "birthday").readNullable[Map[String, List[Long]]].orElse(
+        (JsPath \ "birthday").readNullable[Map[String, Long]].map(_.map(c => c.mapValues(v => List(v)))).orElse(
+          (JsPath \ "birthday").readNullable[List[Long]].map(_.map(c => Map("0" -> c))).orElse(
+        (JsPath \ "birthday").readNullable[Long].map(_.map(c => Map("0" -> List(c))))))) and
       (JsPath \ "sex").readNullable[Map[String, String]].orElse(
         (JsPath \ "sex").readNullable[String].map(_.map(c => Map("0" -> c))))
 
