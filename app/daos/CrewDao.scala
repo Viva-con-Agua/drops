@@ -95,8 +95,8 @@ class MariadbCrewDao extends CrewDao {
   val crews = TableQuery[CrewTableDef]
   val cities = TableQuery[CityTableDef]
 
-  implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextString))
-  implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextLong))
+  implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString))
+  implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
 
   override def find(id: UUID): Future[Option[Crew]] = {
     val action = for {
@@ -136,7 +136,7 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run((crews returning crews.map(_.id)) += CrewDB(crew))
     .flatMap(id =>{
         crew.cities.foreach(city => {
-          dbConfig.db.run((cities returning cities.map(_.id)) += CityDB(0, city, id))
+          dbConfig.db.run((cities returning cities.map(_.id)) += CityDB(0, city.name, city.country, id))
         })
       find(crew.id)
     }).map(c => c.get)
@@ -148,9 +148,9 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run((crews.filter(r => r.publicId === crew.id || r.name === crew.name)).result)
         .flatMap(c => {
           crew_id = c.head.id
-          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name, crew.country))))
+          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name))))
         })
-        .flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
+        //.flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
         .flatMap(_ => find(crew.id))
         .map(c => c.get)
   }

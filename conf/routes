@@ -11,7 +11,7 @@ GET     /file/get/:id                                       controllers.Files.ge
 GET     /delete                                             controllers.Application.userDelete
 
 
-GET     /crews/init                                         controllers.Application.initCrews
+#GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
 GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
 
