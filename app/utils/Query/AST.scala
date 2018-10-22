@@ -110,6 +110,15 @@ case class LIKE(entity: IDENTIFIER, field: IDENTIFIER, value: String) extends Co
   }
 }
 
+case class BETWEEN(entity: IDENTIFIER, field: IDENTIFIER, value: (String, String)) extends Conditions {
+  override def toSqlStatement = {
+    val fieldname = entity.str + "_" + field.str
+    val begin = value._1
+    val end = value._2
+    Converter.concat(sql"""#$fieldname""", Converter.concat(Converter.concat(Converter.concat(sql""" BETWEEN """, sql"""'#$begin'"""), sql""" AND """), sql"""'#$end'"""))
+  }
+}
+
 
 object QueryAST{
   /**

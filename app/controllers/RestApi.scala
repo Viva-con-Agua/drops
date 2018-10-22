@@ -84,7 +84,7 @@ class RestApi @Inject() (
   def getUsers = ApiAction.async(validateJson[rest.QueryBody]) { implicit request => {
     implicit val m = messagesApi
     rest.QueryBody.asUsersQuery(request.body) match {
-      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
       case Left(e : rest.QueryBody.NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
       case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
       case Right(converter) => try {
@@ -252,7 +252,7 @@ class RestApi @Inject() (
   def getCrews = ApiAction.async(validateJson[rest.QueryBody]){ implicit request => {
     implicit val m = messagesApi
     rest.QueryBody.asCrewsQuery(request.body) match {
-      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
+      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
       case Left(e : rest.QueryBody.NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
       case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
       case Right(converter) => try {
