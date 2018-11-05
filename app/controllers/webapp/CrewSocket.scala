@@ -56,44 +56,10 @@ class CrewSocketController @Inject() (
     def props(out: ActorRef) = Props(new CrewWebSocketActor(out))
   }
   
-  class CrewWebSocketActor (out: ActorRef)extends Actor {
+  class CrewWebSocketActor (out: ActorRef)extends WebSocketActor(out) {
     implicit val socketModel: String = "Crew"
-
-    def system = play.api.libs.concurrent.Akka.system(play.api.Play.current)
-
-    //def broadcast(msg: WebSocketEvent) = system.actorSelection("akka://application/system/websockets/*/handler") ! msg
-
     
-    def handleWebSocketEvent(msg: WebSocketEvent): WebSocketEvent = {
-      //lazy val responseTimestamp = currentTime
-      msg.operation match {
-        case "INSERT" => {
-          val received = Await.result(insert(msg), 10 second)
-          system.actorSelection("akka://application/system/websockets/*/handler") ! received
-          received
-        }
-        case "UPDATE" => { 
-          val received = Await.result(update(msg), 10 second)
-          system.actorSelection("akka://application/system/websockets/*/handler") ! received
-          received
-        }
-        case "DELETE" => 
-          val received = Await.result(delete(msg), 10 second)
-          system.actorSelection("akka://application/system/websockets/*/handler") ! received
-          received
-
-        case "SUCCESS" => msg
-        case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", msg.operation)))
-      }
-    }
-    
-    def receive = {
-      case request: WebSocketEvent =>
-        val response = handleWebSocketEvent(request)
-        out ! response
-    } 
-    
-    def insert(event: WebSocketEvent): Future[WebSocketEvent] = {
+    override def insert(event: WebSocketEvent): Future[WebSocketEvent] = {
       event.query match {
         //
         case Some(query) => {
@@ -114,7 +80,7 @@ class CrewSocketController @Inject() (
     }
 
     //handle socket event for update crew
-    def update(event: WebSocketEvent): Future[WebSocketEvent] = {
+    override def update(event: WebSocketEvent): Future[WebSocketEvent] = {
       //check if there is a query, else return WebSocketEvent with error
       event.query match {
         case Some(query) => {
@@ -137,7 +103,7 @@ class CrewSocketController @Inject() (
     }
   
   
-  def delete(event: WebSocketEvent): Future[WebSocketEvent] = { 
+  override def delete(event: WebSocketEvent): Future[WebSocketEvent] = { 
     //check if there is a query, else return WebSocketEvent with error
     event.query match {
       case Some(query) => {
@@ -158,6 +124,9 @@ class CrewSocketController @Inject() (
       case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
     }
   }
+
+  override def notMatch(event: WebSocketEvent): WebSocketEvent =  
+    WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", event.operation)))
   }
 }
     
