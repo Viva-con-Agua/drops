@@ -59,13 +59,30 @@ class CrewSocketController @Inject() (
   class CrewWebSocketActor (out: ActorRef)extends Actor {
     implicit val socketModel: String = "Crew"
 
+    def system = play.api.libs.concurrent.Akka.system(play.api.Play.current)
 
+    //def broadcast(msg: WebSocketEvent) = system.actorSelection("akka://application/system/websockets/*/handler") ! msg
+
+    
     def handleWebSocketEvent(msg: WebSocketEvent): WebSocketEvent = {
       //lazy val responseTimestamp = currentTime
       msg.operation match {
-        case "INSERT" => Await.result(insert(msg), 10 second)
-        case "UPDATE" => Await.result(update(msg), 10 second)
-        case "DELETE" => Await.result(delete(msg), 10 second)
+        case "INSERT" => {
+          val received = Await.result(insert(msg), 10 second)
+          system.actorSelection("akka://application/system/websockets/*/handler") ! received
+          received
+        }
+        case "UPDATE" => { 
+          val received = Await.result(update(msg), 10 second)
+          system.actorSelection("akka://application/system/websockets/*/handler") ! received
+          received
+        }
+        case "DELETE" => 
+          val received = Await.result(delete(msg), 10 second)
+          system.actorSelection("akka://application/system/websockets/*/handler") ! received
+          received
+
+        case "SUCCESS" => msg
         case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", msg.operation)))
       }
     }
@@ -75,7 +92,7 @@ class CrewSocketController @Inject() (
         val response = handleWebSocketEvent(request)
         out ! response
     } 
-  
+    
     def insert(event: WebSocketEvent): Future[WebSocketEvent] = {
       event.query match {
         //
