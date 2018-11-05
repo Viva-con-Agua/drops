@@ -28,6 +28,7 @@ trait CrewDao extends ObjectIdResolver with CountResolver {
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def update(crew: Crew):Future[Crew]
+  def delete(crew: Crew):Future[Boolean]
   def listOfStubs : Future[List[CrewStub]]
   def list : Future[List[Crew]]
   def list_with_statement(statement : SQLActionBuilder):  Future[List[Crew]]
@@ -72,6 +73,7 @@ class MongoCrewDao extends CrewDao {
       Json.obj("name" -> crew.name)
     )), crew).map(_ => crew)
 
+  def delete(crew: Crew):Future[Boolean] = ???
   def list = this.getCount.flatMap(c => ws.list(Json.obj(), c, Json.obj()))
 
   def listOfStubs = this.getCount.flatMap(c => ws.listOfStubs(Json.obj(), c, Json.obj()))
@@ -153,6 +155,13 @@ class MariadbCrewDao extends CrewDao {
         //.flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
         .flatMap(_ => find(crew.id))
         .map(c => c.get)
+  }
+
+  override def delete(crew: Crew): Future[Boolean] = {
+    dbConfig.db.run(crews.filter(c => c.publicId === crew.id).delete).flatMap {
+      case 0 => Future.successful(false)
+      case _ => Future.successful(true)
+    }
   }
 
   override def listOfStubs: Future[List[CrewStub]] = {

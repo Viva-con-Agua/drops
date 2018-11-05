@@ -3,7 +3,9 @@ package controllers.webapp
 import play.api.mvc._
 import play.api.Play.current
 import javax.inject.Inject
-import scala.concurrent.Future
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import com.mohiva.play.silhouette.api.Authenticator.Implicits._
 import com.mohiva.play.silhouette.api.{Environment, LoginInfo, Silhouette}
@@ -55,15 +57,15 @@ class CrewSocketController @Inject() (
   }
   
   class CrewWebSocketActor (out: ActorRef)extends Actor {
-    
     implicit val socketModel: String = "Crew"
+
 
     def handleWebSocketEvent(msg: WebSocketEvent): WebSocketEvent = {
       //lazy val responseTimestamp = currentTime
       msg.operation match {
-        case "INSERT" => insert(msg)
-        case "UPDATE" => update(msg)
-       // case "DELETE" => delete(msg)
+        case "INSERT" => Await.result(insert(msg), 10 second)
+        case "UPDATE" => Await.result(update(msg), 10 second)
+        case "DELETE" => Await.result(delete(msg), 10 second)
         case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", msg.operation)))
       }
     }
@@ -72,66 +74,71 @@ class CrewSocketController @Inject() (
       case request: WebSocketEvent =>
         val response = handleWebSocketEvent(request)
         out ! response
-    }
+    } 
   
-    def insert(event: WebSocketEvent): WebSocketEvent = {
+    def insert(event: WebSocketEvent): Future[WebSocketEvent] = {
       event.query match {
         //
         case Some(query) => {
-            val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
-            val crewJsonResult: JsResult[CrewStub] = firstElement.validate[CrewStub]
-            crewJsonResult match {
-              case s: JsSuccess[CrewStub] => {
-                crewService.save(s.get)
-                WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.insert", s.get.name)))
+          val firstElement = query.headOption.getOrElse(return Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))))
+          val crewJsonResult: JsResult[CrewStub] = firstElement.validate[CrewStub]
+          crewJsonResult match {
+            case s: JsSuccess[CrewStub] => {
+              crewService.save(s.get).flatMap{
+                case (crew) => Future.successful(WebSocketEvent("SUCCESS", Option(List(Json.toJson(crew))), Option(Messages("socket.success.insert", s.get.name))))
+                //case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.insert"))))
               }
-              case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))  
             }
-          
+            case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))) 
+          }
         }
-        case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
+        case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
       }
-  
     }
+
     //handle socket event for update crew
-    def update(event: WebSocketEvent): WebSocketEvent = {
+    def update(event: WebSocketEvent): Future[WebSocketEvent] = {
       //check if there is a query, else return WebSocketEvent with error
       event.query match {
         case Some(query) => {
           // get first element of query. If the list is nil return WebSocketEvent error
-          val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
+          val firstElement = query.headOption.getOrElse(return Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))))
           // validate Json as Crew. If there is no Crew return WebSocketEvent error.
           val crewJsonResult: JsResult[Crew] = firstElement.validate[Crew]
           crewJsonResult match {
             case s: JsSuccess[Crew] => {
-              crewService.update(s.get)
-              WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.update", s.get.name)))
+              crewService.update(s.get).flatMap{
+                case (crew) => Future.successful(WebSocketEvent("SUCCESS", Option(List(Json.toJson(crew))), Option(Messages("socket.success.update", s.get.name))))
+                //case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.update"))))
+              }
             }
-            case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
+            case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel))))
           }
         }
-        case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
+        case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
       }
     }
   
   
-  def delete(event: WebSocketEvent): WebSocketEvent = { 
+  def delete(event: WebSocketEvent): Future[WebSocketEvent] = { 
     //check if there is a query, else return WebSocketEvent with error
     event.query match {
       case Some(query) => {
         // get first element of query. If the list is nil return WebSocketEvent error
-        val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
+        val firstElement = query.headOption.getOrElse(return Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))))
         // validate Json as Crew. If there is no Crew return WebSocketEvent error.
         val crewJsonResult: JsResult[Crew] = firstElement.validate[Crew]
         crewJsonResult match {
           case s: JsSuccess[Crew] => {
-            crewService.delete(s.get)
-            WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.name)))
+            crewService.delete(s.get).flatMap{
+              case true => Future.successful(WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.name))))
+              case false => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.notFound", s.get.name))))
+            }
           }
-          case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
+          case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel))))
         }
       }
-      case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
+      case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
     }
   }
   }

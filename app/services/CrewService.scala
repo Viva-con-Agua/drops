@@ -18,7 +18,7 @@ import utils.Nats
 import slick.jdbc.SQLActionBuilder
 
 class CrewService @Inject() (crewDao: CrewDao, nats: Nats) {
-  def save(crewStub: CrewStub) = crewDao.save(crewStub.toCrew)
+  def save(crewStub: CrewStub):Future[Crew] = crewDao.save(crewStub.toCrew)
   def update(crew: Crew) = crewDao.update(crew)
   def delete(crew: Crew):Future[Boolean] = ???
   def get(id: UUID) = crewDao.find(id)
