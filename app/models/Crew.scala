@@ -7,22 +7,20 @@ import play.api.libs.json.Json
 /**
   * Created by johann on 17.11.16.
   */
-
+ 
 trait CrewBase {
   val name: String
-  val country: String
-  val cities: Set[String]
+  val cities: Set[City]
 }
 
-case class CrewStub(name: String, country: String, cities: Set[String]) extends CrewBase {
-  def toCrew : Crew = Crew(UUID.randomUUID(), name, country, cities)
+case class CrewStub(name: String, cities: Set[City]) extends CrewBase {
+  def toCrew : Crew = Crew(UUID.randomUUID(), name, cities)
 }
 
 case class Crew(
   id: UUID,
   override val name: String,
-  override val country: String,
-  override val cities: Set[String]
+  override val cities: Set[City]
 ) extends CrewBase {
   override def equals(o: scala.Any): Boolean = o match {
     case other : Crew => other.name == this.name
@@ -35,7 +33,7 @@ case class Crew(
   })
 
   def toCrewStub() : CrewStub =
-    CrewStub(name, country, cities)
+    CrewStub(name, cities)
 }
 
 object Crew {
@@ -45,4 +43,3 @@ object Crew {
 object CrewStub {
   implicit val crewJsonFormat = Json.format[CrewStub]
 }
-

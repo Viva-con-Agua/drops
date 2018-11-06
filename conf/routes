@@ -11,7 +11,7 @@ GET     /file/get/:id                                       controllers.Files.ge
 GET     /delete                                             controllers.Application.userDelete
 
 
-GET     /crews/init                                         controllers.Application.initCrews
+#GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
 GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
 
@@ -37,8 +37,18 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
 #WebApp crew
-GET     /webapp/crew/ws                                     controllers.webapp.CrewController.socket
+GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
+GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
+GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.get(name: String)
+GET     /webapp/crew/list                                   controllers.webapp.CrewController.list
 
+GET     /webapp/oauthclient/ws                              controllers.webapp.OauthClientSocketController.socket
+GET     /webapp/oauthclient/get/:name                             controllers.webapp.OauthClientController.get(name: String)
+GET     /webapp/oauthclient/list                            controllers.webapp.OauthClientController.list
+
+GET     /webapp/organization/ws                             controllers.webapp.OrganizationSocketController.socket
+GET     /webapp/organization/get/:name                      controllers.webapp.OrganizationController.get(name: String)
+#GET     /webapp/organization/list                           controllers.webapp.OrganizationController.list
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile

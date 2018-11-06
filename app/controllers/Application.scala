@@ -132,7 +132,7 @@ class Application @Inject() (
     val resultingTasks: Future[Seq[Task]] = taskDao.all()
       Ok(dispenserService.getTemplate(views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks)))
   }
-
+/*
   def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
     configuration.getConfigList("crews").map(_.toList.map(c =>
       crewDao.find(c.getString("name").get).map(_ match {
@@ -144,7 +144,7 @@ class Application @Inject() (
     ))
     Future.successful(Redirect("/"))
   }
-
+*/
   def fixCrewsID = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
     val crews = crewDao.listOfStubs.flatMap(l => Future.sequence(l.map(oldCrew => crewDao.update(oldCrew.toCrew))))
     val users = crews.flatMap(l => userService.listOfStubs.flatMap(ul => Future.sequence(ul.map(user => {

@@ -1,5 +1,4 @@
 package controllers.webapp
-
 import play.api.mvc._
 import play.api.Play.current
 import javax.inject.Inject
@@ -29,40 +28,29 @@ import java.util.UUID
 import utils.Query.QueryParserError
 import controllers.rest._
 
-class CrewController @Inject() (
-  userService: UserService,
-  crewService: CrewService,
-  crewDao: CrewDao,
-  val messagesApi: MessagesApi,
-  val env: Environment[User, CookieAuthenticator]
+class OauthClientController @Inject() (
+    oauthClientService: OauthClientService,
+    userService: UserService,
+    val messagesApi: MessagesApi,
+    val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
+
     implicit val mApi = messagesApi
-    
+
     def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
-    
-    def get(id: UUID) = SecuredAction.async { implicit request =>
+
+    def get(id: String) = SecuredAction.async { implicit request =>
       userService.retrieve(request.authenticator.loginInfo).flatMap {
         case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
         case Some(user) => {
-          crewService.get(id).map {
-            case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
-            case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
-          }   
-        }
-      }
-    }
-    def get(name: String) = SecuredAction.async { implicit request => 
-      userService.retrieve(request.authenticator.loginInfo).flatMap {
-        case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
-        case Some(user) => {
-          crewService.get(name).map {
-            case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
-            case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
+          oauthClientService.get(id).map {
+            case Some(oauthClient) => WebAppResult.Ok(request, "oauthClient.get", Nil, "AuthProvider.Identity.Success", Json.toJson(oauthClient)).getResult
+            case _ => WebAppResult.Bogus(request, "oauthClient.notExist", Nil, "402", Json.toJson("")).getResult
           }
         }
       }
     }
-    //def list(event: WebSocketEvent): WebSocketEvent = ???
+
     def list = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
       QueryBody.asCrewsQuery(request.body) match {
       case Left(e : QueryParserError) => Future.successful(
@@ -91,7 +79,7 @@ class CrewController @Inject() (
           Json.obj("error" -> e.getMessage)
         ).getResult)
       case Right(converter) => try {
-        crewService.list_with_statement(converter.toStatement).map((crews) =>
+        oauthClientService.list_with_statement(converter.toStatement).map((crews) =>
           WebAppResult.Ok(request, "webapp.crew.found", Nil, "WebApp.GetCrews.Success", Json.toJson(crews)).getResult
           )
       } catch {
@@ -103,6 +91,5 @@ class CrewController @Inject() (
         }
       }  
     }
-
   }
-  
+

@@ -231,3 +231,11 @@ widgets.users.error.queryParser=Given query can not be parsed.
 widgets.users.error.noValues=The query contains no values that can be used for the search.
 widgets.users.error.generic=An error occurred during processing the given query.
 widgets.users.error.sql=The query throws an SQL error.
+
+socket.error.ops=Operation {0} is not supported
+socket.error.queryEmpty=Query is empty. The Socket requires a {0} model as Json.
+socket.error.model=Query is not a {0}. The Socket requires a {0} model as Json.
+socket.success.insert=save {0}
+
+socket.success.update={0} successful updated
+socket.success.delete={0} is deleted
