@@ -15,34 +15,24 @@ class WebSocketActor (out: ActorRef) extends Actor {
   //send a message to all actors of the system context. 
   def broadcast(msg: WebSocketEvent) = system.actorSelection("akka://application/system/websockets/*/handler") ! msg
   
-  //handle WebSocketEvent operators
-  def handleWebSocketEvent(msg: WebSocketEvent): WebSocketEvent = {
-   //lazy val responseTimestamp = currentTime
-      msg.operation match {
+  def receive = {
+    case msg: WebSocketEvent =>
+       msg.operation match {
         case "INSERT" => {
           val received = Await.result(insert(msg), 10 second)
           system.actorSelection("akka://application/system/websockets/*/handler") ! received
-          received
         }
         case "UPDATE" => { 
           val received = Await.result(update(msg), 10 second)
           system.actorSelection("akka://application/system/websockets/*/handler") ! received
-          received
         }
         case "DELETE" => 
           val received = Await.result(delete(msg), 10 second)
           system.actorSelection("akka://application/system/websockets/*/handler") ! received
-          received
 
-        case "SUCCESS" => msg
-        case _ => notMatch(msg)
+        case "SUCCESS" => out ! msg
+        case _ => out ! notMatch(msg)
       }
-  }
-  
-  def receive = {
-    case request: WebSocketEvent =>
-      val response = handleWebSocketEvent(request)
-      out ! response
   }
 
   def insert(event: WebSocketEvent):Future[WebSocketEvent] = Future.successful(event)
