@@ -77,7 +77,7 @@ class OAuth2Controller @Inject() (
         case Some(flag) if flag => Future.successful(
           generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, "error.oauth2.not.authenticated", Map("oauth2_client" -> clientId))
         )
-        case _ => Future.successful(Redirect(routes.Auth.signIn))
+        case _ => Future.successful(Redirect("/arise/#/signin"))
       }
     }
   }}
@@ -124,7 +124,7 @@ class OAuth2Controller @Inject() (
           case Some(flag) if flag => Future.successful(
             generateJsonErrorMsg(request, play.api.mvc.Results.Unauthorized, "error.oauth2.not.authenticated", Map("oauth2_client" -> client_id))
           )
-          case _ => Future.successful(Redirect(routes.Auth.signIn))
+          case _ => Future.successful(Redirect("/arise/#/signin"))
         }
       }
     }

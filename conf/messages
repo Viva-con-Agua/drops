@@ -209,6 +209,9 @@ rest.api.queryFunctionsNotImplementedYet=One or more query functions are not imp
 rest.api.givenClientNotFound=Found no valid client for the given ID.
 rest.api.noClientSecretGiven=Security method ''secret'' is currently configured, but no client secret was given.
 rest.api.securityMethodNotImplemented=The currently configured security method is not implemented yet, please change ''drops.ws.security'' in your application.conf 
+rest.api.converter.no.view=There exists no SQL View named ''{1}''
+rest.api.noValuesGiven=The query contains no values that can be used for the search.
+rest.api.noQueryGiven=There is no query given.
 
 pool1.error.config.noURI=No Pool 1 system configured (missing URL)
 pool1.debug.not.activated=Export not activated in configuration! Set `pool1.export=true` in your applications conf file.
@@ -220,9 +223,14 @@ organization.error.notFound=Organization not found
 organization.error.profileInv=Profile is part of the organization
 
 widgets.user.found=User has been found!
+widgets.count.found=Number of users has been calculated.
 widgets.user.notFound=The user has not been found.
 widgets.forbidden=You have no permissions to see this data.
 widgets.notAuthenticated=Please, log in first.
+widgets.users.error.queryParser=Given query can not be parsed.
+widgets.users.error.noValues=The query contains no values that can be used for the search.
+widgets.users.error.generic=An error occurred during processing the given query.
+widgets.users.error.sql=The query throws an SQL error.
 
 socket.error.ops=Operation {0} is not supported
 socket.error.queryEmpty=Query is empty. The Socket requires a {0} model as Json.

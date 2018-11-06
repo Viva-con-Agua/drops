@@ -62,7 +62,7 @@ object QueryParser extends Parsers{
   }
 
   def statement: Parser[QueryAST] = {
-    combined_group | group | expression | eq  | lt | le | gt | ge | like
+    combined_group | group | expression | eq  | lt | le | gt | ge | like | between
   }
 
 
@@ -79,7 +79,7 @@ object QueryParser extends Parsers{
 
 
   def expression : Parser[Combination] = {
-    ((eq  | lt | le | gt | ge | like) ~ rep((OR | AND) ~ (eq  | lt | le | gt | ge | like))) ^^ {
+    ((eq  | lt | le | gt | ge | like | between) ~ rep((OR | AND) ~ (eq  | lt | le | gt | ge | like | between))) ^^ {
       case f1 ~ f2 => Combination(f1, f2)
     }
   }
@@ -125,13 +125,41 @@ object QueryParser extends Parsers{
     (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ LIKE_OPERATOR) ^^ {case entity ~ _ ~ field ~ _ ~ _ => LIKE(entity, field, getValue(entity.str, field.str, 0)) } |
     (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ LIKE_OPERATOR)     ^^ { case entity ~ _ ~  field ~ _ ~ index ~ _ ~ _ => LIKE(entity, field, getValue(entity.str, field.str, index.i)) }
   }
+
+  def between: Parser[Conditions] = positioned {
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ BETWEEN_OPERATOR) ^^ { case entity ~ _ ~ field ~ _ ~ _ => BETWEEN(entity, field, getValuePair(entity.str, field.str, 0)) }
+    (entity ~ SEPARATOR ~ field ~ SEPARATOR ~ index ~ SEPARATOR ~ BETWEEN_OPERATOR) ^^ { case entity ~ _ ~ field ~ _ ~ index ~ _ ~ _ => BETWEEN(entity, field, getValuePair(entity.str, field.str, index.i)) }
+  }
   //ToDo: Add Error Handling!
   //ToDo: Use Messages
   def getValue(entity: String, field: String, index: Int) : String = {
+    QueryParser.getValueBase(entity, field, index) match {
+      case l : List[Any] => l.headOption.map(_.toString) match {
+        case Some(head) => head
+        case None => throw new QueryParserError("The operator expects more elements.")
+      }
+      case x : Any => x.toString
+    }
+  }
+
+  def getValuePair(entity: String, field: String, index: Int): (String, String) = {
+    QueryParser.getValueBase(entity, field, index) match {
+      case l : List[Any] => {
+        val str = l.map(_.toString)
+        str.headOption.flatMap(h => str.tail.headOption.map( ( h, _ ) )) match {
+          case Some(pair) => pair
+          case _ => throw new QueryParserError("The operator expects more elements.")
+        }
+      }
+      case _ => throw new QueryParserError("There is no list of elements given, as expected for this field.")
+    }
+  }
+
+  private def getValueBase(entity: String, field: String, index: Int): Any = {
     if(values.isFieldDefined(entity)){
       val e : ViewBase = values.getValue(entity).asInstanceOf[ViewBase]
       if(e.isFieldDefined(field, index)){
-        e.getValue(field, index).toString
+        e.getValue(field, index)
       }else{
         throw new QueryParserError("There is no filter value for one or more query parts")
       }
