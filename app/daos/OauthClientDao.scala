@@ -18,7 +18,8 @@ import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
 import slick.driver.MySQLDriver.api._
 import play.api.db.slick.DatabaseConfigProvider
-
+import slick.jdbc.{GetResult, PositionedParameters, SQLActionBuilder, SetParameter}
+import models.converter.OauthClientConverter
 
 /**
   * Created by johann on 24.11.16.
@@ -75,6 +76,8 @@ class MariadbOauthClientDao extends OauthClientDao {
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   val oauthClients = TableQuery[OauthClientTableDef]
 
+  implicit val getOauthClient = GetResult(r => OauthClientDB(r.nextString, r.nextString, r.nextStringOption, r.nextString))
+
   override def find(id: String) : Future[Option[OauthClient]] = {
     dbConfig.db.run(oauthClients.filter(_.id === id).result).map(oauthClient => {
       oauthClient.headOption.map(_.toOauthClient)
@@ -118,5 +121,10 @@ class MariadbOauthClientDao extends OauthClientDao {
       case 0 => Future.successful(false)
       case _ => Future.successful(true)
     }
+  }
+
+  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] = {
+    var sql_action = statement.as[(OauthClientDB)]
+    dbConfig.db.run(sql_action).map(OauthClientConverter.buildListFromResult(_))
   }
 }
