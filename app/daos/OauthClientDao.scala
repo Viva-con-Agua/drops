@@ -29,6 +29,8 @@ trait OauthClientDao {
   def find(id: String, secret: Option[String], grantType: String) : Future[Option[OauthClient]]
   def save(client: OauthClient) : Future[OauthClient]
   def validate(id: String, secret: Option[String], grantType: String) : Future[Boolean]
+  def update(client: OauthClient) : Future[OauthClient]
+  def delete(client: OauthClient) : Future[Boolean]
 }
 
 class MongoOauthClientDao extends OauthClientDao {
@@ -63,6 +65,10 @@ class MongoOauthClientDao extends OauthClientDao {
       case Some(client) => true
       case _ => false
     })
+  
+  // It's necessary to define functions for the OauthClientDao trait in MongoOauthClientDao
+  def update(client: OauthClient): Future[OauthClient] = ???
+  def delete(client: OauthClient) : Future[Boolean] = ???
 }
 
 class MariadbOauthClientDao extends OauthClientDao {
@@ -101,5 +107,16 @@ class MariadbOauthClientDao extends OauthClientDao {
       if(r.isDefined) true
       else false
     })
+  }
+  
+  def update(client: OauthClient) : Future[OauthClient] = {
+    dbConfig.db.run(oauthClients.update(OauthClientDB(client))).flatMap(_ => find(client.id)).map(_.get) 
+  }
+
+  def delete(client: OauthClient) : Future[Boolean] = {
+    dbConfig.db.run(oauthClients.filter(o => o.id === client.id).delete).flatMap {
+      case 0 => Future.successful(false)
+      case _ => Future.successful(true)
+    }
   }
 }
