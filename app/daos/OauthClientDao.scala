@@ -32,6 +32,8 @@ trait OauthClientDao {
   def validate(id: String, secret: Option[String], grantType: String) : Future[Boolean]
   def update(client: OauthClient) : Future[OauthClient]
   def delete(client: OauthClient) : Future[Boolean]
+  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] 
+
 }
 
 class MongoOauthClientDao extends OauthClientDao {
@@ -70,6 +72,7 @@ class MongoOauthClientDao extends OauthClientDao {
   // It's necessary to define functions for the OauthClientDao trait in MongoOauthClientDao
   def update(client: OauthClient): Future[OauthClient] = ???
   def delete(client: OauthClient) : Future[Boolean] = ???
+  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] = ???
 }
 
 class MariadbOauthClientDao extends OauthClientDao {
