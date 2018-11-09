@@ -54,84 +54,75 @@ class OauthClientSocketController @Inject() (
     def props(out: ActorRef) = Props(new OauthClientSocketActor(out))
   }
   
-  class OauthClientSocketActor (out: ActorRef)extends Actor {
+  class OauthClientSocketActor (out: ActorRef)extends WebSocketActor(out) {
     
     implicit val socketModel: String = "OauthClient"
 
-    def handleWebSocketEvent(msg: WebSocketEvent): WebSocketEvent = {
-      //lazy val responseTimestamp = currentTime
-      msg.operation match {
-        case "INSERT" => insert(msg)
-        case "UPDATE" => update(msg)
-        case "DELETE" => delete(msg)
-        case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", msg.operation)))
-      }
-    }
-    
-    def receive = {
-      case request: WebSocketEvent =>
-        val response = handleWebSocketEvent(request)
-        out ! response
-    }
-  
-    def insert(event: WebSocketEvent): WebSocketEvent = {
+    override def insert(event: WebSocketEvent): Future[WebSocketEvent] = {
       event.query match {
         //
         case Some(query) => {
-            val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
+            val firstElement = query.headOption.getOrElse(return Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))))
             val oauthJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
             oauthJsonResult match {
               case s: JsSuccess[OauthClient] => {
-                oauthClientService.save(s.get)
-                WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.insert", s.get.id)))
+                oauthClientService.save(s.get).flatMap{
+                  case (oauthClient) => Future.successful(WebSocketEvent("SUCCESS", Option(List(Json.toJson(oauthClient))), Option(Messages("socket.success.insert", s.get.id))))
+                }
               }
-              case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))  
+              case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel))))  
             }
           
         }
-        case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
+        case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
       }
     }
     //handle socket event for update crew
-    def update(event: WebSocketEvent): WebSocketEvent = {
+    override def update(event: WebSocketEvent): Future[WebSocketEvent] = {
       //check if there is a query, else return WebSocketEvent with error
       event.query match {
         case Some(query) => {
           // get first element of query. If the list is nil return WebSocketEvent error
-          val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
+          val firstElement = query.headOption.getOrElse(return Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))))
           // validate Json as Crew. If there is no Crew return WebSocketEvent error.
           val oauthJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
           oauthJsonResult match {
             case s: JsSuccess[OauthClient] => {
-              oauthClientService.update(s.get)
-              WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.update", s.get.id)))
+              oauthClientService.update(s.get).flatMap{
+                case (oauthClient) => Future.successful(WebSocketEvent("SUCCESS", Option(List(Json.toJson(oauthClient))), Option(Messages("socket.success.update", s.get.id))))
+              }
             }
-            case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
+            case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel))))
           }
         }
-        case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
+        case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
       }
     }
   
-    def delete(event: WebSocketEvent): WebSocketEvent = { 
+    override def delete(event: WebSocketEvent): Future[WebSocketEvent] = { 
     //check if there is a query, else return WebSocketEvent with error
-    event.query match {
-      case Some(query) => {
-        // get first element of query. If the list is nil return WebSocketEvent error
-        val firstElement = query.headOption.getOrElse(return WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
-        // validate Json as Crew. If there is no Crew return WebSocketEvent error.
-        val crewJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
-        crewJsonResult match {
-          case s: JsSuccess[OauthClient] => {
-            oauthClientService.delete(s.get)
-            WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.id)))
+      event.query match {
+        case Some(query) => {
+          // get first element of query. If the list is nil return WebSocketEvent error
+          val firstElement = query.headOption.getOrElse(return Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))))
+          // validate Json as Crew. If there is no Crew return WebSocketEvent error.
+          val crewJsonResult: JsResult[OauthClient] = firstElement.validate[OauthClient]
+          crewJsonResult match {
+            case s: JsSuccess[OauthClient] => {
+              oauthClientService.delete(s.get).flatMap{
+                case true => Future.successful(WebSocketEvent("SUCCESS", None, Option(Messages("socket.success.delete", s.get.id))))
+                case false => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.notFound", s.get.id))))
+              }
+            }
+            case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel))))
           }
-          case e: JsError => WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))
         }
+        case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel))))
       }
-      case _ => WebSocketEvent("ERROR", None, Option(Messages("socket.error.query", socketModel)))
     }
-    }
+
+    override def notMatch(event: WebSocketEvent): WebSocketEvent =  
+      WebSocketEvent("ERROR", None, Option(Messages("socket.error.ops", event.operation)))
   }
 }
 
