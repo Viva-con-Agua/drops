@@ -1,0 +1,30 @@
+
+# --- !Ups
+CREATE TABLE Crew(
+  id BIGINT(20) NOT NULL AUTO_INCREMENT,
+  publicId BINARY(16),
+  name VARCHAR(255),
+  PRIMARY KEY (id),
+  UNIQUE KEY (name)
+);
+
+CREATE TABLE City(
+  id BIGINT(20) NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255),
+  country VARCHAR(255),
+  crew_id BIGINT(20),
+  PRIMARY KEY (id),
+  FOREIGN KEY (crew_id) REFERENCES Crew(id) ON UPDATE CASCADE
+);
+
+ALTER TABLE Supporter
+    ADD crew_id BIGINT(20);
+ALTER TABLE Supporter
+    ADD FOREIGN KEY (crew_id) REFERENCES Crew(id) ON UPDATE CASCADE;
+
+
+# --- !Downs
+DROP TABLE Crew;
+DROP TABLE City;
+ALTER TABLE Supporter DROP FOREIGN KEY Supporter_ibfk_2;
+ALTER TABLE Supporter DROP COLUMN crew_id;

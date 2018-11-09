@@ -11,12 +11,9 @@
 @linkedIds = @{loggedUser.profiles.map(_.loginInfo.providerID)}
 
 @implicitFieldConstructor = @{b3.vertical.fieldConstructor}
-
-@views.html.templates.mainApp(Messages("profile.title"), tab = "profile", loggedUser = Some(loggedUser), loginInfo=Some(loginInfo)) {
-  @request.flash.get("error").map { msg =>
+	@request.flash.get("error").map { msg =>
     @errors.alert(msg, "error")
   }
-
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
       <div class="profileHeader">
         @profile.getAvatar.map((ava) => Await.result(ava.getImage(400,400), 3000 millis)).map { url =>
@@ -81,7 +78,7 @@
           ) { implicit values => {
               @b3.selectOption("", Messages("crew.select.one"), 'disabled -> true)
               @for(crew <- availableCrews.toList.sortWith((c1, c2) => c1.name <= c2.name)) {
-                @b3.selectOption(crew.name, crew.name + " (" + crew.country + ")")
+                @b3.selectOption(crew.name, crew.name)
               }
             }
           }
@@ -157,4 +154,3 @@
       </div>
     }
   }
-}

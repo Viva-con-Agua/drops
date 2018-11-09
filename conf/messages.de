@@ -53,6 +53,9 @@ profile.submit=Ändern
 profile.update.legend=Du kannst alle Infos über dich bearbeiten
 profile.upload.msg=Für Upload klicken
 profile.upload.hint=Bewege die Maus hier rüber, um das Bild zu ändern.
+profile.notExist=Profile konnte nicht gefunden werden.
+profile.emailNotExist=Die Email ist nicht angegeben.
+
 
 task.title=Todo Übersicht
 
@@ -86,6 +89,9 @@ signin.rememberMe=Merke dir meine Daten!
 signin.signup=Du hast noch keinen Account? Du kannst jederzeit <a href="{0}">Mitmachen</a>.
 signin.resetPassword=Passwort vergessen? Das kannst du <a href="{0}">neu setzen</a>.
 signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
+signin.success=Du bist ringeloggt!
+
+signout.msg=Du bist rausgeloggt!
 
 reset.title=Passwort zurücksetzen
 reset.startLegend=Hast du dein Passwort vergessen??
@@ -102,6 +108,13 @@ reset.doneTitle=Neues Passwort
 reset.done=Dein password wurde erfolgreich neu gesetzt.
 reset.gotoIndex=Gehe auf die <a href={0}>Startseite</a>.
 
+status.pool1PasswordResetMailSend=Es wurde eine Email an {0} gesendet, die den Reset-Link enthält.
+
+error.noAuthenticatedUser=Es ist kein Nutzer eingeloggt.
+error.bogusAuthenticationData=Die übergebenen Daten können nicht interpretiert werden.
+error.bogusResetPasswordData=Die übergebenen Daten können nicht interpretiert werden.
+error.bogusSignUpData=Die übergebenen Daten können nicht interpretiert werden.
+error.missingUserForPool1User=Für die Emailadresse {0} existiert ein Pool 1 Nutzer ohne, dass zu diesem ein Drops Nutzer zugeordnet werden kann.
 error.accessDenied=Du musst dich reinloggen, um die aufgerufene Seite sehen zu können.
 error.notFound=Nicht gefunden!
 error.notFound.details=Aufgerufen: {0}
@@ -121,6 +134,10 @@ error.profileUnauth=Auf das Tropfenprofil kann erst nach dem reinloggen zugegrif
 error.sex.notAllowed=Deine Sexualität kennt das System noch nicht. Gib bitte eine bekannte an (männlich, weiblich, weitere) und rege eine Diskussion im Kosmos an.
 error.telphone.wrongFormat=Formatfehler, erlaubt sind beispielsweise: 0167/123456 oder +176/123456
 error.profile.image.upload=Das neue Tropfenbild des Profils konnte nicht hochgeladen werden! Versuche es nochmal!
+error.oauth2.not.authenticated=Kein Tropfen zu finden! Hier ist keiner angemeldet.
+error.reset.toToken=Kein Token für das aufgerufene gefunden: {0}
+error.expiredToken=Das Token {0} ist nicht mehr gültig oder nicht für die Registrierung von Nutzern erstellt worden.
+error.noToken=Das Token {0} kann nicht in der Datenbank gefunden werden.
 
 
 success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!
@@ -148,6 +165,10 @@ oauth2server.clientId.notFound=Keinen OAuth 2 Client gefunden, der zu der angege
 oauth2server.clientSecret.missing=Kein OAuth 2 Client Secret angegeben!
 oauth2server.clientId.missing=Keine OAuth 2 Client ID angegeben!
 oauth2server.security.method.notImplemented=Konfigurierte Methode zur Absicherung der Webservices ''{0}'' ist bisher nicht implementiert. Bitte ändere den Wert der Variablen ''drops.ws.security'' in deiner application.conf.
+oauth2server.responseTypeUnsupported=Der erwartete Response Type wird nicht unterstützt. 
+oauth2server.redirectUriDoesNotMatch=Die Redirect URI ist falsch!
+oauth2server.clientHasNoRedirectURI=Die Redirect URI für den angegebenen Client fehlt. Diese ist aber erforderlich für den gewählten Grant type.
+oauth2server.generic.error=Generischer Fehler der OAuth2 Bibliothek. Beachte die zusätzlich angefügte Fehlerbeschreibung.
 
 oauth2.register.title=Registriere Oauth2 Client
 oauth2.register.legend=Registriere Oauth2 Client
@@ -183,3 +204,16 @@ rest.api.queryFunctionsNotImplementedYet=Mindestens eine Funktion in der Anfrage
 rest.api.givenClientNotFound=Es konnte der angebenen ID kein valider Client zugeordnet werden.
 rest.api.noClientSecretGiven=Methode zur Absicherung der Webservices ist momentan ''secret'', aber es wurde kein Client Secret angegeben.
 rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der Webservices ist derzeit nicht implementiert, bitte ändere ''drops.ws.security'' in deiner application.conf
+rest.api.converter.no.view=Es gibt keine SQL View mit dem Namen ''{1}''
+rest.api.noValuesGiven=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
+rest.api.noQueryGiven=Es wurde keine Query angegeben.
+
+widgets.user.found=Supporter gefunden!
+widgets.count.found=Anzahl der Nutzer konnte berechnet werden.
+widgets.user.notFound=Der Supporter konnte nicht gefunden werden.
+widgets.forbidden=Du darfst dies nicht sehen.
+widgets.notAuthenticated=Log dich erst ein.
+widgets.users.error.queryParser=Die gegebene Query kann nicht geparsed werden.
+widgets.users.error.noValues=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
+widgets.users.error.generic=Die Query enthält einen Fehler.
+widgets.users.error.sql=Die Query verursacht einen SQL Fehler.

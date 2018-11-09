@@ -316,12 +316,18 @@ Implementation
 --------------
 Implementing the handshake is very simple and consists of three steps:
 
-1.  Implement an URL path pointing to an action of your service that redirects 
-(<code>HTTP 303</code> or <code>HTTP 302</code>) to <code>``<drops_url>/oauth2/code/get/<client_id>``</code>. 
-The variables <code>``<drops_url>``</code> and <code>``<client_id>``</code> 
-have been defined during preparation phase.
+(1)  Implement an URL path pointing to an action of your service that redirects 
+(<code>HTTP 303</code> or <code>HTTP 302</code>) to: 
+```
+<drops_url>/oauth2/code/get?client_id=<client_id>&response_type=code&state=<state>&redirect_uri=<redirect_uri>
+``` 
+The variables <code>``<drops_url>``</code>, <code>``<client_id>``</code> and <code>``<redirect_uri>``</code> 
+have been defined during preparation phase. <code>``state``</code> can be used to save the current state of the OAuth2 
+client across redirects. Additionally, you can add the query paramater <code>``ajax``</code> indicating if the current 
+redirects was issued by an ajax request. In that case no login screen will be shown, but a JSON encoded error message is 
+returned.
 
-2.  The action handling the <code>redirectUri</code> has to be implemented. 
+(2)  The action handling the <code>redirectUri</code> has to be implemented. 
 This action will be accessed by an HTTP redirect initiated by the Drops service.
 It receives a code by a query parameter or inside the URL path and uses this code
 to receive an OAuth 2 <code>AccessToken</code>. For this purpose it calls the 
@@ -332,7 +338,7 @@ and the following query parameter:
   *  <code>``code=<received_code>``</code>
   *  <code>``redirect_uri=<redirectUri>``</code>
 
-3.  The responded <code>AccessToken</code> can be used to request the users profile,
+(3)  The responded <code>AccessToken</code> can be used to request the users profile,
 by requesting another webservice supplied by the Drops service:
   *  endpoint: <code>``<drops_url>/oauth2/rest/profile``</code>
   *  query string: <code>``access_token=<access_token>``</code>
@@ -359,7 +365,28 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.23.16 (2018-02-12)
+## Version 0.29.31 (2018-11-06)
+* [[W] #226 - Group of users](https://github.com/Viva-con-Agua/drops/issues/226)
+* [[W] #225 - Small inline user](https://github.com/Viva-con-Agua/drops/issues/225)
+* [[W] #224 - Autocomplete Widget](https://github.com/Viva-con-Agua/drops/issues/224)
+* [[F] #264 - CRUD Crews WebApp Controller](https://github.com/Viva-con-Agua/drops/issues/264)
+* [[I] #245 - Frontend Controller SignUp](https://github.com/Viva-con-Agua/drops/issues/245)
+* [[I] #244 - FrontendController SignIn](https://github.com/Viva-con-Agua/drops/issues/244)
+* [[I] #241 - OAuth2 redirect to HTML during Ajax request](https://github.com/Viva-con-Agua/drops/issues/241)
+* [[F] #227 - Impressum: Action for handling Impressum](https://github.com/Viva-con-Agua/drops/issues/227)
+* [[I] #221 - Pool1 OES trouble](https://github.com/Viva-con-Agua/drops/issues/221)
+* [[F] #93 - Add generic filter for Crews and Users](https://github.com/Viva-con-Agua/drops/issues/93)
+* [[F] #32 -  Organizations are configurable](https://github.com/Viva-con-Agua/drops/issues/32)
+* [[I] #222 - Allow simple filter OES](https://github.com/Viva-con-Agua/drops/issues/222)
+* [[B] #215 - OAuth 2 Provider does not implements query params](https://github.com/Viva-con-Agua/drops/issues/215)
+* [[B] #217 - Missing template on BadRequest](https://github.com/Viva-con-Agua/drops/issues/217)
+* [[B] #213 - OAuth Database bug](https://github.com/Viva-con-Agua/drops/issues/213)
+* [[F] #208 - Add MariadbPool1UserDao](https://github.com/Viva-con-Agua/drops/issues/208)
+* [[F] #91 - handler for dispenser templates](https://github.com/Viva-con-Agua/drops/issues/91)
+* [[I] #123 - Split Task and AccessRight Model in Database and Business Models](https://github.com/Viva-con-Agua/drops/issues/123)
+* [[I] #114 - Mongo to MariaDB](https://github.com/Viva-con-Agua/drops/issues/114)
+* [[B] #205 - Redirect Problems in a running Session](https://github.com/Viva-con-Agua/drops/issues/205)
+* [[F] #202 - OES Create Update Delete](https://github.com/Viva-con-Agua/drops/issues/202)
 * [[F] #107 - User import from external tools](https://github.com/Viva-con-Agua/drops/issues/107)
 * [[F] #38 - logout event](https://github.com/Viva-con-Agua/drops/issues/38)
 * [[B] #186 - the oauth handshake contains the client_secret](https://github.com/Viva-con-Agua/drops/issues/186)

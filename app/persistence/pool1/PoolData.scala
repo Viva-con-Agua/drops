@@ -1,10 +1,11 @@
 package persistence.pool1
 
+import java.util.UUID
 import play.api.http._
 import play.api.mvc._
 import models.User
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, JsValue, OWrites, Reads, Json}
+import play.api.libs.json.{JsPath, JsValue, OWrites, Reads, Json, Writes}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait PoolData[T] {
@@ -12,6 +13,7 @@ trait PoolData[T] {
   val content: JsValue
   val paramName : String
   def toPost : Map[String, Seq[String]]
+  def toUUIDPost : Map[String, Seq[String]]
 }
 
 object PoolData {
@@ -110,18 +112,33 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
         (JsPath \ "usermeta").read[UserMeta]
       ).tupled.map(PoolUserDataContainer( _ ))
   }
+  
+
+  case class PoolUserUUIDContainer(uuid: String)
+  
+  
+
+  object PoolUserUUIDContainer {
+   
+    
+    implicit val uuidContainerWrites : Writes[PoolUserUUIDContainer] = (JsPath \ "uuid").write[PoolUserUUIDContainer]
+    implicit val uuidContainerReads : Reads[PoolUserUUIDContainer] = (JsPath \ "uuid").read[PoolUserUUIDContainer]
+  } 
+    
+  
+
 
   /**
     * Mapping between User and PoolUser
     */
   val container = PoolUserDataContainer(
     userLogin = user.profiles.head.email.getOrElse(""),
-    userNiceName = user.profiles.head.supporter.username.getOrElse(""),
+    userNiceName = user.profiles.head.supporter.fullName.getOrElse(""),
     email = user.profiles.head.email.getOrElse(""),
     displayName = user.profiles.head.supporter.fullName.getOrElse(""),
-    userName = user.profiles.head.supporter.username.getOrElse(""),
+    userName = user.profiles.head.supporter.fullName.getOrElse(""),
     meta = UserMeta(
-      nickName = user.profiles.head.supporter.username.getOrElse(""),
+      nickName = user.profiles.head.supporter.fullName.getOrElse(""),
       firstName = user.profiles.head.supporter.firstName.getOrElse(""),
       lastName = user.profiles.head.supporter.lastName.getOrElse(""),
       mobile = user.profiles.head.supporter.mobilePhone.getOrElse(""),
@@ -130,6 +147,8 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
       gender = user.profiles.head.supporter.sex.getOrElse("")
     )
   )
+  val containerUUID = PoolUserUUIDContainer(uuid = user.id.toString)
+  
   override val content: JsValue = Json.toJson(this.container)
   override val paramName : String = "user"
 
@@ -137,4 +156,16 @@ case class PoolUserData(override val hash: String, user: User) extends PoolData[
     "hash" -> Seq(hash),
     "user" -> Seq(content.toString())
   )
+  override def toUUIDPost : Map[String, Seq[String]] = Map(
+    "hash" -> Seq(hash),
+    "user" -> Seq(Json.toJson(this.containerUUID).toString)
+  )
 }
+
+/**case class PoolUserUUID(uuid: UUID)
+
+object PoolUserUUID {
+  
+}*/
+
+

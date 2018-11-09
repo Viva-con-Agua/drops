@@ -38,6 +38,8 @@ case class ApiRequest[A](request : Request[A], oauthClientDao : OauthClientDao, 
     throw new Exception // Todo: Meaningful Exception
   )
 
+  val body = request.body
+
   val query = request.body match {
     case b : AnyContent => b.asJson match {
       case Some(json) => json == Json.obj() match {

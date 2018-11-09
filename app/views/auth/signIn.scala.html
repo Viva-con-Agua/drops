@@ -4,7 +4,6 @@
 
 @implicitFieldConstructor = @{b3.vertical.fieldConstructor}
 
-@views.html.templates.mainAuth(Messages("signin.title"), tab = "signin") {
   @request.flash.get("error").map { msg =>
     @errors.alert(msg, "error")
   }
@@ -46,4 +45,4 @@
       </div>
     </div>
   }
-}
+

@@ -1,44 +1,19 @@
 package models
 
-import java.text.SimpleDateFormat
 import java.util.Date
 
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Reads}
+import play.api.libs.json.{JsPath, Reads, _}
 
-case class Task(
-                 id: Long,
-                 title: String,
-                 description: Option[String],
-               //ToDo Yoda Date?
-                 deadline: Option[Date],
-                 count_supporter: Option[Int]
-               )
+case class Task (
+                  id: Long,
+                  title: String,
+                  description: Option[String],
+                  deadline: Option[Date],
+                  count_supporter: Option[Int]
+           )
 
-object Task{
-
-  def mapperTo(
-                id: Long, title: String,
-                description: Option[String], deadline: Option[Date], count_supporter: Option[Int]
-              ) = apply(id, title, description, deadline, count_supporter)
-
-  def apply(tuple: (Long, String, Option[String], Option[Date], Option[Int])): Task =
-    Task(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
-
-  def apply(id: Long, tuple: (String, Option[String], Option[Date], Option[Int])): Task =
-    Task(0, tuple._1, tuple._2, tuple._3, tuple._4)
-
-  def apply(id: Long, title: String, description: String, deadline: Date, count_supporter: Int) : Task =
-   Task(id, title, Some(description), Some(deadline), Some(count_supporter))
-
-  implicit val dateWrites = new Writes[Date] {
-    def writes(date: Date) = JsString(date.toString)
-  }
-
-  implicit  val dateReads = new Reads[Date]{
-    def reads(json: JsValue): JsResult[Date] = JsSuccess(new SimpleDateFormat("yyyy-MM-dd").parse(json.as[String]))
-  }
+object Task {
 
   implicit val taskWrites : OWrites[Task] = (
     (JsPath \ "id").write[Long] and
@@ -55,8 +30,6 @@ object Task{
       (JsPath \ "deadline").readNullable[Date] and
       (JsPath \ "count_supporter").readNullable[Int]
     ).tupled.map((task) => if(task._1.isEmpty)
-      Task(0, task._2, task._3, task._4, task._5)
-      else Task(task._1.get, task._2, task._3, task._4, task._5))
+    Task(0, task._2, task._3, task._4, task._5)
+  else Task(task._1.get, task._2, task._3, task._4, task._5))
 }
-
-

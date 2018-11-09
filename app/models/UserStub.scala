@@ -15,7 +15,6 @@ case class SupporterStub(
                       firstName: Option[String],
                       lastName: Option[String],
                       fullName: Option[String],
-                      username: Option[String],
                       mobilePhone: Option[String],
                       placeOfResidence: Option[String],
                       birthday: Option[Long],
@@ -34,24 +33,23 @@ case class SupporterStub(
   }
 
   def toSupporter(c: Option[Crew]) : Supporter =
-    Supporter(firstName, lastName, fullName, username, mobilePhone, placeOfResidence, birthday, sex, c, pillars)
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, c, pillars)
 }
 
 object SupporterStub {
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : SupporterStub =
-    SupporterStub(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
+    SupporterStub(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : SupporterStub =
-    SupporterStub(firstName, lastName, fullName, None, None, None, None, None, None, Set())
+    SupporterStub(firstName, lastName, fullName, None, None, None, None, None, Set())
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Pillar])) : SupporterStub =
-    SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Pillar])) : SupporterStub =
+    SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
   implicit val supporterWrites : OWrites[SupporterStub] = (
     (JsPath \ "firstName").writeNullable[String] and
       (JsPath \ "lastName").writeNullable[String] and
       (JsPath \ "fullName").writeNullable[String] and
-      (JsPath \ "username").writeNullable[String] and
       (JsPath \ "mobilePhone").writeNullable[String] and
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
@@ -63,7 +61,6 @@ object SupporterStub {
     (JsPath \ "firstName").readNullable[String] and
       (JsPath \ "lastName").readNullable[String] and
       (JsPath \ "fullName").readNullable[String] and
-      (JsPath \ "username").readNullable[String] and
       (JsPath \ "mobilePhone").readNullable[String] and
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
@@ -119,8 +116,8 @@ object ProfileStub {
     ).tupled.map(ProfileStub( _ ))
 }
 
-case class UserStub(id: UUID, profiles: List[ProfileStub], roles: Set[Role] = Set(RoleSupporter)) extends Identity {
-  def toUser(p: List[Profile]) = User(id, p, roles)
+case class UserStub(id: UUID, profiles: List[ProfileStub], updated : Long, created : Long, roles: Set[Role] = Set(RoleSupporter)) extends Identity {
+  def toUser(p: List[Profile]) = User(id, p, updated, created, roles)
 }
 object UserStub {
   implicit val passwordInfoJsonFormat = Json.format[PasswordInfo]

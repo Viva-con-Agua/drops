@@ -8,14 +8,47 @@ POST    /user/update                                        controllers.Applicat
 POST    /user/uploadAvatar                                  controllers.Files.uploadProfileImage
 GET     /file/get/:id                                       controllers.Files.get(id: String)
 
+GET     /delete                                             controllers.Application.userDelete
 
-GET     /crews/init                                         controllers.Application.initCrews
+
+#GET     /crews/init                                         controllers.Application.initCrews
 GET     /crews/fixID                                        controllers.Application.fixCrewsID
 GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
 
 # Roles
 GET     /roles                                              controllers.Roles.index
 POST    /roles/update                                       controllers.Roles.update
+
+# Widgets
+GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
+POST    /widgets/users                                      controllers.widgets.Users.getUsers
+POST    /widgets/users/count                                controllers.widgets.Users.getCountUsers
+
+# WebApp endpoints
+GET     /webapp/identity                                    controllers.webapp.Auth.identity
+POST    /webapp/authenticate                                controllers.webapp.Auth.authenticate
+GET     /webapp/out                                         controllers.webapp.Auth.signOut
+GET     /webapp/reset/:tokenId                              controllers.webapp.Auth.resetPassword(tokenId: String)
+POST    /webapp/reset/:tokenId                              controllers.webapp.Auth.handleResetPassword(tokenId: String)
+POST    /webapp/reset                                       controllers.webapp.Auth.handleResetPasswordStartData
+POST    /webapp/signup                                      controllers.webapp.Auth.handleStartSignUp
+GET     /webapp/signup/:tokenId                             controllers.webapp.Auth.signUp(tokenId)
+# WebApp profile
+GET     /webapp/profile/get                                 controllers.webapp.Profile.get
+POST    /webapp/profile/update                              controllers.webapp.Profile.update
+#WebApp crew
+GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
+GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
+GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.get(name: String)
+GET     /webapp/crew/list                                   controllers.webapp.CrewController.list
+
+GET     /webapp/oauthclient/ws                              controllers.webapp.OauthClientSocketController.socket
+GET     /webapp/oauthclient/get/:name                             controllers.webapp.OauthClientController.get(name: String)
+GET     /webapp/oauthclient/list                            controllers.webapp.OauthClientController.list
+
+GET     /webapp/organization/ws                             controllers.webapp.OrganizationSocketController.socket
+GET     /webapp/organization/get/:name                      controllers.webapp.OrganizationController.get(name: String)
+#GET     /webapp/organization/list                           controllers.webapp.OrganizationController.list
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
@@ -28,22 +61,24 @@ DELETE  /rest/user/:id                                     controllers.RestApi.d
 
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
-POST    /rest/crew                                         controllers.RestApi.crews
+POST    /rest/crew                                          controllers.RestApi.getCrews
 GET     /rest/task                                          controllers.RestApi.getTasks
 POST    /rest/task                                          controllers.RestApi.createTask
 GET     /rest/task/:id                                      controllers.RestApi.getTasksWithAccessRights(id: Long)
 DELETE  /rest/task/:id                                      controllers.RestApi.deleteTask(id: Long)
-GET     /rest/access                                        controllers.RestApi.getAccessRights(q: String, f: String)
+GET     /rest/access                                        controllers.RestApi.getAccessRights
+#GET /rest/access controllers.RestApi.getAccessRights(q: String, f: String)
 GET     /rest/access/:id                                    controllers.RestApi.findAccessRight(id: Long)
 DELETE  /rest/access/:id                                    controllers.RestApi.deleteAccessRight(id: Long)
 POST    /rest/access                                        controllers.RestApi.createAccessRight
 
 #Pool1User Rest API
-POST 		/rest/pool1user/create															controllers.RestApi.createPool1User	
+POST 		/rest/pool1user/create							controllers.RestApi.createPool1User
 
 # OAuth2 Rest API
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
-GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String)
+GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String, ajax: Option[Boolean])
+GET     /oauth2/code/get                                    controllers.OAuth2Controller.getCodeOAuth2Spec(scope: Option[String], client_id : String, response_type : String, state: String, redirect_uri: String, ajax: Option[Boolean])
 
 # Authentication
 GET     /auth/init                                          controllers.Auth.init
@@ -65,11 +100,25 @@ POST    /auth/reset/:token                                  controllers.Auth.han
 
 GET     /auth/social/:providerId                            controllers.Auth.socialAuthenticate(providerId:String)
 
+# Organizations
+POST   /organization/insert                                	controllers.OrganizationController.insert
+POST   /organization/addProfile    													controllers.OrganizationController.addProfileName
+DELETE   /organization/deleteProfile    											controllers.OrganizationController.deleteProfile
+DELETE   /organization/delete  																controllers.OrganizationController.delete
+POST   /organization/get																		controllers.OrganizationController.getOrganization
+POST   /organization/withProfile														controllers.OrganizationController.getOrganizationWithProfile
+POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
+POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankAccountName
+POST	 /organization/withBankaccounts												controllers.OrganizationController.withBankAccounts
+
 # OAuth 2 Server
 GET     /oauth2/access_token                                controllers.OAuth2Controller.accessToken
+POST    /oauth2/access_token                                controllers.OAuth2Controller.accessToken
 GET     /oauth2/register                                    controllers.Application.registration
 POST    /oauth2/register                                    controllers.Application.registerOAuth2Client
 
+# Imprint
+GET 	/impressum																						controllers.ImprintController.imprint
 # Public assets
 GET     /assets/*file                                       controllers.Assets.versioned(path="/public", file: Asset)
 GET     /webjars/*file                                      controllers.WebJarAssets.at(file)

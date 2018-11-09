@@ -21,23 +21,26 @@ import User._
 import api.ApiAction
 import api.query.{CrewRequest, RequestConfig, UserRequest}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
-import com.mohiva.play.silhouette.api.util.PasswordHasher
+import com.mohiva.play.silhouette.api.util.{PasswordHasher, PasswordInfo}
 import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
-import daos.{CrewDao, OauthClientDao, UserDao}
-import daos.{AccessRightDao, TaskDao, Pool1UserDao}
+import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
+import daos._
+import models.dbviews.{Crews, Users}
 import services.{TaskService, UserService, UserTokenService}
 import utils.Mailer
-import utils.Query.{QueryAST, QueryLexer, QueryParser}
+import utils.Query._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
 import scala.util.parsing.json.JSONArray
 
+
+
 //import net.liftweb.json._
 
 class RestApi @Inject() (
-  val userDao : UserDao,
-  val crewDao: CrewDao,
+  val userDao : MariadbUserDao,
+  val crewDao: MariadbCrewDao,
   val taskDao: TaskDao,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
@@ -55,10 +58,12 @@ class RestApi @Inject() (
 
   /** checks whether a json is validate or not
     *
-    *  @param A Reads json datatype and request.
+    *  @param B Reads json datatype and request.
     *  @return if the json in the request.body is  successful, return JsSuccess Type, else return BadRequest with json errors
     */
-  def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
+  def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
   
   def profile = SecuredAction.async { implicit request =>
     val json = Json.toJson(request.identity.profileFor(request.authenticator.loginInfo).get)
@@ -67,42 +72,54 @@ class RestApi @Inject() (
       (__ \ 'passordInfo).json.prune andThen 
       (__ \ 'oauth1Info).json.prune)
     prunedJson.fold(
-      _ => Future.successful(InternalServerError(Json.obj("error" -> Messages("error.profileError")))),
+      _ => Future.successful(responseError(play.api.mvc.Results.InternalServerError, "InternalProfileError", Messages("error.profileError"))),
       js => Future.successful(Ok(js))
     )
   }
 
   override def onNotAuthenticated(request:RequestHeader) = {
-    Some(Future.successful(Unauthorized(Json.obj("error" -> Messages("error.profileUnauth")))))
+    Some(Future.successful(responseError(play.api.mvc.Results.Unauthorized, "UserNotAuthorized", Messages("error.profileUnauth"))))
   }
 
-  def getUsers = ApiAction.async { implicit request => {
-    def body(query : JsObject, limit : Int, sort : JsObject) = userDao.ws.list(query, limit, sort).map(users => Ok(
-      Json.toJson(users.map(PublicUser(_)))
-    ))
-    implicit val u: UserDao = userDao
-    implicit val config : RequestConfig = UserRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) =>
-        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
-      )
-      case None => body(Json.obj(), 20, Json.obj())
+  def getUsers = ApiAction.async(validateJson[rest.QueryBody]) { implicit request => {
+    implicit val m = messagesApi
+    rest.QueryBody.asUsersQuery(request.body) match {
+      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
+      case Left(e : rest.QueryBody.NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
+      case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+      case Right(converter) => try {
+        userDao.list_with_statement(converter.toStatement).map((users) =>
+          Ok(Json.toJson(users))
+        )
+      } catch {
+        case e: java.sql.SQLException => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+        case e: Exception => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+      }
     }
   }}
 
   def getUser(id : UUID) = ApiAction.async { implicit request => {
-    def body(query: JsObject) = userDao.ws.find(id, query).map(_ match {
-      case Some(user) => Ok(Json.toJson(PublicUser(user)))
-      case _ => BadRequest(Json.obj("error" -> Messages("rest.api.canNotFindGivenUser", id)))
-    })
-    implicit val u: UserDao = userDao
-    implicit val config : RequestConfig = UserRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) => body(ext._1))
-      case None => body(Json.obj())
-    }
 
+    userDao.find(id).map(_ match {
+      case Some(user) => Ok(Json.toJson(PublicUser(user)))
+      case _ => responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("rest.api.canNotFindGivenUser", id))
+    })
   }}
+
+  protected def responseError(code: play.api.mvc.Results.Status, typ: String, msg: String) : Result =
+    responseError(code, typ, JsString(msg))
+
+  protected def responseError(code: play.api.mvc.Results.Status, typ: String, msg: JsValue) : Result =
+    code(Json.obj(
+      "status" -> "error",
+      "code" -> code.header.status,
+      "type" -> typ,
+      "msg" -> msg
+    )).as("application/json")
 
   case class CreateUserBody(
      email: String,
@@ -112,6 +129,7 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
+     password: Option[String], //Password is optional, perhaps its necessary to set the pw on the first login
      profileImageUrl: Option[String]
   )
   object CreateUserBody{
@@ -124,9 +142,13 @@ class RestApi @Inject() (
     val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
     userService.retrieve(loginInfo).flatMap{
       case Some(_) =>
-        Future(BadRequest(Json.obj("error" -> Messages("error.userExists", signUpData.email))))
+        Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserExists", Messages("error.userExists", signUpData.email)))
       case None =>{
-        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, List(new DefaultProfileImage))
+        var passwordInfo : Option[PasswordInfo] = None
+        if(signUpData.password.isDefined)
+          passwordInfo = Option(passwordHasher.hash(signUpData.password.get))
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo, List(new DefaultProfileImage))
+
         avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
           userService.save(User(id = UUID.randomUUID(), profiles =
             (signUpData.profileImageUrl, avatarUrl) match {
@@ -134,7 +156,7 @@ class RestApi @Inject() (
               case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
               case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
               case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            })).map((user) => Ok(Json.toJson(user)))
+            }, updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
         })
       }
     }
@@ -173,12 +195,12 @@ class RestApi @Inject() (
                 val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
                 userService.update(userObj.get.updateProfile(updatedProfile)).map((u) => Ok(Json.toJson(u)))
               }
-              case None => Future(NotFound(Messages("error.profileError")))
+              case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "ProfileNotFound", Messages("error.profileError")))
             }
           }
-          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+          case false => Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserIDMismatch", Messages("error.identifiersDontMatch")))
         }
-        case None => Future(NotFound(Messages("error.noUser")))
+        case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
   }}
@@ -200,11 +222,11 @@ class RestApi @Inject() (
         case Some(user) => user.id == id match {
           case true => user.profileFor(loginInfo) match {
             case Some(profile) => userService.saveImage(profile, UrlProfileImage(userData.url)).map(u => Ok(Json.toJson(u)))
-            case None => Future(NotFound(Messages("error.profileError")))
+            case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "ProfileNotFound", Messages("error.profileError")))
           }
-          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+          case false => Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserIDMismatch", Messages("error.identifiersDontMatch")))
         }
-        case None => Future(NotFound(Messages("error.noUser")))
+        case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
   }}
@@ -220,23 +242,31 @@ class RestApi @Inject() (
       userObj match {
         case Some(user) => user.id == id match {
           case true => userDao.delete(id).map(r => Ok(Json.toJson(r)))
-          case false => Future(BadRequest(Messages("error.identifiersDontMatch")))
+          case false => Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserIDMismatch", Messages("error.identifiersDontMatch")))
         }
-        case None => Future(NotFound(Messages("error.noUser")))
+        case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
   }}
 
-  def crews = ApiAction.async { implicit request => {
-    def body(query: JsObject, limit: Int, sort: JsObject) = crewDao.ws.list(query, limit, sort).map((crews) => Ok(Json.toJson(crews)))
-
-    implicit val c: CrewDao = crewDao
-    implicit val config : RequestConfig = CrewRequest
-    request.query match {
-      case Some(query) => query.toExtension.flatMap((ext) =>
-        body(ext._1, ext._2.get("limit").getOrElse(20), query.getSortCriteria)
-      )
-      case None => body(Json.obj(), 20, Json.obj())
+  def getCrews = ApiAction.async(validateJson[rest.QueryBody]){ implicit request => {
+    implicit val m = messagesApi
+    rest.QueryBody.asCrewsQuery(request.body) match {
+      case Left(e : QueryParserError) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
+      case Left(e : rest.QueryBody.NoValuesGiven) => Future.successful(BadRequest(Json.obj("error" -> e.getMessage)))
+      case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+      case Right(converter) => try {
+        crewDao.list_with_statement(converter.toStatement).map((crews) =>
+          Ok(Json.toJson(crews))
+        )
+      } catch {
+        case e: java.sql.SQLException => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+        case e: Exception => {
+          Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
+        }
+      }
     }
   }}
 
@@ -261,7 +291,7 @@ class RestApi @Inject() (
     taskDao.find(id).map(task => Ok(Json.toJson(task)))
   }}
 
-  def createTask() = Action.async(validateJson[Task]) {implicit request => {
+  def createTask() = Action.async(validateJson[Task]) { implicit request => {
     taskDao.create(request.body).map{task => Ok(Json.toJson(task))}
   }}
 
@@ -270,51 +300,8 @@ class RestApi @Inject() (
   }}
 
   //ToDo: Query parameter optional?
-  def getAccessRights(query: String, f: String) = Action.async{ implicit  request => {
-    //Use the lexer to validate query syntax and extract tokens
-    val tokens = QueryLexer(query)
-    if(tokens.isLeft){
-      Future(BadRequest(Json.obj("error" -> Messages("rest.api.syntaxError"))))
-    }else {
-      //Use the parser to validate and extract grammar
-      val ast = QueryParser(tokens.right.get)
-      if (ast.isLeft) {
-        Future(InternalServerError(Json.obj("error" -> Messages("rest.api.syntaxGrammar"))))
-      }
-      else {
-
-
-        val query: QueryAST = ast.right.get
-        //validate if the desired functions exists in the query
-        query match {
-          case and : utils.Query.A => and.step1 match {
-            case step1: utils.Query.EQ => and.step2 match {
-              case step2: utils.Query.EQ => {
-                val and: utils.Query.A = query.asInstanceOf[utils.Query.A]
-
-                val step1 = and.step1
-                val step2 = and.step2
-                val filter: JsObject = Json.parse(f).as[JsObject]
-                //check, if there exists an filter value for the steps respectively the functions
-                if (QueryAST.validateStep(step1, filter) && QueryAST.validateStep(step2, filter)) {
-                  //Get the filter values
-                  //ToDo This should be generic
-                  val userId = UUID.fromString(filter.\("user").\("id").as[String])
-                  val service: String = filter.\("accessRight").\("service").as[String]
-
-                  accessRightDao.forUserAndService(userId, service).map(accessRights => Ok(Json.toJson(accessRights)))
-                } else {
-                  Future(BadRequest(Json.obj("error" -> Messages("rest.api.missingFilterValue"))))
-                }
-              }
-              case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-            }
-            case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-          }
-          case _ => Future(NotImplemented(Json.obj("error" -> Messages("rest.api.queryFunctionsNotImplementedYet"))))
-        }
-      }
-    }
+  def getAccessRights() = Action.async{ implicit  request => {
+    accessRightDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
   def findAccessRight(id: Long) = Action.async{ implicit  request => {

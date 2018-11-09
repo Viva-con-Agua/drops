@@ -22,6 +22,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer.MailerClient
 import play.api.libs.ws.WSClient
 import daos._
+import persistence.pool1._
 import models.User
 import persistence.pool1.{PoolService, PoolServiceImpl}
 import play.api.libs.json.JsObject
@@ -31,20 +32,23 @@ import utils.Mailer
 class Module extends AbstractModule with ScalaModule {
 
   def configure() {
+   // bind[PoolUUIDData].to[PoolUserUUIDData]
     bind[IdentityService[User]].to[UserService]
-    bind[UserDao].to[MongoUserDao]
+    bind[UserDao].to[MariadbUserDao]
 //    bind[UserApiQueryDao[JsObject]].to[MongoUserApiQueryDao]
-    bind[CrewDao].to[MongoCrewDao]
-    bind[UserTokenDao].to[MongoUserTokenDao]
+    bind[OrganizationDAO].to[MariadbOrganizationDAO]
+    bind[CrewDao].to[MariadbCrewDao]
+    bind[UserTokenDao].to[MariadbUserTokenDao]
     bind[TaskDao].to[MariadbTaskDao]
+    bind[PasswordInfoDao].to[MariadbPasswordInfoDao]
     bind[AccessRightDao].to[MariadbAccessRightDao]
-    bind[OauthClientDao].to[MongoOauthClientDao]
-    bind[OauthTokenDao].to[MongoOauthTokenDao]
+    bind[OauthClientDao].to[MariadbOauthClientDao]
+    bind[OauthTokenDao].to[MariadbOauthTokenDao]
     bind[PoolService].to[PoolServiceImpl]
-    bind[OauthCodeDao].to[MongoOauthCodeDao]
-    bind[Pool1UserDao].to[MongoPool1UserDao]
-    bind[DelegableAuthInfoDAO[PasswordInfo]].to[PasswordInfoDao]
-    bind[DelegableAuthInfoDAO[OAuth1Info]].to[OAuth1InfoDao]
+    bind[OauthCodeDao].to[MariadbOauthCodeDao]
+    bind[DelegableAuthInfoDAO[PasswordInfo]].to[MariadbPasswordInfoDao]
+    bind[DelegableAuthInfoDAO[OAuth1Info]].to[MariadbOAuth1InfoDao]
+    bind[Pool1UserDao].to[MariadbPool1UserDao]
     bind[IDGenerator].toInstance(new SecureRandomIDGenerator())
     bind[PasswordHasher].toInstance(new BCryptPasswordHasher)
     bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))

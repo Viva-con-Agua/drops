@@ -1,0 +1,25 @@
+@(organization: Organization, executives: List[Profile])
+<p>
+	<strong>
+					Für alle Inhalte, die das Viva con Agua Mineralwasser betreffen, lautet das Impressum:
+	</strong>
+</p>
+
+@organization.address
+<p>
+Telefon: @organization.telefon
+<br>
+Fax: @organization.fax
+<br>
+Email: @organization.email
+</p>
+<p>
+Geschäftsführung: 
+@for(executive <- executives){
+	@executive.supporter.name
+}
+<br>
+Handelsregister: @organization.executive
+</p>
+
+

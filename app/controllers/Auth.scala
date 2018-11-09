@@ -22,6 +22,7 @@ import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.exceptions.IdentityNotFoundException
 import com.mohiva.play.silhouette.impl.providers._
 import play.api._
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
@@ -29,8 +30,9 @@ import play.api.mvc._
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
+import models.dispenser._
 import UserForms.UserConstraints
-import services.{UserService, UserTokenService, Pool1Service}
+import services.{UserService, UserTokenService, Pool1Service, DispenserService}
 import utils.{Mailer, Nats}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
@@ -95,9 +97,12 @@ class Auth @Inject() (
   configuration: Configuration,
   pool: PoolService,
   mailer: Mailer,
+  dispenserService: DispenserService,
   nats: Nats) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
+
+  override val logger: Logger = Logger(this.getClass())
 
   def init = Action.async { implicit request => {
     val config = configuration.getConfig("admin.default")
@@ -118,12 +123,12 @@ class Auth @Inject() (
           List(new DefaultProfileImage)
         )
         for {
-          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatar = List(new DefaultProfileImage))), roles = Set(RoleAdmin)))
+          user <- userService.save(User(id = UUID.randomUUID(), profiles = List(profile.copy(avatar = List(new DefaultProfileImage))), roles = Set(RoleAdmin), updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
           _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(config.get.getString("password").get))
           token <- userTokenService.save(UserToken.create(user.id, config.get.getString("email").get, true))
         } yield {
           mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
-          Ok(views.html.auth.finishSignUp(profile))
+          Ok(dispenserService.getTemplate(views.html.auth.finishSignUp(profile)))
         }
       }
     })
@@ -132,13 +137,14 @@ class Auth @Inject() (
   def startSignUp = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
       case Some(user) => redirectAfterLogin
-      case None => Ok(views.html.auth.startSignUp(signUpForm))
-    })
+      case None => {
+        Ok(dispenserService.getTemplate(views.html.auth.startSignUp(signUpForm)))
+    }})
   }
 
   def handleStartSignUp = Action.async { implicit request =>
     signUpForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.startSignUp(bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.startSignUp(bogusForm)))),
       signUpData => {
         val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
         userService.retrieve(loginInfo).flatMap {
@@ -153,12 +159,12 @@ class Auth @Inject() (
                 avatarUrl match {
                   case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url),new DefaultProfileImage)))
                   case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-                }))
+                }, updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
               _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
             } yield {
               mailer.welcome(profile, link = routes.Auth.signUp(token.id.toString).absoluteURL())
-              Ok(views.html.auth.finishSignUp(profile))
+              Ok(dispenserService.getTemplate(views.html.auth.finishSignUp(profile)))
             }
         }
       }
@@ -199,14 +205,16 @@ class Auth @Inject() (
   def signIn = UserAwareAction.async { implicit request =>
     Future.successful(request.identity match {
       case Some(user) => Redirect(routes.Application.index())
-      case None => Ok(views.html.auth.signIn(signInForm,socialProviderRegistry))
+      case None => {
+        Ok(dispenserService.getTemplate(views.html.auth.signIn(signInForm, socialProviderRegistry)))
+      }
     })
   }
 
 
   def authenticate = Action.async { implicit request =>
     signInForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.signIn(bogusForm, socialProviderRegistry))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.signIn(bogusForm, socialProviderRegistry)))),
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
         pool1Service.pool1user(signInData.email).flatMap {
@@ -248,14 +256,18 @@ class Auth @Inject() (
     userService.retrieve(request.authenticator.loginInfo).flatMap {
       case None => 
         Future.successful(Redirect(routes.Auth.signOut()).flashing("error" -> Messages("error.noUser")))
-      case Some(user) => 
+      case Some(user) => {
+        pool.logout(user)
         Future.successful(nats.publishLogout(user.id))
+
+      }
     }
     env.authenticatorService.discard(request.authenticator, redirectAfterLogout)
+    
   }
 
   def startResetPassword = Action { implicit request =>
-    Ok(views.html.auth.startResetPassword(emailForm))
+    Ok(dispenserService.getTemplate(views.html.auth.startResetPassword(emailForm)))
   }
 
   def handlePool1StartResetPassword(email64: String) = Action.async { implicit request =>
@@ -273,14 +285,14 @@ class Auth @Inject() (
 
   def handleStartResetPassword = Action.async { implicit request =>
     emailForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.startResetPassword(bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.startResetPassword(bogusForm)))),
       email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email)).flatMap {
         case None => Future.successful(Redirect(routes.Auth.startResetPassword()).flashing("error" -> Messages("error.noUser")))
         case Some(user) => for {
           token <- userTokenService.save(UserToken.create(user.id, email, isSignUp = false))
         } yield {
           mailer.resetPassword(email, link = routes.Auth.resetPassword(token.id.toString).absoluteURL())
-          Ok(views.html.auth.resetPasswordInstructions(email))
+          Ok(dispenserService.getTemplate(views.html.auth.resetPasswordInstructions(email)))
         }
       }
     )
@@ -292,7 +304,7 @@ class Auth @Inject() (
       case None => 
         Future.successful(NotFound(views.html.errors.notFound(request)))
       case Some(token) if !token.isSignUp && !token.isExpired => 
-        Future.successful(Ok(views.html.auth.resetPassword(tokenId, resetPasswordForm)))
+        Future.successful(Ok(dispenserService.getTemplate(views.html.auth.resetPassword(tokenId, resetPasswordForm))))
       case _ => for {
         _ <- userTokenService.remove(id)
       } yield NotFound(views.html.errors.notFound(request))
@@ -301,7 +313,7 @@ class Auth @Inject() (
 
   def handleResetPassword(tokenId:String) = Action.async { implicit request =>
     resetPasswordForm.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(views.html.auth.resetPassword(tokenId, bogusForm))),
+      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.auth.resetPassword(tokenId, bogusForm)))),
       passwords => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
@@ -317,7 +329,7 @@ class Auth @Inject() (
               //pool1 user
               _ <- pool1Service.confirmed(token.email)
               _ <- userService.confirm(loginInfo)
-              result <- env.authenticatorService.embed(value, Ok(views.html.auth.resetPasswordDone()))
+              result <- env.authenticatorService.embed(value, Ok(dispenserService.getTemplate(views.html.auth.resetPasswordDone())))
             } yield result
         }
       } 

@@ -21,7 +21,6 @@ case class Supporter(
   firstName: Option[String],
   lastName: Option[String],
   fullName: Option[String],
-  username: Option[String],
   mobilePhone: Option[String],
   placeOfResidence: Option[String],
   birthday: Option[Long],
@@ -40,29 +39,36 @@ case class Supporter(
   }
 
   def name : Option[String] = this.firstName.flatMap(fn => lastName.map(fn + " " + _))
+
+  def toSupporterStub() : SupporterStub =
+    SupporterStub(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, (if(crew.isDefined) Option(crew.get.toCrewStub()) else None), Set())
 }
 
 object Supporter {
-  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
-    Supporter(firstName, lastName, None, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+  def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, None, Set())
   }
+
+  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
+    Supporter(firstName, lastName, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+  }
+
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String): Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
 
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), None, Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
-    Supporter(firstName, lastName, fullName, None, None, None, None, None, None, Set())
+    Supporter(firstName, lastName, fullName, None, None, None, None, None, Set())
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Pillar])) : Supporter =
-    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
+  def apply(tuple: (Option[String],  Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Pillar])) : Supporter =
+    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
   implicit val supporterWrites : OWrites[Supporter] = (
     (JsPath \ "firstName").writeNullable[String] and
       (JsPath \ "lastName").writeNullable[String] and
       (JsPath \ "fullName").writeNullable[String] and
-      (JsPath \ "username").writeNullable[String] and
       (JsPath \ "mobilePhone").writeNullable[String] and
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
@@ -74,7 +80,6 @@ object Supporter {
       (JsPath \ "firstName").readNullable[String] and
       (JsPath \ "lastName").readNullable[String] and
       (JsPath \ "fullName").readNullable[String] and
-      (JsPath \ "username").readNullable[String] and
       (JsPath \ "mobilePhone").readNullable[String] and
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
@@ -94,11 +99,18 @@ case class Profile(
   avatar: List[ProfileImage]) {
 
   def getAvatar = avatar.headOption
+
+  //ToDo: add avatar url
+  def toProfileStub : ProfileStub =
+    ProfileStub(loginInfo, confirmed, email, supporter.toSupporterStub(), passwordInfo, oauth1Info, None)
 }
 
 object Profile {
-  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, avatar: List[DefaultProfileImage]) :Profile =
-    Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
+
+  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, supporter: Supporter, passwordInfo: Option[PasswordInfo], oauth1Info: Option[OAuth1Info]) : Profile =
+    Profile(loginInfo, confirmed, Some(email), supporter, passwordInfo, oauth1Info, List[DefaultProfileImage]())
+  def apply(loginInfo: LoginInfo, confirmed: Boolean, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, passwordInfo: Option[PasswordInfo], avatar: List[DefaultProfileImage]) :Profile =
+    Profile(loginInfo, confirmed, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), passwordInfo, None, avatar)
 
   def apply(loginInfo: LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String, avatar: List[DefaultProfileImage]) : Profile =
     Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, avatar)
@@ -174,15 +186,24 @@ object PublicProfile {
     ).tupled.map(PublicProfile( _ ))
 }
 
-case class User(id: UUID, profiles: List[Profile], roles: Set[Role] = Set(RoleSupporter)) extends Identity {
+case class User(id: UUID, profiles: List[Profile], updated: Long, created: Long, roles: Set[Role] = Set(RoleSupporter)) extends Identity {
   def updateProfile(updatedProfile: Profile) = User(this.id, profiles.map(p => p.loginInfo match {
     case updatedProfile.loginInfo => updatedProfile
     case _ => p
-  }), this.roles)
+  }), this.updated, this.created, this.roles)
   def profileFor(loginInfo:LoginInfo) = profiles.find(_.loginInfo == loginInfo)
   def fullName(loginInfo:LoginInfo) = profileFor(loginInfo).flatMap(_.supporter.fullName)
   def setRoles(roles : Set[Role]) = this.copy(roles = roles)
   def hasRole(role: Role) = this.roles.contains(role)
+
+  def toUserStub : UserStub = {
+    val profileStubList : List[ProfileStub] = List[ProfileStub]()
+    profiles.foreach(profile => {
+      profileStubList ++ List(profile.toProfileStub)
+    })
+    UserStub(id, profileStubList, updated, created, roles)
+  }
+
 }
 
 object User {
@@ -191,27 +212,33 @@ object User {
   implicit val userJsonFormat = Json.format[User]
 }
 
-case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role])
+case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role], updated: Long, created: Long)
 
 object PublicUser {
   def apply(user : User) : PublicUser = PublicUser(
     user.id,
     // select the first profile as the primary profile:
     user.profiles.headOption.map(PublicProfile(_, true)).toList ++ user.profiles.tail.map(PublicProfile(_)),
-    user.roles
+    user.roles,
+    user.updated,
+    user.created
   )
-  def apply(tuple : (UUID, List[PublicProfile], Set[Role])) : PublicUser = PublicUser(
-    tuple._1, tuple._2, tuple._3
+  def apply(tuple : (UUID, List[PublicProfile], Set[Role], Long, Long)) : PublicUser = PublicUser(
+    tuple._1, tuple._2, tuple._3, tuple._4, tuple._5
   )
 
   implicit val publicUserWrites : OWrites[PublicUser] = (
     (JsPath \ "id").write[UUID] and
       (JsPath \ "profiles").write[List[PublicProfile]] and
-      (JsPath \ "roles").write[Set[Role]]
+      (JsPath \ "roles").write[Set[Role]] and
+      (JsPath \ "updated").write[Long] and
+      (JsPath \ "created").write[Long]
     )(unlift(PublicUser.unapply))
   implicit val publicUserReads : Reads[PublicUser] = (
     (JsPath \ "id").read[UUID] and
       (JsPath \ "profiles").read[List[PublicProfile]] and
-      (JsPath \ "roles").read[Set[Role]]
+      (JsPath \ "roles").read[Set[Role]] and
+      (JsPath \ "updated").read[Long] and
+      (JsPath \ "created").read[Long]
     ).tupled.map(PublicUser( _ ))
 }

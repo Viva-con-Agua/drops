@@ -1,0 +1,12 @@
+@(organization: Organization)
+<p>
+	<strong>Ordentlich bestellter Datenschutzbeauftragter</strong>
+</p>
+<p>
+	<strong>@organization.name</strong>
+	<br>
+	@organization.address
+	<br>
+	<a href="mailto:@organization.email?subject=Datenschutz%20bei%20Viva%20con%20Agua">
+					@organization.email </a>
+</p>

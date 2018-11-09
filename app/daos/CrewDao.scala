@@ -10,16 +10,28 @@ import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import com.mohiva.play.silhouette.api.LoginInfo
-import models.{Crew, CrewStub, ObjectIdWrapper}
+import daos.schema.{CityTableDef, CrewTableDef}
+import models.{Crew, CrewStub, ObjectId, ObjectIdWrapper}
 import models.Crew._
+import models.converter.CrewConverter
+import models.database.{CityDB, CrewDB}
+import play.Logger
+import play.api.Play
+import play.api.db.slick.DatabaseConfigProvider
+import slick.driver.JdbcProfile
+import slick.lifted.TableQuery
+import slick.driver.MySQLDriver.api._
+import slick.jdbc.{GetResult, PositionedParameters, SQLActionBuilder, SetParameter}
 
 trait CrewDao extends ObjectIdResolver with CountResolver {
   def find(id: UUID):Future[Option[Crew]]
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def update(crew: Crew):Future[Crew]
+  def delete(crew: Crew):Future[Boolean]
   def listOfStubs : Future[List[CrewStub]]
   def list : Future[List[Crew]]
+  def list_with_statement(statement : SQLActionBuilder):  Future[List[Crew]]
 
   trait CrewWS {
     def listOfStubs(queryExtension: JsObject, limit : Int, sort: JsObject):Future[List[CrewStub]]
@@ -61,6 +73,7 @@ class MongoCrewDao extends CrewDao {
       Json.obj("name" -> crew.name)
     )), crew).map(_ => crew)
 
+  def delete(crew: Crew):Future[Boolean] = ???
   def list = this.getCount.flatMap(c => ws.list(Json.obj(), c, Json.obj()))
 
   def listOfStubs = this.getCount.flatMap(c => ws.listOfStubs(Json.obj(), c, Json.obj()))
@@ -73,5 +86,120 @@ class MongoCrewDao extends CrewDao {
       crews.find(queryExtension).sort(sort).cursor[CrewStub]().collect[List](limit)
   }
 
+  def list_with_statement(statement : SQLActionBuilder): Future[List[Crew]] = ???
   val ws = new MongoCrewWS
+}
+
+class MariadbCrewDao extends CrewDao {
+
+
+  val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
+  val crews = TableQuery[CrewTableDef]
+  val cities = TableQuery[CityTableDef]
+
+  implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString))
+  implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
+
+  override def find(id: UUID): Future[Option[Crew]] = {
+    val action = for {
+      (crew, city) <- (crews.filter(_.publicId === id)
+        join cities on (_.id === _.crewId)
+        )} yield (crew, city)
+    
+    dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
+  }
+
+
+  override def find(crewName: String): Future[Option[Crew]] = {
+    val action = for {
+      (crew, city) <- (crews.filter(_.name === crewName)
+        join cities on (_.id === _.crewId)
+        )} yield (crew, city)
+
+    dbConfig.db.run(action.result).map(r =>{
+      CrewConverter.buildCrewObjectFromResult(r)
+    })
+  }
+
+  def find(id : Long) : Future[Option[Crew]] = {
+    val action = for {
+      (crew, city) <- (crews.filter(_.id === id)
+        join cities on (_.id === _.crewId)
+        )} yield (crew, city)
+
+    dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
+  }
+
+  def findDBCrewModel(crewId : UUID) : Future[CrewDB] = {
+    dbConfig.db.run(crews.filter(_.publicId === crewId).result).map(r => r.head)
+  }
+
+  override def save(crew: Crew): Future[Crew] = {
+    dbConfig.db.run((crews returning crews.map(_.id)) += CrewDB(crew))
+    .flatMap(id =>{
+        crew.cities.foreach(city => {
+          dbConfig.db.run((cities returning cities.map(_.id)) += CityDB(0, city.name, city.country, id))
+        })
+      find(crew.id)
+    }).map(c => c.get)
+  }
+
+  override def update(crew: Crew): Future[Crew] = {
+    var crew_id = 0L
+
+    dbConfig.db.run((crews.filter(r => r.publicId === crew.id || r.name === crew.name)).result)
+        .flatMap(c => {
+          crew_id = c.head.id
+          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name))))
+        })
+        //.flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
+        .flatMap(_ => find(crew.id))
+        .map(c => c.get)
+  }
+
+  override def delete(crew: Crew): Future[Boolean] = {
+    dbConfig.db.run(crews.filter(c => c.publicId === crew.id).delete).flatMap {
+      case 0 => Future.successful(false)
+      case _ => Future.successful(true)
+    }
+  }
+
+  override def listOfStubs: Future[List[CrewStub]] = {
+    list.map(crewList => {
+      CrewConverter.buildCrewStubListFromCrewList(crewList)
+    })
+  }
+
+  override def list: Future[List[Crew]] = {
+    val action = for {
+      (crew, city) <- (crews
+        join cities on (_.id === _.crewId)
+        )} yield (crew, city)
+
+    dbConfig.db.run(action.result).map(CrewConverter.buildCrewListFromResult(_))
+  }
+
+  def list_with_statement(statement : SQLActionBuilder) : Future[List[Crew]] = {
+    var sql_action = statement.as[(CrewDB, CityDB)]
+    dbConfig.db.run(sql_action).map(CrewConverter.buildCrewListFromResult(_))
+  }
+
+  override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
+    findDBCrewModel(id).map(c => {
+      Option(ObjectIdWrapper(ObjectId(c.id.toString)))
+    })
+  }
+
+  override def getObjectId(name: String) : Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))
+
+  override def getCount : Future[Int] = dbConfig.db.run(crews.length.result)
+
+  class MariadbCrewWS extends CrewWS {
+    override def listOfStubs(queryExtension: JsObject, limit: Int, sort: JsObject): Future[List[CrewStub]] = ???
+
+    override def list(queryExtension: JsObject, limit: Int, sort: JsObject): Future[List[Crew]] = MariadbCrewDao.this.list
+  }
+
+  val ws = new MariadbCrewWS
+
 }
