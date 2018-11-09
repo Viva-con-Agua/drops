@@ -18,8 +18,7 @@ import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
 import slick.driver.MySQLDriver.api._
 import play.api.db.slick.DatabaseConfigProvider
-import slick.jdbc.{GetResult, PositionedParameters, SQLActionBuilder, SetParameter}
-import models.converter.OauthClientConverter
+
 
 /**
   * Created by johann on 24.11.16.
@@ -30,10 +29,6 @@ trait OauthClientDao {
   def find(id: String, secret: Option[String], grantType: String) : Future[Option[OauthClient]]
   def save(client: OauthClient) : Future[OauthClient]
   def validate(id: String, secret: Option[String], grantType: String) : Future[Boolean]
-  def update(client: OauthClient) : Future[OauthClient]
-  def delete(client: OauthClient) : Future[Boolean]
-  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] 
-
 }
 
 class MongoOauthClientDao extends OauthClientDao {
@@ -68,18 +63,11 @@ class MongoOauthClientDao extends OauthClientDao {
       case Some(client) => true
       case _ => false
     })
-  
-  // It's necessary to define functions for the OauthClientDao trait in MongoOauthClientDao
-  def update(client: OauthClient): Future[OauthClient] = ???
-  def delete(client: OauthClient) : Future[Boolean] = ???
-  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] = ???
 }
 
 class MariadbOauthClientDao extends OauthClientDao {
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   val oauthClients = TableQuery[OauthClientTableDef]
-
-  implicit val getOauthClient = GetResult(r => OauthClientDB(r.nextString, r.nextString, r.nextStringOption, r.nextString))
 
   override def find(id: String) : Future[Option[OauthClient]] = {
     dbConfig.db.run(oauthClients.filter(_.id === id).result).map(oauthClient => {
@@ -113,21 +101,5 @@ class MariadbOauthClientDao extends OauthClientDao {
       if(r.isDefined) true
       else false
     })
-  }
-  
-  def update(client: OauthClient) : Future[OauthClient] = {
-    dbConfig.db.run(oauthClients.update(OauthClientDB(client))).flatMap(_ => find(client.id)).map(_.get) 
-  }
-
-  def delete(client: OauthClient) : Future[Boolean] = {
-    dbConfig.db.run(oauthClients.filter(o => o.id === client.id).delete).flatMap {
-      case 0 => Future.successful(false)
-      case _ => Future.successful(true)
-    }
-  }
-
-  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] = {
-    var sql_action = statement.as[(OauthClientDB)]
-    dbConfig.db.run(sql_action).map(OauthClientConverter.buildListFromResult(_))
   }
 }
