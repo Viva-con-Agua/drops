@@ -7,6 +7,7 @@ import play.api.i18n._
 import play.api.mvc.Request
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Check for authorization
@@ -36,7 +37,6 @@ case class IsVolunteerManager(crewName: Option[String] = None) extends Authoriza
 }
 
 object IsVolunteerManager {
-  def apply(crew: Option[Crew]): IsVolunteerManager = IsVolunteerManager(crew.map(_.name))
   def apply(crew: Crew): IsVolunteerManager = IsVolunteerManager(Some(crew.name))
   def apply(crewName: String): IsVolunteerManager = IsVolunteerManager(Some(crewName))
 }
