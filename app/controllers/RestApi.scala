@@ -89,7 +89,7 @@ class RestApi @Inject() (
       case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
       case Right(converter) => try {
         userDao.list_with_statement(converter.toStatement).map((users) =>
-          Ok(Json.toJson(users))
+          Ok(Json.toJson(users.map(PublicUser( _ ))))
         )
       } catch {
         case e: java.sql.SQLException => {

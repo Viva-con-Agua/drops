@@ -36,11 +36,6 @@ CREATE VIEW Users AS
          s.birthday AS Supporter_birthday,
          s.sex AS Supporter_sex,
          s.profile_id AS Supporter_profileId,
-         sc.role AS Supporter_Crew_role,
-         sc.pillar AS Supporter_Crew_pillar,
-         uuid_of(c.publicId) AS Crew_publicId,
-         c.name AS Crew_name,
-         c.country AS Crew_country,
          l.id AS LoginInfo_id,
          l.provider_id AS LoginInfo_providerId,
          l.provider_key AS LoginInfo_providerKey,
@@ -52,7 +47,16 @@ CREATE VIEW Users AS
          o.id AS OAuth1Token_id,
          o.token AS OAuth1Token_token,
          o.secret AS OAuth1Token_secret,
-         o.profile_id AS OAuth1Token_profileId
+         o.profile_id AS OAuth1Token_profileId,
+         sc.supporter_id AS Supporter_Crew_supporterId,
+         sc.crew_id AS Supporter_Crew_crewId,
+         sc.role AS Supporter_Crew_role,
+         sc.pillar AS Supporter_Crew_pillar,
+         sc.created AS Supporter_Crew_created,
+         sc.updated AS Supporter_Crew_updated,
+         uuid_of(c.publicId) AS Supporter_Crew_publicId,
+         c.name AS Supporter_Crew_name,
+         c.country AS Supporter_Crew_country
   FROM User AS u
     INNER JOIN Profile AS p ON p.user_id = u.id
     INNER JOIN Supporter AS s ON p.id = s.profile_id
