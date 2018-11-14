@@ -26,6 +26,7 @@ case class Supporter(
   birthday: Option[Long],
   sex: Option[String],
   crew: Option[Crew],
+  roles: Set[Role],
   pillars: Set[Pillar]
 ) {
   def birthString(implicit messages: Messages): Option[String] = this.birthday match {
@@ -41,29 +42,37 @@ case class Supporter(
   def name : Option[String] = this.firstName.flatMap(fn => lastName.map(fn + " " + _))
 
   def toSupporterStub() : SupporterStub =
-    SupporterStub(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, (if(crew.isDefined) Option(crew.get.toCrewStub()) else None), Set())
+    SupporterStub(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, (if(crew.isDefined) Option(crew.get.toCrewStub()) else None), roles, pillars)
 }
 
 object Supporter {
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
-    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, None, Set(), Set())
   }
 
   def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
-    Supporter(firstName, lastName, None, mobilePhone, placeOfResidence, birthday, sex, None, Set())
+    Supporter(firstName, lastName, None, mobilePhone, placeOfResidence, birthday, sex, None, Set(), Set())
+  }
+
+  def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String], crew: Option[Crew], roles: Set[Role]): Supporter = {
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew, roles, Set())
+  }
+
+  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String], crew: Option[Crew], roles: Set[Role]): Supporter = {
+    Supporter(firstName, lastName, None, mobilePhone, placeOfResidence, birthday, sex, crew, roles, Set())
   }
 
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Long, sex: String): Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set())
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday), Some(sex), None, Set(), Set())
 
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
-    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
+    Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set(), Set())
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
-    Supporter(firstName, lastName, fullName, None, None, None, None, None, Set())
+    Supporter(firstName, lastName, fullName, None, None, None, None, None, Set(), Set())
 
-  def apply(tuple: (Option[String],  Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Pillar])) : Supporter =
-    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
+  def apply(tuple: (Option[String],  Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Role], Set[Pillar])) : Supporter =
+    Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
 
   implicit val supporterWrites : OWrites[Supporter] = (
     (JsPath \ "firstName").writeNullable[String] and
@@ -74,6 +83,7 @@ object Supporter {
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
       (JsPath \ "crew").writeNullable[Crew] and
+      (JsPath \ "roles").write[Set[Role]] and
       (JsPath \ "pillars").write[Set[Pillar]]
     )(unlift(Supporter.unapply))
   implicit val supporterReads : Reads[Supporter] = (
@@ -85,6 +95,7 @@ object Supporter {
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
       (JsPath \ "crew").readNullable[Crew] and
+      (JsPath \ "roles").read[Set[Role]] and
       (JsPath \ "pillars").read[Set[Pillar]]
     ).tupled.map(Supporter( _ ))
 }
