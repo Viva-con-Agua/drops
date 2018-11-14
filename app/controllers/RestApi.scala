@@ -271,52 +271,52 @@ class RestApi @Inject() (
   }}
 
   //ToDo: ApiAction instead of Action
-  def getTasks = Action.async{ implicit  request => {
+  def getTasks = ApiAction.async{ implicit  request => {
     taskDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
-  def getTasksForUser(userId : UUID) = Action.async{ implicit request => {
+  def getTasksForUser(userId : UUID) = ApiAction.async{ implicit request => {
     taskDao.forUser(userId).map(tasks => Ok(Json.toJson(tasks)))
   }}
 
-  def getAccessRightsForUser(userId : UUID) = Action.async{ implicit  request => {
+  def getAccessRightsForUser(userId : UUID) = ApiAction.async{ implicit  request => {
     userService.accessRights(userId).map(accessRights => Ok(Json.toJson(accessRights)))
   }}
 
-  def getTasksWithAccessRights(id: Long) = Action.async{ implicit request => {
+  def getTasksWithAccessRights(id: Long) = ApiAction.async{ implicit request => {
     taskService.getWithAccessRights(id).map(r => Ok(r))
   }}
 
-  def findTask(id: Long) = Action.async{ implicit  request => {
+  def findTask(id: Long) = ApiAction.async{ implicit  request => {
     taskDao.find(id).map(task => Ok(Json.toJson(task)))
   }}
 
-  def createTask() = Action.async(validateJson[Task]) { implicit request => {
+  def createTask() = ApiAction.async(validateJson[Task]) { implicit request => {
     taskDao.create(request.body).map{task => Ok(Json.toJson(task))}
   }}
 
-  def deleteTask(id: Long) = Action.async{ implicit request => {
+  def deleteTask(id: Long) = ApiAction.async{ implicit request => {
     taskDao.delete(id).map(count => if (count == 0) NotFound else Ok)
   }}
 
   //ToDo: Query parameter optional?
-  def getAccessRights() = Action.async{ implicit  request => {
+  def getAccessRights() = ApiAction.async{ implicit  request => {
     accessRightDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
-  def findAccessRight(id: Long) = Action.async{ implicit  request => {
+  def findAccessRight(id: Long) = ApiAction.async{ implicit  request => {
     accessRightDao.find(id).map(accessRights => Ok(Json.toJson(accessRights)))
   }}
 
-  def createAccessRight() = Action.async(validateJson[AccessRight]) {implicit request => {
+  def createAccessRight() = ApiAction.async(validateJson[AccessRight]) {implicit request => {
     accessRightDao.create(request.body).map{ac => Ok(Json.toJson(ac))}
   }}
 
-  def deleteAccessRight(id: Long) = Action.async{ implicit request => {
+  def deleteAccessRight(id: Long) = ApiAction.async{ implicit request => {
     accessRightDao.delete(id).map(count => if (count == 0) NotFound else Ok)
   }}
 
-  def createPool1User() = Action.async(validateJson[Pool1User]) { request => 
+  def createPool1User() = ApiAction.async(validateJson[Pool1User]) { request =>
     pool1UserDao.save(request.body).map{user => Ok(Json.toJson(user))}
   }
 }

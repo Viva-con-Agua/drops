@@ -85,7 +85,17 @@ trait Context[T] {
   def context: T
 }
 
-case class VolunteerManager(name: String, context: (Crew, Pillar)) extends Role with Context[(Crew, Pillar)]
+case class VolunteerManager(name: String, context: (Crew, Pillar)) extends Role with Context[(Crew, Pillar)] {
+  override def equals(o: scala.Any): Boolean = o match {
+    case vm : VolunteerManager =>
+      this.name == vm.name && this.context._1 == vm.context._1 && this.context._2 == vm.context._2
+    case _ => false
+  }
+
+  def forCrew(other: Crew): Boolean = this.context._1 == other
+  def forCrew(crewName: String): Boolean = this.context._1.name == other
+  def isResponsibleFor(pillar: Pillar): Boolean = this.context._2 == pillar
+}
 
 object VolunteerManager {
 

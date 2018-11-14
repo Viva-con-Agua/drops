@@ -51,7 +51,7 @@ class Files @Inject() (
 
   val files = reactiveMongoApi.db.collection[JSONCollection]("fs.files")
 
-  def uploadProfileImage = SecuredAction(Pool1Restriction(pool1Export)).async(fsParser) { implicit request =>
+  def uploadProfileImage = SecuredAction.async(fsParser) { implicit request =>
     val futureFile: Future[ReadFile[JSONSerializationPack.type, JsValue]] =
       request.body.files.head.ref
 
@@ -88,7 +88,7 @@ class Files @Inject() (
     )
   }
 
-  def get(id: String) = SecuredAction.async { implicit request =>
+  def get(id: String) = Action.async { implicit request =>
     // find the matching attachment, if any, and streams it to the client
     val file = gridFS.find[JsObject, JSONReadFile](Json.obj("_id" -> id))
 

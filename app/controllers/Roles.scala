@@ -27,11 +27,11 @@ class Roles @Inject() (
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
 
-  def index = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
+  def index = SecuredAction(WithRole(RoleAdmin)).async { request =>
     userService.list.map(users => Ok(views.html.roles.index(request.identity, request.authenticator.loginInfo, RolesForms.setUsers(users))(request, messagesApi.preferred(request)))) //RolesForms.setUsers(users)
   }
 
-  def update = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
+  def update = SecuredAction(WithRole(RoleAdmin)).async { request =>
     RolesForms.set.bindFromRequest()(request).fold(
       bogusForm => Future.successful(BadRequest(
         views.html.roles.index(request.identity, request.authenticator.loginInfo, bogusForm)(request, messagesApi.preferred(request))
