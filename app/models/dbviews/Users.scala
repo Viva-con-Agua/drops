@@ -18,7 +18,7 @@ case class Users (
       case "profile" => profile.get
       case "loginInfo" => loginInfo.get
       case "supporter" => supporterView.get
-      case "supporterCrew" => supporterView.get
+      case "supporterCrew" => supporterCrewView.get
     }
   }
 
@@ -28,7 +28,7 @@ case class Users (
       case "profile" => profile.isDefined
       case "loginInfo" => loginInfo.isDefined
       case "supporter" => supporterView.isDefined
-      case "supporterCrew" => supporterView.isDefined
+      case "supporterCrew" => supporterCrewView.isDefined
     }
   }
 }
@@ -340,8 +340,8 @@ case class SupporterCrewView(
       case "role" => role.get.get(index.toString).get
       case "pillar" => pillar.get.get(index.toString).get
       case "publicId" => publicId.get.get(index.toString).get
-      case "name" => role.get.get(index.toString).get
-      case "country" => role.get.get(index.toString).get
+      case "name" => name.get.get(index.toString).get
+      case "country" => country.get.get(index.toString).get
     }
   }
 
