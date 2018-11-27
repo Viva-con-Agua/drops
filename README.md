@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.29.31 (2018-11-06)
+## Version 0.30.31 (2018-11-27)
+* [[F] #284 - Extended Role-based Access Control](https://github.com/Viva-con-Agua/drops/issues/284)
 * [[W] #226 - Group of users](https://github.com/Viva-con-Agua/drops/issues/226)
 * [[W] #225 - Small inline user](https://github.com/Viva-con-Agua/drops/issues/225)
 * [[W] #224 - Autocomplete Widget](https://github.com/Viva-con-Agua/drops/issues/224)
