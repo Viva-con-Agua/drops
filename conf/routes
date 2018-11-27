@@ -40,8 +40,8 @@ POST    /webapp/profile/update                              controllers.webapp.P
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
 GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.get(name: String)
-GET     /webapp/crew/list                                   controllers.webapp.CrewController.list
-
+POST    /webapp/crew/list                                   controllers.webapp.CrewController.list
+POST    /webapp/crew/count                                  controllers.webapp.CrewController.count
 GET     /webapp/oauthclient/ws                              controllers.webapp.OauthClientSocketController.socket
 GET     /webapp/oauthclient/get/:name                             controllers.webapp.OauthClientController.get(name: String)
 GET     /webapp/oauthclient/list                            controllers.webapp.OauthClientController.list

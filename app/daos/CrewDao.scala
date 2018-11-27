@@ -32,6 +32,8 @@ trait CrewDao extends ObjectIdResolver with CountResolver {
   def listOfStubs : Future[List[CrewStub]]
   def list : Future[List[Crew]]
   def list_with_statement(statement : SQLActionBuilder):  Future[List[Crew]]
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long]
+
 
   trait CrewWS {
     def listOfStubs(queryExtension: JsObject, limit : Int, sort: JsObject):Future[List[CrewStub]]
@@ -87,6 +89,8 @@ class MongoCrewDao extends CrewDao {
   }
 
   def list_with_statement(statement : SQLActionBuilder): Future[List[Crew]] = ???
+  
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long] = ???
   val ws = new MongoCrewWS
 }
 
@@ -183,6 +187,11 @@ class MariadbCrewDao extends CrewDao {
     var sql_action = statement.as[(CrewDB, CityDB)]
     dbConfig.db.run(sql_action).map(CrewConverter.buildCrewListFromResult(_))
   }
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long] = {
+    val sql_action = statement.as[Long]
+    dbConfig.db.run(sql_action).map(_.head)
+  }
+
 
   override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
     findDBCrewModel(id).map(c => {

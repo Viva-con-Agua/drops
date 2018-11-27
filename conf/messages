@@ -222,6 +222,17 @@ organization.error.exist=Organization already exist
 organization.error.notFound=Organization not found
 organization.error.profileInv=Profile is part of the organization
 
+webapp.crew.found=Crew has been found!
+webapp.crews.count.found=Number of crews has been calculated.
+webapp.crew.notFound=The crew has not been found.
+webapp.forbidden=You have no permissions to see this data.
+webapp.notAuthenticated=Please, log in first.
+webapp.crews.error.queryParser=Given query can not be parsed.
+webapp.crews.error.noValues=The query contains no values that can be used for the search.
+webapp.crews.error.generic=An error occurred during processing the given query.
+webapp.crews.error.sql=The query throws an SQL error.
+
+
 widgets.user.found=User has been found!
 widgets.count.found=Number of users has been calculated.
 widgets.user.notFound=The user has not been found.
