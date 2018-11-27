@@ -146,7 +146,10 @@ class Application @Inject() (
       crewDao.find(c.getString("name").get).map(_ match {
         case Some(crew) => crew
         case _ => crewDao.save(
-          Crew(UUID.randomUUID(), c.getString("name").get, c.getString("country").get, c.getStringList("cities").get.toSet)
+          Crew(
+            UUID.randomUUID(),
+            c.getString("name").get,
+            c.getStringList("cities").get.toSet.map((name: String) => City(name, c.getString("country").get)))
         )
       })
     ))
