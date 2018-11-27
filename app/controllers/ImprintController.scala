@@ -31,30 +31,30 @@ class ImprintController @Inject()(
   def imprint = Action.async { implicit request =>
     
     val vcaSPHtml:Future[Html] = organizationService.withBankAccounts("Viva con Agua de Sankt Pauli e.V.").flatMap {
-      case Some(orga) => userService.profileListByRole(orga.publicId, "executive").flatMap {
-        case Some(executive) => userService.profileListByRole(orga.publicId, "medien").flatMap {
+      case Some(orga) => userService.profileByRole(orga.publicId, "executive").flatMap {
+        case Some(executive) => userService.profileByRole(orga.publicId, "medien").flatMap {
           case Some(visdp) => userService.profileListByRole(orga.publicId, "representative").flatMap {
-            case Some(profiles) => orga.bankaccount match {
-              case Some(b) => Future.successful(views.html.imprints.imprintEV(orga, executive.head, profiles, visdp.head, b.head))
-              case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
+            case profiles : List[Profile] if profiles.nonEmpty => orga.bankaccount match {
+              case Some(b) => Future.successful(views.html.imprints.imprintEV(orga, executive, profiles, visdp, b.head))
+              case _ => Future.successful(views.html.imprints.error("Viva con Agua de Sankt Pauli e.V."))
             }
-            case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
+            case _ => Future.successful(views.html.imprints.error("Viva con Agua de Sankt Pauli e.V."))
           }
-          case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
+          case _ => Future.successful(views.html.imprints.error("Viva con Agua de Sankt Pauli e.V."))
         }
-        case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
+        case _ => Future.successful(views.html.imprints.error("Viva con Agua de Sankt Pauli e.V."))
       }
-      case _ => Future.successful(views.html.imprints.error("Vica con Agua de Sankt Pauli e.V."))
+      case _ => Future.successful(views.html.imprints.error("Viva con Agua de Sankt Pauli e.V."))
     }
 
     val vcaWaterHtml:Future[Html] = organizationService.find("Viva con Agua Wasser GmbH").flatMap {
       case Some(orga) => {
         userService.profileListByRole(orga.publicId, "executive").flatMap {
-          case Some(p) => Future.successful(views.html.imprints.imprintGMBH(orga, p))
-          case _ => Future.successful(views.html.imprints.error("Vica con Agua Wasser GmbH"))
+          case p: List[Profile] if p.nonEmpty => Future.successful(views.html.imprints.imprintGMBH(orga, p))
+          case _ => Future.successful(views.html.imprints.error("Viva con Agua Wasser GmbH"))
         } 
       }
-      case _ => Future.successful(views.html.imprints.error("Vica con Agua Wasser GmbH"))
+      case _ => Future.successful(views.html.imprints.error("Viva con Agua Wasser GmbH"))
     }
     val vcaDataHtml:Future[Html] = organizationService.find("Herting Oberbeck Datenschutz GmbH").flatMap {
       case Some(orga) => Future.successful(views.html.imprints.imprintObDb(orga)) 

@@ -127,6 +127,7 @@ class Profile @Inject() (
                   request.body.birthday,
                   request.body.sex,
                   profile.supporter.crew,
+                  profile.supporter.roles,
                   profile.supporter.pillars
                 )
                 val newProfile = profile.copy(supporter = supporter)

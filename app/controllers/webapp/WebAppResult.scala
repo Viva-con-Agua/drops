@@ -1,5 +1,6 @@
 package controllers.webapp
 
+import models.PublicUser
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{RequestHeader, Result}
@@ -66,6 +67,9 @@ object WebAppResult {
     WebAppResult(request, play.api.mvc.Results.Ok, msg, msgValues, internalStatusCode, additional)
 
   object Ok {
+    def apply(request: RequestHeader, msg: String, msgValues: List[String], internalStatusCode: String, user: PublicUser) : Ok =
+      Ok(request, msg, msgValues, internalStatusCode, Json.toJson(user))
+
     def apply(request: RequestHeader, msg: String, msgValues: List[String], internalStatusCode: String, additional : Map[String, String] = Map()) : Ok =
       Ok(request, msg, msgValues, internalStatusCode, Json.toJson(additional))
   }

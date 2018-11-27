@@ -1,6 +1,6 @@
 package models.database
 
-import models.Supporter
+import models.{Crew, Role, Supporter}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -25,18 +25,18 @@ case class SupporterDB(
                 placeOfResidence: Option[String],
                 birthday: Option[Long],
                 sex: Option[String],
-                profileId: Long,
-                crewId: Option[Long]
+                profileId: Long
                 ) {
-  def toSupporter: Supporter = Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex)
+  def toSupporter(crew: Option[(Crew, Option[Role])] = None): Supporter =
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew.map(_._1), crew.flatMap(_._2.map(Set( _ ))).getOrElse(Set()))
 }
 
-object SupporterDB extends ((Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long, Option[Long]) => SupporterDB ){
-  def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long, Option[Long])) : SupporterDB =
-    SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
+object SupporterDB extends ((Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long) => SupporterDB ){
+  def apply(tuple: (Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long)) : SupporterDB =
+    SupporterDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
 
   def apply(id: Long, supporter: Supporter, profileId: Long) : SupporterDB =
-    SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId, None)
+    SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId)
 
   implicit val supporterWrites : OWrites[SupporterDB] = (
     (JsPath \ "id").write[Long] and
@@ -47,8 +47,7 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
       (JsPath \ "placeOfResidence").writeNullable[String] and
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
-      (JsPath \ "profileId").write[Long] and
-      (JsPath \ "crewId").writeNullable[Long]
+      (JsPath \ "profileId").write[Long]
   )(unlift(SupporterDB.unapply))
 
   implicit val supporterReads : Reads[SupporterDB] = (
@@ -60,9 +59,8 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
       (JsPath \ "placeOfResidence").readNullable[String] and
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
-      (JsPath \ "profileId").read[Long] and
-      (JsPath \ "crewId").readNullable[Long]
+      (JsPath \ "profileId").read[Long]
     ).tupled.map((supporter) => if(supporter._1.isEmpty)
-    SupporterDB(0, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9, supporter._10)
-  else SupporterDB(supporter._1.get, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9, supporter._10))
+    SupporterDB(0, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9)
+  else SupporterDB(supporter._1.get, supporter._2, supporter._3, supporter._4, supporter._5, supporter._6, supporter._7, supporter._8, supporter._9))
 }

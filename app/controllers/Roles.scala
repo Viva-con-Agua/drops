@@ -27,11 +27,11 @@ class Roles @Inject() (
 
   val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
 
-  def index = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
+  def index = SecuredAction(WithRole(RoleAdmin)).async { request =>
     userService.list.map(users => Ok(views.html.roles.index(request.identity, request.authenticator.loginInfo, RolesForms.setUsers(users))(request, messagesApi.preferred(request)))) //RolesForms.setUsers(users)
   }
 
-  def update = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
+  def update = SecuredAction(WithRole(RoleAdmin)).async { request =>
     RolesForms.set.bindFromRequest()(request).fold(
       bogusForm => Future.successful(BadRequest(
         views.html.roles.index(request.identity, request.authenticator.loginInfo, bogusForm)(request, messagesApi.preferred(request))
@@ -49,11 +49,10 @@ class Roles @Inject() (
 }
 
 object RolesForms {
-  case class RolesData(admin: Boolean, employee: Boolean, volunteerManager: Boolean, supporter: Boolean) {
+  case class RolesData(admin: Boolean, employee: Boolean, supporter: Boolean) {
     def get : Set[Role] = Map(
       "admin" -> admin,
       "employee" -> employee,
-      "volunteerManager" -> volunteerManager,
       "supporter" -> supporter
     ).foldLeft[Set[Role]](Set())(
       (res, pair) => pair._2 match {
@@ -71,7 +70,6 @@ object RolesForms {
       "roles" -> mapping(
         "admin" -> boolean,
         "employee" -> boolean,
-        "volunteerManager" -> boolean,
         "supporter" -> boolean
       )(RolesData.apply)(RolesData.unapply)
     )
@@ -83,7 +81,6 @@ object RolesForms {
     UserRoles(user.id, RolesData(
       user.roles.contains(RoleAdmin),
       user.roles.contains(RoleEmployee),
-      user.roles.contains(RoleVolunteerManager),
       user.roles.contains(RoleSupporter)
     ))
   )))

@@ -1,8 +1,8 @@
 package controllers
 
 import java.util.UUID
-import javax.inject.Inject
 
+import javax.inject.Inject
 import com.mohiva.play.silhouette.api.util.PasswordHasher
 
 import scala.concurrent.Future
@@ -16,11 +16,11 @@ import models._
 import models.dispenser._
 import play.api.data.Form
 import play.api.data.Forms._
-import services.{UserService, DispenserService}
+import services.{DispenserService, UserService}
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
-import utils.authorization.{Pool1Restriction, WithAlternativeRoles, WithRole}
+import utils.authorization.{IsVolunteerManager, Pool1Restriction, WithAlternativeRoles, WithRole}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -87,7 +87,11 @@ class Application @Inject() (
     )
   }
 
-  def updateCrew = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
+  def updateCrew = SecuredAction(
+    WithRole(RoleAdmin) ||
+    WithRole(RoleEmployee) ||
+    IsVolunteerManager()
+  ).async { implicit request =>
     CrewForms.geoForm.bindFromRequest.fold(
       bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define)))),
       crewData => {
@@ -110,7 +114,11 @@ class Application @Inject() (
     )
   }
 
-  def updatePillar = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
+  def updatePillar = SecuredAction(
+    WithRole(RoleAdmin) ||
+    WithRole(RoleEmployee) ||
+    IsVolunteerManager()
+  ).async { implicit request =>
     PillarForms.define.bindFromRequest.fold(
       bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm)))),
       pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
@@ -128,12 +136,12 @@ class Application @Inject() (
     )
   }
 
-  def task = SecuredAction(Pool1Restriction(pool1Export)) { implicit request =>
+  def task = SecuredAction { implicit request =>
     val resultingTasks: Future[Seq[Task]] = taskDao.all()
       Ok(dispenserService.getTemplate(views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks)))
   }
-/*
-  def initCrews = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
+
+  def initCrews = SecuredAction(WithRole(RoleAdmin)).async { request =>
     configuration.getConfigList("crews").map(_.toList.map(c =>
       crewDao.find(c.getString("name").get).map(_ match {
         case Some(crew) => crew
@@ -144,8 +152,8 @@ class Application @Inject() (
     ))
     Future.successful(Redirect("/"))
   }
-*/
-  def fixCrewsID = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request =>
+
+  def fixCrewsID = SecuredAction(WithRole(RoleAdmin)).async { request =>
     val crews = crewDao.listOfStubs.flatMap(l => Future.sequence(l.map(oldCrew => crewDao.update(oldCrew.toCrew))))
     val users = crews.flatMap(l => userService.listOfStubs.flatMap(ul => Future.sequence(ul.map(user => {
       val profiles = user.profiles.map(profile => {
@@ -161,7 +169,7 @@ class Application @Inject() (
     res.map(pair => Ok(Json.arr(Json.toJson(pair._1), Json.toJson(pair._2))))
   }
 
-  def initUsers(number: Int, specialRoleUsers : Int = 1) = SecuredAction(WithRole(RoleAdmin) && Pool1Restriction(pool1Export)).async { request => {
+  def initUsers(number: Int, specialRoleUsers : Int = 1) = SecuredAction(WithRole(RoleAdmin)).async { request => {
     val wsRequest = ws.url("https://randomuser.me/api/")
       .withHeaders("Accept" -> "application/json")
       .withRequestTimeout(10000)
@@ -193,7 +201,7 @@ class Application @Inject() (
     )
   }}
 
-  def registration = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)) { implicit request =>
+  def registration = SecuredAction(WithRole(RoleAdmin)) { implicit request =>
     val template: Template = dispenserService.buildTemplate(
         NavigationData("GlobalNav", "", None),
         "Drops", views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register).toString
@@ -201,7 +209,7 @@ class Application @Inject() (
       Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
   }
 
-  def registerOAuth2Client = SecuredAction((WithRole(RoleAdmin) || WithRole(RoleEmployee)) && Pool1Restriction(pool1Export)).async { implicit request =>
+  def registerOAuth2Client = SecuredAction(WithRole(RoleAdmin)).async { implicit request =>
     OAuth2ClientForms.register.bindFromRequest.fold(
       bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm)))),
       registerData => {
