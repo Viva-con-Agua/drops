@@ -15,7 +15,6 @@ CREATE VIEW Crews AS
 
 # --- !Downs
 
-DROP VIEW Users;
 DROP VIEW Crews;
 CREATE VIEW Crews AS
   SELECT DISTINCT Crew.id as Crew_id,
