@@ -17,36 +17,121 @@ import com.mohiva.play.silhouette.impl.exceptions.{IdentityNotFoundException, In
 import com.mohiva.play.silhouette.impl.providers._
 import play.api._
 import akka.actor._
+import services._
 import models._
+import daos.CrewDao
 import play.api.libs.concurrent.Execution.Implicits._
 import services.{UserService}
-
-object CrewWebSocketActor {
-  def props(out: ActorRef) = Props(new CrewWebSocketActor(out))
-}
-
-class CrewWebSocketActor(out: ActorRef) extends Actor {
-  def receive = {
-    case msg: String =>
-      out ! (s"Hi" + msg)
-  }
-}
-
+import play.api.mvc.WebSocket.FrameFormatter
+import play.api.libs.iteratee._
+import play.api.libs.json._
+import java.util.UUID
+import utils.Query.QueryParserError
+import controllers.rest._
 
 class CrewController @Inject() (
   userService: UserService,
+  crewService: CrewService,
+  crewDao: CrewDao,
   val messagesApi: MessagesApi,
   val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
     implicit val mApi = messagesApi
     
-    def socket = WebSocket.tryAcceptWithActor[String, String] { request =>
-      implicit val req = Request(request, AnyContentAsEmpty)
-      SecuredRequestHandler { securedRequest =>
-        Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
-      }.map {
-        case HandlerResult(r, Some(user)) => Right(CrewWebSocketActor.props _)
-        case HandlerResult(r, None) => Left(r)
+    def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+    
+    def get(id: UUID) = SecuredAction.async { implicit request =>
+      userService.retrieve(request.authenticator.loginInfo).flatMap {
+        case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+        case Some(user) => {
+          crewService.get(id).map {
+            case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
+            case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
+          }   
+        }
+      }
+    }
+    def get(name: String) = SecuredAction.async { implicit request => 
+      userService.retrieve(request.authenticator.loginInfo).flatMap {
+        case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+        case Some(user) => {
+          crewService.get(name).map {
+            case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
+            case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
+          }
+        }
+      }
+    }
+    //def list(event: WebSocketEvent): WebSocketEvent = ???
+    def list = SecuredAction.async(validateJson[QueryBodyCrews]) { implicit request =>
+      QueryBodyCrews.asCrewsQuery(request.body) match {
+      case Left(e : QueryParserError) => Future.successful(
+        WebAppResult.Bogus(
+          request, 
+          "error.webapp.crew.queryParser", 
+          Nil, 
+          "", 
+          Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
+        ).getResult)
+      case Left(e : QueryBodyCrews.NoValuesGiven) => Future.successful(
+         WebAppResult.Bogus(
+          request, 
+          "error.webapp.crew.queryParser", 
+          Nil, 
+          "", 
+          Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
+        ).getResult)
+      case Left(e) => Future.successful(
+        WebAppResult.Generic(
+          request, 
+          play.api.mvc.Results.InternalServerError,
+          "error.webapp.crew.noValues", 
+          Nil, 
+          "WebApp.list.NoValues",
+          Json.obj("error" -> e.getMessage)
+        ).getResult)
+      case Right(converter) => try {
+        crewService.list_with_statement(converter.toStatement).map((crews) =>
+          WebAppResult.Ok(request, "webapp.crew.found", Nil, "WebApp.GetCrews.Success", Json.toJson(crews)).getResult
+          )
+      } catch {
+        case e: java.sql.SQLException => {
+          Future.successful(
+            WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.webapp.crew.sql", Nil, "Webapp.GetCrews.SQLException", Json.obj("error" -> e.getMessage)).getResult
+            )
+          }
+        }
+      }
+
+    }
+    def count = SecuredAction.async(validateJson[QueryBodyCrews]) { implicit request =>
+      implicit val cd = crewDao
+      QueryBodyCrews.asCrewsCountQuery(request.body) match {
+        case Left(e : QueryParserError) => Future.successful(
+          WebAppResult.Bogus(request, "widgets.crews.error.queryParser", Nil, "Widgets.GetCountCrews.QueryParsingError", Json.obj("error" -> e.getMessage)).getResult
+        )
+        case Left(e : QueryBody.NoValuesGiven) => Future.successful(
+          WebAppResult.Bogus(request, "widgets.crews.error.noValues", Nil, "Widgets.GetCountCrews.NoValues", Json.obj("error" -> e.getMessage)).getResult
+        )
+        case Left(e) => Future.successful(
+          WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.crews.error.generic", Nil, "Widgets.GetCountUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+        )
+        case Right(converter) => try {
+          crewDao.count_with_statement(converter.toCountStatement).map((count) =>
+            WebAppResult.Ok(request, "widgets.crews.count.found", Nil, "Widgets.GetCountCrews.Success", Json.obj("count" -> count)).getResult
+          ) //.map(users => Ok(Json.toJson(users)))
+        } catch {
+          case e: java.sql.SQLException => {
+            Future.successful(
+              WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.crews.error.sql", Nil, "Widgets.GetUsers.SQLException", Json.obj("error" -> e.getMessage)).getResult
+            )
+          }
+          case e: Exception => {
+            Future.successful(
+              WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.crews.error.generic", Nil, "Widgets.GetCrews.Generic", Json.obj("error" -> e.getMessage)).getResult
+            )
+          }
+        }
       }
     }
   }

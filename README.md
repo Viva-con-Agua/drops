@@ -365,7 +365,11 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.28.28 (2018-09-12)
+## Version 0.29.31 (2018-11-06)
+* [[W] #226 - Group of users](https://github.com/Viva-con-Agua/drops/issues/226)
+* [[W] #225 - Small inline user](https://github.com/Viva-con-Agua/drops/issues/225)
+* [[W] #224 - Autocomplete Widget](https://github.com/Viva-con-Agua/drops/issues/224)
+* [[F] #264 - CRUD Crews WebApp Controller](https://github.com/Viva-con-Agua/drops/issues/264)
 * [[I] #245 - Frontend Controller SignUp](https://github.com/Viva-con-Agua/drops/issues/245)
 * [[I] #244 - FrontendController SignIn](https://github.com/Viva-con-Agua/drops/issues/244)
 * [[I] #241 - OAuth2 redirect to HTML during Ajax request](https://github.com/Viva-con-Agua/drops/issues/241)

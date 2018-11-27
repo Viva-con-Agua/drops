@@ -28,8 +28,12 @@ trait CrewDao extends ObjectIdResolver with CountResolver {
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def update(crew: Crew):Future[Crew]
+  def delete(crew: Crew):Future[Boolean]
   def listOfStubs : Future[List[CrewStub]]
   def list : Future[List[Crew]]
+  def list_with_statement(statement : SQLActionBuilder):  Future[List[Crew]]
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long]
+
 
   trait CrewWS {
     def listOfStubs(queryExtension: JsObject, limit : Int, sort: JsObject):Future[List[CrewStub]]
@@ -71,6 +75,7 @@ class MongoCrewDao extends CrewDao {
       Json.obj("name" -> crew.name)
     )), crew).map(_ => crew)
 
+  def delete(crew: Crew):Future[Boolean] = ???
   def list = this.getCount.flatMap(c => ws.list(Json.obj(), c, Json.obj()))
 
   def listOfStubs = this.getCount.flatMap(c => ws.listOfStubs(Json.obj(), c, Json.obj()))
@@ -83,6 +88,9 @@ class MongoCrewDao extends CrewDao {
       crews.find(queryExtension).sort(sort).cursor[CrewStub]().collect[List](limit)
   }
 
+  def list_with_statement(statement : SQLActionBuilder): Future[List[Crew]] = ???
+  
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long] = ???
   val ws = new MongoCrewWS
 }
 
@@ -93,8 +101,8 @@ class MariadbCrewDao extends CrewDao {
   val crews = TableQuery[CrewTableDef]
   val cities = TableQuery[CityTableDef]
 
-  implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextString))
-  implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextLong))
+  implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString))
+  implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
 
   override def find(id: UUID): Future[Option[Crew]] = {
     val action = for {
@@ -134,7 +142,7 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run((crews returning crews.map(_.id)) += CrewDB(crew))
     .flatMap(id =>{
         crew.cities.foreach(city => {
-          dbConfig.db.run((cities returning cities.map(_.id)) += CityDB(0, city, id))
+          dbConfig.db.run((cities returning cities.map(_.id)) += CityDB(0, city.name, city.country, id))
         })
       find(crew.id)
     }).map(c => c.get)
@@ -146,11 +154,18 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run((crews.filter(r => r.publicId === crew.id || r.name === crew.name)).result)
         .flatMap(c => {
           crew_id = c.head.id
-          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name, crew.country))))
+          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name))))
         })
-        .flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
+        //.flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
         .flatMap(_ => find(crew.id))
         .map(c => c.get)
+  }
+
+  override def delete(crew: Crew): Future[Boolean] = {
+    dbConfig.db.run(crews.filter(c => c.publicId === crew.id).delete).flatMap {
+      case 0 => Future.successful(false)
+      case _ => Future.successful(true)
+    }
   }
 
   override def listOfStubs: Future[List[CrewStub]] = {
@@ -172,6 +187,11 @@ class MariadbCrewDao extends CrewDao {
     var sql_action = statement.as[(CrewDB, CityDB)]
     dbConfig.db.run(sql_action).map(CrewConverter.buildCrewListFromResult(_))
   }
+  def count_with_statement(statement : SQLActionBuilder) : Future[Long] = {
+    val sql_action = statement.as[Long]
+    dbConfig.db.run(sql_action).map(_.head)
+  }
+
 
   override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
     findDBCrewModel(id).map(c => {

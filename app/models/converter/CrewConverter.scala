@@ -1,6 +1,6 @@
 package models.converter
 
-import models.{Crew, CrewStub}
+import models.{Crew, CrewStub, City}
 import models.database.{CityDB, CrewDB}
 
 object CrewConverter {
@@ -13,13 +13,13 @@ object CrewConverter {
   def buildCrewObjectFromResult(result : Seq[(CrewDB, CityDB)]) : Option[Crew] = {
     if(result.headOption.isDefined) {
       val crew = result.headOption.get._1
-      val cityList = result.seq.foldLeft(Set[String]()) { (cityList, dbEntry) => {
+      val cityList = result.seq.foldLeft(Set[City]()) { (cityList, dbEntry) => {
         if (crew.id == dbEntry._2.crewId)
-          cityList ++ List(dbEntry._2.name)
+          cityList ++ List(dbEntry._2.toCity)
         else cityList
       }}
 
-      Option(Crew(crew.publicId, crew.name, crew.country, cityList))
+      Option(Crew(crew.publicId, crew.name, cityList))
     }else{
       None
     }
@@ -33,9 +33,9 @@ object CrewConverter {
       if(crewList.length != 0 && crewList.last.id == dbEntry._1.publicId){
         //tail = use all elements except the head element
         //reverse.tail.reverse = erease last element from list
-        crewList.reverse.tail.reverse ++ List(crewList.last.copy(cities = crewList.last.cities ++ List(city.name) ))
+        crewList.reverse.tail.reverse ++ List(crewList.last.copy(cities = crewList.last.cities ++ List(city.toCity) ))
       }else{
-        crewList ++ List(crew.toCrew(Set(city.name)))
+        crewList ++ List(crew.toCrew(Set(city.toCity)))
       }
     })
     crewList

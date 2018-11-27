@@ -65,6 +65,10 @@ CREATE VIEW Users AS
     LEFT JOIN OAuth1Info AS o on o.profile_id = p.id
     LEFT JOIN Supporter_Crew AS sc ON s.id = sc.supporter_id
     LEFT JOIN Crew AS c ON sc.crew_id = c.id;
+    
+ALTER TABLE Crew DROP COLUMN country;
+ALTER TABLE City
+    ADD COLUMN country VARCHAR(255);
 
 # --- !Downs
 
@@ -76,3 +80,6 @@ ALTER TABLE Supporter
     ADD FOREIGN KEY (crew_id) REFERENCES Crew(id) ON UPDATE CASCADE;
 
 DROP VIEW Users;
+
+ALTER VIEW Crews DROP COLUMN City.country;
+ALTER TABLE City DROP COLUMN country;
