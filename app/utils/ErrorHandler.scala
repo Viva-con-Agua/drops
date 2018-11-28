@@ -34,11 +34,11 @@ class ErrorHandler @Inject() (
     Some(Future.successful(Redirect(routes.Auth.signIn()).flashing("error" -> Messages("error.accessDenied")(messages))))
 
   override def onNotFound(request: RequestHeader, message: String): Future[Result] = 
-    Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onNotFound", views.html.errors.notFound(request).toString))))
+    Future.successful(NotFound(views.html.dispenser(dispenserService.getErrorTemplate("onNotFound", views.html.errors.notFound(request).toString))))
 
   override def onServerError(request:RequestHeader, exception:Throwable):Future[Result] = 
-    Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onServerError", views.html.errors.serverError(request, exception).toString))))
+    Future.successful(InternalServerError(views.html.dispenser(dispenserService.getErrorTemplate("onServerError", views.html.errors.serverError(request, exception).toString))))
 
   override def onBadRequest(request: RequestHeader, message: String): Future[Result] =
-    Future.successful(Ok(views.html.dispenser(dispenserService.getErrorTemplate("onNotFound", views.html.errors.badRequest(request).toString))))
+    Future.successful(BadRequest(views.html.dispenser(dispenserService.getErrorTemplate("onNotFound", views.html.errors.badRequest(request).toString))))
 }
