@@ -324,9 +324,12 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao{
         val insertion = (for {
           p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userDB.id)
           s <- (supporters returning supporters.map(_.id)) += SupporterDB(0, supporter, p)
-          _ <- supporter.roles.tail.foldLeft(DBIO.seq(supporterCrewAssignment(crewDBiD, s, supporter.roles.headOption)))(
-            (seq, role) => DBIO.seq(seq, supporterCrewAssignment(crewDBiD, s, Some(role)))
-          )
+          _ <- supporter.roles match {
+            case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(supporterCrewAssignment(crewDBiD, s, list.headOption)))(
+              (seq, role) => DBIO.seq(seq, supporterCrewAssignment(crewDBiD, s, Some(role)))
+            )
+            case _ => DBIO.seq(supporterCrewAssignment(crewDBiD, s, None))
+          }
           _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, loginInfo, p)
           _ <- (profile.passwordInfo match {
             case Some(passwordInfo) => (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
