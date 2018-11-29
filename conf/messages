@@ -144,6 +144,8 @@ error.webapp.missing.base=Base URL of arise has not been configured!
 error.webapp.missing.notFound=The path for the ''Not Found'' page of arise has not been configured!
 error.webapp.missing.resetPassword=The path for the ''Reset Password'' page of arise has not been configured!
 error.webapp.missing.tokenidentifier=The token identifier used inside the query string of the reset password page is missing!
+error.webapp.missing.signUpToken=The path for the ''Sign Up'' page that takes a token has not been configured!
+error.webapp.missing.tokenSUidentifier=The token identifier used inside the query string of the sign up page is missing!
 
 success.profile.image.upload=Profile image was successfully uploaded!
 

@@ -144,8 +144,13 @@ class Auth @Inject() (
               _ <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
             } yield {
-              mailer.welcome(profile, link = controllers.webapp.routes.Auth.signUp(token.id.toString).absoluteURL())
-              WebAppResult.Ok(request, "signup.created", Nil, "AuthProvider.SignUp.Success", Json.toJson(profile)).getResult
+              getWebApp match {
+                case Left(message) => WebAppResult.NotFound(request, message._1, Nil, "AuthProvider.SignUp.MissingConfig", Map[String, String]()).getResult
+                case Right(webapp) => {
+                  mailer.welcome(profile, link = webapp.getAbsoluteSignUpTokenEndpoint(token.id.toString))
+                  WebAppResult.Ok(request, "signup.created", Nil, "AuthProvider.SignUp.Success", Json.toJson(profile)).getResult
+                }
+              }
             }
         }
       }
@@ -337,7 +342,7 @@ class Auth @Inject() (
   def resetPassword(tokenId:String) = Action.async { implicit request =>
     val id = UUID.fromString(tokenId)
     getWebApp match {
-      case Left(message) => Future.successful(NotFound(message))
+      case Left(message) => Future.successful(NotFound(message._2))
       case Right(webapp) => userTokenService.find(id).flatMap {
         case None =>
           Future.successful(Redirect(webapp.getNotFound))
@@ -384,22 +389,47 @@ class Auth @Inject() (
     )
   }
 
-  private case class WebApp(base: String, notFound: String, resetPassword: String, tokenIdentifier: String) {
+  private case class WebApp(host: String, base: String, notFound: String, resetPassword: String, tokenRPIdentifier: String, handleToken: String, tokenSUidentifier: String) {
     def getNotFound: String = base + notFound
-    def getResetPassword(token: String): String = base + resetPassword + "?" + tokenIdentifier + "=" + token
+    def getResetPassword(token: String): String = base + resetPassword + "?" + tokenRPIdentifier + "=" + token
+    def getSignUpTokenEndpoint(token: String): String = base + handleToken + "/" + token //+ "?" + tokenSUidentifier + "=" + token
+    def getAbsoluteSignUpTokenEndpoint(token: String): String = host + getSignUpTokenEndpoint(token)
   }
-  private def getWebApp : Either[String, WebApp] = {
+  private def getWebApp : Either[(String, String), WebApp] = {
+    def getValue(path: String, i18nMsg: String): Either[(String, String), String] = configuration.getString(path).map(
+      (value) => Right(value)
+    ).getOrElse(Left((i18nMsg, Messages(i18nMsg))))
+
+    def transform(args: Seq[Either[(String, String), String]]): Either[(String, String), Array[String]] =
+      args.foldLeft[Either[(String, String), Seq[String]]](Right(Seq()))(
+        (argList, arg) =>
+          argList match {
+            case Right(seq) => arg match {
+              case Right(param) => Right(seq :+ param)
+              case Left((i18n, message)) => Left((i18n, message))
+            }
+            case Left((i18n, message)) => Left((i18n, message))
+          }
+        ) match {
+          case Right(seq) => Right(seq.toArray[String])
+          case Left(pair) => Left(pair)
+        }
+
     configuration.getConfig("webapp").map(
-      (webapp) => webapp.getString("base").map(
-        (base) => webapp.getString("notFound.path").map(
-          (notFound) => webapp.getString("resetPassword.path").map(
-            (resetPassword) => webapp.getString("resetPassword.tokenIdentifier").map(
-              (tokenIdentifier) => Right(WebApp(base, notFound, resetPassword, tokenIdentifier))
-            ).getOrElse(Left(Messages("error.webapp.missing.tokenidentifier")))
-          ).getOrElse(Left(Messages("error.webapp.missing.resetPassword")))
-        ).getOrElse(Left(Messages("error.webapp.missing.notFound")))
-      ).getOrElse(Left(Messages("error.webapp.missing.base")))
-    ).getOrElse(Left(Messages("error.webapp.missing.config")))
+      (webapp) => {
+        val host = getValue("webapp.host", "error.webapp.missing.host")
+        val base = getValue("webapp.base", "error.webapp.missing.base")
+        val notFound = getValue("webapp.notFound.path", "error.webapp.missing.notFound")
+        val resetPassword = getValue("webapp.resetPassword.path", "error.webapp.missing.resetPassword")
+        val tokenIdentifier = getValue("webapp.resetPassword.tokenIdentifier", "error.webapp.missing.tokenidentifier")
+        val signUpToken = getValue("webapp.signUpToken.path", "error.webapp.missing.signUpToken")
+        val tokenSUidentifier = getValue("webapp.signUpToken.identifier", "error.webapp.missing.tokenSUidentifier")
+        transform(Seq( host, base, notFound, resetPassword, tokenIdentifier, signUpToken, tokenSUidentifier )) match {
+          case Right(args) => Right(WebApp(args(0), args(1), args(2), args(3), args(4), args(5), args(6)))
+          case Left((i18n, message)) => Left((i18n, message))
+        }
+      }
+    ).getOrElse(Left(("error.webapp.missing.config", Messages("error.webapp.missing.config"))))
   }
 //
 //  def socialAuthenticate(providerId:String) = UserAwareAction.async { implicit request =>
