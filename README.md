@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.30.35 (2018-11-29)
+## Version 0.30.36 (2018-11-29)
+* [[B] #291 - Error on calling users widget](https://github.com/Viva-con-Agua/drops/issues/291)
 * [[I] #290 - Non-JSON endpoint sign up mail link](https://github.com/Viva-con-Agua/drops/issues/290)
 * [[B] #289 - Asynchronous insert and find](https://github.com/Viva-con-Agua/drops/issues/289)
 * [[B] #288 - Error on supporter roles (SignUp)](https://github.com/Viva-con-Agua/drops/issues/288)
