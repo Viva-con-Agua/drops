@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.30.31 (2018-11-27)
+## Version 0.30.32 (2018-11-28)
+* [[B] #287 - Status codes on Error](https://github.com/Viva-con-Agua/drops/issues/287)
 * [[F] #284 - Extended Role-based Access Control](https://github.com/Viva-con-Agua/drops/issues/284)
 * [[W] #226 - Group of users](https://github.com/Viva-con-Agua/drops/issues/226)
 * [[W] #225 - Small inline user](https://github.com/Viva-con-Agua/drops/issues/225)
