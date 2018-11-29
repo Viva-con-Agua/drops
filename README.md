@@ -365,7 +365,10 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.30.32 (2018-11-28)
+## Version 0.30.35 (2018-11-29)
+* [[I] #290 - Non-JSON endpoint sign up mail link](https://github.com/Viva-con-Agua/drops/issues/290)
+* [[B] #289 - Asynchronous insert and find](https://github.com/Viva-con-Agua/drops/issues/289)
+* [[B] #288 - Error on supporter roles (SignUp)](https://github.com/Viva-con-Agua/drops/issues/288)
 * [[B] #287 - Status codes on Error](https://github.com/Viva-con-Agua/drops/issues/287)
 * [[F] #284 - Extended Role-based Access Control](https://github.com/Viva-con-Agua/drops/issues/284)
 * [[W] #226 - Group of users](https://github.com/Viva-con-Agua/drops/issues/226)
