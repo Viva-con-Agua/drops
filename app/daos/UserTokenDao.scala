@@ -51,8 +51,10 @@ class MariadbUserTokenDao extends UserTokenDao{
 
   override def save(token: UserToken):Future[UserToken] = {
     val tokenDB : UserTokenDB = UserTokenDB(token)
-    dbConfig.db.run((userTokens += tokenDB).andThen(DBIO.successful(tokenDB)))
-    find(token.id).map(_.get)
+    dbConfig.db.run((userTokens += tokenDB).andThen(DBIO.successful(tokenDB))).flatMap(
+      newDBEntry => find(newDBEntry.id).map(_.get)
+    )
+
   }
 
   override def remove(id: UUID):Future[Unit] = {
