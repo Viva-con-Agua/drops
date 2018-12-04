@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.30.36 (2018-11-29)
+## Version 0.30.37 (2018-12-04)
+* [[B] #292 - Error on reset password](https://github.com/Viva-con-Agua/drops/issues/292)
 * [[B] #291 - Error on calling users widget](https://github.com/Viva-con-Agua/drops/issues/291)
 * [[I] #290 - Non-JSON endpoint sign up mail link](https://github.com/Viva-con-Agua/drops/issues/290)
 * [[B] #289 - Asynchronous insert and find](https://github.com/Viva-con-Agua/drops/issues/289)
