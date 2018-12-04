@@ -31,6 +31,7 @@ class WebSocketActor (out: ActorRef) extends Actor {
           system.actorSelection("akka://application/system/websockets/*/handler") ! received
 
         case "SUCCESS" => out ! msg
+        case "ERROR" => out ! msg
         case _ => out ! notMatch(msg)
       }
   }

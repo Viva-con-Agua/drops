@@ -154,18 +154,38 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run((crews.filter(r => r.publicId === crew.id || r.name === crew.name)).result)
         .flatMap(c => {
           crew_id = c.head.id
-          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name))))
+          dbConfig.db.run((crews.filter(_.id === c.head.id).update(CrewDB(c.head.id,crew.id, crew.name)))).flatMap(id => {
+            crew.cities.foreach(city => {
+              dbConfig.db.run((cities.filter(ci => ci.crewId === crew_id && ci.name === city.name && ci.country === city.country).exists.result.flatMap { exists =>
+                if (!exists) {
+                  cities returning cities.map(_.id) += CityDB(0, city.name, city.country, id)
+                } else {
+                  DBIO.successful(None)
+                }
+              }))
+            })
+            find(id)
         })
         //.flatMap(_ => dbConfig.db.run((for{c <- cities.filter(_.name.inSet(crew.cities))}yield c.crewId).update(crew_id)))
         .flatMap(_ => find(crew.id))
         .map(c => c.get)
+        })
   }
 
   override def delete(crew: Crew): Future[Boolean] = {
-    dbConfig.db.run(crews.filter(c => c.publicId === crew.id).delete).flatMap {
-      case 0 => Future.successful(false)
-      case _ => Future.successful(true)
-    }
+    dbConfig.db.run(crews.filter(c => c.publicId === crew.id).result)
+      .flatMap(cr => {
+        dbConfig.db.run(cities.filter(city => city.crewId === cr.head.id).delete)
+        .flatMap {
+          case 0 => Future.successful(false)
+          case _ => dbConfig.db.run(crews.filter(cre => cre.publicId === crew.id).delete)
+          .flatMap {
+            case 0 => Future.successful(false)
+            case _ => Future.successful(true)
+          }
+        }
+      })
+  
   }
 
   override def listOfStubs: Future[List[CrewStub]] = {
