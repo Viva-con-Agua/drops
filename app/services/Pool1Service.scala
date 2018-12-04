@@ -18,7 +18,7 @@ import daos.{Pool1UserDao}
 class Pool1Service @Inject() (pool1UserDAO: Pool1UserDao){
 
   def pool1user(email: String) : Future[Option[Pool1User]] = pool1UserDAO.find(email)
-  def confirmed(email: String) : Future[Pool1User] = pool1UserDAO.confirm(email)
+  def confirmed(email: String) : Future[Option[Pool1User]] = pool1UserDAO.confirm(email)
 
 }
 

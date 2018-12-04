@@ -142,15 +142,15 @@ error.noToken=Das Token {0} kann nicht in der Datenbank gefunden werden.
 
 success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!
 
-mail.welcome.subject=Willkommen im Boot
+mail.welcome.subject=VcA Pool | Willkommen im Boot
 mail.welcome.hi=Moin, {0}!
 mail.welcome.instructions=Danke, dass du dabei bist. Rufe nur noch den folgenden Link auf, um deinen Account zu aktivieren.
 
 
-mail.reset.subject=Passwort neu setzen
+mail.reset.subject=VcA Pool | Passwort neu setzen
 mail.reset.hi=Moin, {0}!
 mail.reset.instructions=Du willst dein Passwort neu setzen? Klicke auf den folgenden Link!
-mail.reset.instructions=Wir haben mitbekommen, dass du dich mit deinem alten Pool Account angemeldet hast. Es ist wichtig das du dein Passwort neu setzt. Klick einfach auf den unteren Link.
+mail.reset.instructionsPool1=Wir haben mitbekommen, dass du dich mit deinem alten Pool Account angemeldet hast. Es ist wichtig das du dein Passwort neu setzt. Klick einfach auf den unteren Link.
 
 crew.legend=Crew
 crew.name=Crew Name

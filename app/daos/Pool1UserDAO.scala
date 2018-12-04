@@ -24,7 +24,7 @@ import slick.driver.MySQLDriver.api._
 trait Pool1UserDao {
   def find(email: String): Future[Option[Pool1User]]
   def save(user: Pool1User): Future[Pool1User]
-  def confirm(email: String): Future[Pool1User]
+  def confirm(email: String): Future[Option[Pool1User]]
 }
 
 class MongoPool1UserDao extends Pool1UserDao {
@@ -37,10 +37,10 @@ class MongoPool1UserDao extends Pool1UserDao {
   def save(user: Pool1User): Future[Pool1User] = 
     pool1users.insert(user).map(_ => user)
 
-  def confirm(email: String):Future[Pool1User] = for {
+  def confirm(email: String):Future[Option[Pool1User]] = for {
     _ <- pool1users.update(Json.obj("email" -> email), Json.obj("$set" -> Json.obj("confirmed" -> true)))
     user <- find(email)
-  } yield user.get
+  } yield user
 }
 
 class MariadbPool1UserDao extends Pool1UserDao{
@@ -56,8 +56,8 @@ class MariadbPool1UserDao extends Pool1UserDao{
   override def save(user: Pool1User): Future[Pool1User] =
     dbConfig.db.run((pool1Users returning pool1Users.map(_.id)) += Pool1UserDB(user)).flatMap((id) => find(id)).map(_.get)
 
-  override def confirm(email: String): Future[Pool1User] = {
+  override def confirm(email: String): Future[Option[Pool1User]] = {
     val updatePool1User = for {p1U <- pool1Users.filter(_.email === email)} yield p1U.confirmed
-    dbConfig.db.run(updatePool1User.update(true)).flatMap(_ => find(email)).map(_.get)
+    dbConfig.db.run(updatePool1User.update(true)).flatMap(_ => find(email))
   }
 }

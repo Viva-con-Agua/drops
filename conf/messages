@@ -149,11 +149,11 @@ error.webapp.missing.tokenSUidentifier=The token identifier used inside the quer
 
 success.profile.image.upload=Profile image was successfully uploaded!
 
-mail.welcome.subject=Welcome
+mail.welcome.subject=VcA Pool | Welcome
 mail.welcome.hi=Hello, {0}!
 mail.welcome.instructions=Thanks for signing up. Just go to the following url to activate you account.
 
-mail.reset.subject=Reset password
+mail.reset.subject=VcA Pool | Reset password
 mail.reset.hi=Hello, {0}!
 mail.reset.instructions=We have received a request to reset your password. Just go to the following url to proceed.
 mail.reset.instructionsPool1=We have received your first login with an old Pool Account. Just go to the following url to set a new Password.

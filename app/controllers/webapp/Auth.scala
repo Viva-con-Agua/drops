@@ -391,7 +391,7 @@ class Auth @Inject() (
 
   private case class WebApp(host: String, base: String, notFound: String, resetPassword: String, tokenRPIdentifier: String, handleToken: String, tokenSUidentifier: String) {
     def getNotFound: String = base + notFound
-    def getResetPassword(token: String): String = base + resetPassword + "?" + tokenRPIdentifier + "=" + token
+    def getResetPassword(token: String): String = base + resetPassword + "/" + token //"?" + tokenRPIdentifier + "=" + token
     def getSignUpTokenEndpoint(token: String): String = base + handleToken + "/" + token //+ "?" + tokenSUidentifier + "=" + token
     def getAbsoluteSignUpTokenEndpoint(token: String): String = host + getSignUpTokenEndpoint(token)
   }
