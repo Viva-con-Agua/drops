@@ -2,6 +2,7 @@ package controllers.webapp
 import play.api.mvc._
 import play.api.Play.current
 import javax.inject.Inject
+
 import scala.concurrent.Future
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import com.mohiva.play.silhouette.api.Authenticator.Implicits._
@@ -20,13 +21,15 @@ import services._
 import models._
 import daos.CrewDao
 import play.api.libs.concurrent.Execution.Implicits._
-import services.{UserService}
+import services.UserService
 import play.api.mvc.WebSocket.FrameFormatter
 import play.api.libs.iteratee._
 import play.api.libs.json._
 import java.util.UUID
+
 import utils.Query.QueryParserError
 import controllers.rest._
+import utils.authorization.WithRole
 
 class OauthClientController @Inject() (
     oauthClientService: OauthClientService,
@@ -39,7 +42,7 @@ class OauthClientController @Inject() (
 
     def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
 
-    def get(id: String) = SecuredAction.async { implicit request =>
+    def get(id: String) = SecuredAction(WithRole(RoleAdmin)).async { implicit request =>
       userService.retrieve(request.authenticator.loginInfo).flatMap {
         case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
         case Some(user) => {
@@ -51,45 +54,16 @@ class OauthClientController @Inject() (
       }
     }
 
-    def list = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
-      QueryBody.asCrewsQuery(request.body) match {
-      case Left(e : QueryParserError) => Future.successful(
-        WebAppResult.Bogus(
-          request, 
-          "error.webapp.crew.queryParser", 
-          Nil, 
-          "", 
-          Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
-        ).getResult)
-      case Left(e : QueryBody.NoValuesGiven) => Future.successful(
-         WebAppResult.Bogus(
-          request, 
-          "error.webapp.crew.queryParser", 
-          Nil, 
-          "", 
-          Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
-        ).getResult)
-      case Left(e) => Future.successful(
-        WebAppResult.Generic(
-          request, 
-          play.api.mvc.Results.InternalServerError,
-          "error.webapp.crew.noValues", 
-          Nil, 
-          "WebApp.list.NoValues",
-          Json.obj("error" -> e.getMessage)
-        ).getResult)
-      case Right(converter) => try {
-        oauthClientService.list_with_statement(converter.toStatement).map((crews) =>
-          WebAppResult.Ok(request, "webapp.crew.found", Nil, "WebApp.GetCrews.Success", Json.toJson(crews)).getResult
-          )
-      } catch {
-        case e: java.sql.SQLException => {
-          Future.successful(
-            WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.webapp.crew.sql", Nil, "Webapp.GetCrews.SQLException", Json.obj("error" -> e.getMessage)).getResult
-            )
-          }
-        }
-      }  
+    def list = SecuredAction(WithRole(RoleAdmin)).async { implicit request =>
+      oauthClientService.list.map((clients) =>
+        WebAppResult.Ok(request, "oauthClient.list", Nil, "OAuthClient.List.Success", Json.toJson(clients)).getResult
+      )
+    }
+
+    def add = SecuredAction(WithRole(RoleAdmin)).async(validateJson[OauthClient]) { implicit request =>
+      oauthClientService.save(request.body).map((client) =>
+        WebAppResult.Ok(request, "oauthClient.add", Nil, "OAuthClient.Add.Success", Json.toJson(client)).getResult
+      )
     }
   }
 

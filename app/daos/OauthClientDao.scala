@@ -32,7 +32,8 @@ trait OauthClientDao {
   def validate(id: String, secret: Option[String], grantType: String) : Future[Boolean]
   def update(client: OauthClient) : Future[OauthClient]
   def delete(client: OauthClient) : Future[Boolean]
-  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] 
+  def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]]
+  def list: Future[List[OauthClient]]
 
 }
 
@@ -73,6 +74,8 @@ class MongoOauthClientDao extends OauthClientDao {
   def update(client: OauthClient): Future[OauthClient] = ???
   def delete(client: OauthClient) : Future[Boolean] = ???
   def list_with_statement(statement : SQLActionBuilder) : Future[List[OauthClient]] = ???
+
+  def list: Future[List[OauthClient]] = ???
 }
 
 class MariadbOauthClientDao extends OauthClientDao {
@@ -130,4 +133,7 @@ class MariadbOauthClientDao extends OauthClientDao {
     var sql_action = statement.as[(OauthClientDB)]
     dbConfig.db.run(sql_action).map(OauthClientConverter.buildListFromResult(_))
   }
+
+  def list: Future[List[OauthClient]] =
+    dbConfig.db.run(oauthClients.result).map(_.map(_.toOauthClient).toList)
 }
