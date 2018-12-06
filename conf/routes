@@ -51,6 +51,10 @@ GET     /webapp/organization/ws                             controllers.webapp.O
 GET     /webapp/organization/get/:name                      controllers.webapp.OrganizationController.get(name: String)
 #GET     /webapp/organization/list                           controllers.webapp.OrganizationController.list
 
+POST    /webapp/avatar/upload                               controllers.webapp.Avatar.upload
+GET     /webapp/avatar/get/:id                              controllers.webapp.Avatar.get(id: String)
+GET     /webapp/avatar/csrf                                 controllers.webapp.Avatar.getCSRF
+
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
 POST    /rest/user/create                                  controllers.RestApi.createUser
