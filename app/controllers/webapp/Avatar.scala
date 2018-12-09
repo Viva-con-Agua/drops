@@ -1,18 +1,25 @@
 package controllers.webapp
 
-import java.io.File
+import java.awt.image.BufferedImage
+import java.io.{ByteArrayInputStream, File}
 
 import play.api.mvc._
 
 import scala.concurrent.Future
 import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import javax.imageio.ImageIO
 import javax.inject.Inject
-import models.User
+import models.{RESTImageRequest, UploadedImage, User}
+import play.api.Logger
 import play.api.i18n.MessagesApi
+import play.api.libs.Files.TemporaryFile
+import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import services.UserService
 import play.filters.csrf._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class Avatar @Inject() (
@@ -21,7 +28,13 @@ class Avatar @Inject() (
                          val env: Environment[User, CookieAuthenticator]
                        ) extends Silhouette[User, CookieAuthenticator] {
   implicit val mApi = messagesApi
+  override val logger = Logger(Action.getClass)
   var files : Map[String, File] = Map()
+  var thumbnailFiles : Map[String, List[UploadedImage]] = Map()
+
+  def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
+  private def thumbId(id: String, width: Int, height: Int) : String = id + "_" + width + "x" + height
 
   def getCSRF = CSRFAddToken { SecuredAction.async { request =>
     Future.successful(
@@ -48,6 +61,21 @@ class Avatar @Inject() (
     Future.successful(res)
   }
 
+  def thumbnails(id : String) = SecuredAction.async(validateJson[List[RESTImageRequest]]) { request =>
+    val response = request.body.map(_.toUploadedImage)
+    this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> response)
+//      .getOrElse {
+//      WebAppResult.Bogus(request, "avatar.notExist", Nil, "Avatar.Thumbnail.Failure", Json.obj()).getResult
+//    }
+    Future.successful(
+      WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
+        Json.toJson(response.map((thumb) => thumb.getRESTResponse(
+          controllers.webapp.routes.Avatar.getThumb(thumb.name, thumb.width, thumb.height).url
+        )))
+      ).getResult
+    )
+  }
+
   def get(id: String) = SecuredAction.async { request =>
     Future.successful(this.files.get(id) match {
       case Some(file) => Ok.sendFile(
@@ -56,6 +84,22 @@ class Avatar @Inject() (
       )
       case _ => WebAppResult.NotFound(request, "avatar.get.notFound", Nil, "Avatar.Get.NotFound", Map(
         "id" -> id
+      )).getResult
+    })
+  }
+
+  def getThumb(id: String, width: Int, height: Int) = SecuredAction.async { request =>
+    def finder(id: String, width: Int, height: Int, ui: UploadedImage) = ui ~ (id, width, height)
+    Future.successful(this.thumbnailFiles.get(id).flatMap(_.find((ui: UploadedImage) => finder(id, width, height, ui))) match {
+      case Some(thumb) => {
+        val temp = TemporaryFile(thumb.getName, thumb.format).file
+        ImageIO.write(thumb.bufferedImage, thumb.format, temp)
+        Ok.sendFile(temp).as(thumb.getContentType)
+      }
+      case _ => WebAppResult.NotFound(request, "avatar.getThumb.notFound", Nil, "Avatar.GetThumb.NotFound", Map(
+        "id" -> id,
+        "width" -> width.toString,
+        "height" -> height.toString
       )).getResult
     })
   }

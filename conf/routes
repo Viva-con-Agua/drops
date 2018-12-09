@@ -53,7 +53,9 @@ GET     /webapp/organization/get/:name                      controllers.webapp.O
 
 POST    /webapp/avatar/upload                               controllers.webapp.Avatar.upload
 GET     /webapp/avatar/get/:id                              controllers.webapp.Avatar.get(id: String)
+GET     /webapp/avatar/get/:id/:width/:height               controllers.webapp.Avatar.getThumb(id: String, width: Int, height: Int)
 GET     /webapp/avatar/csrf                                 controllers.webapp.Avatar.getCSRF
+POST    /webapp/avatar/upload/thumbnails/:id                controllers.webapp.Avatar.thumbnails(id: String)
 
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
