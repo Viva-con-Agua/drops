@@ -63,13 +63,13 @@ class Avatar @Inject() (
     Future.successful(response)
   }
 
-  def thumbnails(id : String) = SecuredAction.async(validateJson[List[RESTImageRequest]]) { request =>
-    val response = request.body.map(_.toUploadedImage)
-    this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> response)
+  def thumbnails(id : String) = SecuredAction.async(parse.multipartFormData) { request =>
+    val uploadedImages = request.body.files.map((img) => UploadedImage(img.ref.file, Some(id), img.contentType))
+    this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> uploadedImages.toList)
     Future.successful(
       WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
-        Json.toJson(response.map((thumb) => thumb.getRESTResponse(
-          controllers.webapp.routes.Avatar.getThumb(thumb.name, thumb.width, thumb.height).url
+        Json.toJson(uploadedImages.map((thumb) => thumb.getRESTResponse(
+          controllers.webapp.routes.Avatar.getThumb(id, thumb.width, thumb.height).url
         )))
       ).getResult
     )
