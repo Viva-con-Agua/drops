@@ -29,7 +29,7 @@ class Avatar @Inject() (
                        ) extends Silhouette[User, CookieAuthenticator] {
   implicit val mApi = messagesApi
   override val logger = Logger(Action.getClass)
-  var files : Map[String, File] = Map()
+  var files : Map[String, UploadedImage] = Map()
   var thumbnailFiles : Map[String, List[UploadedImage]] = Map()
 
   def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
@@ -46,27 +46,26 @@ class Avatar @Inject() (
   }}
 
   def upload = SecuredAction.async(parse.multipartFormData) { request =>
-    var res = request.body.file("avatar").map { picture =>
-      // only get the last part of the filename
-      // otherwise someone can send a path like ../../home/foo/bar.txt to write to other files on the system
-      import java.io.File
-      val filename = picture.filename
-      val contentType = picture.contentType
-      val file = picture.ref.file //.moveTo(new File(s"tmp/picture/$filename"))
-      this.files += (filename -> file)
-      WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success", Json.obj("fileName" -> filename)).getResult
-    }.getOrElse {
-      WebAppResult.Bogus(request, "avatar.notExist", Nil, "Avatar.Upload.Failure", Json.obj()).getResult
+    val image = request.body.file("image")
+    val response = image match {
+      case Some(img) => {
+        val newImages = List(UploadedImage(img.ref.file, Some(img.filename), img.contentType))
+        this.files = this.files ++ newImages.map(uploaded => (img.filename -> uploaded))
+        WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success",
+          Json.toJson(newImages.map((img) => img.getRESTResponse(
+            controllers.webapp.routes.Avatar.get(img.name).url
+          )))
+        ).getResult
+      }
+      case None => WebAppResult.Ok(request, "avatar.upload.failure", Nil, "Avatar.Upload.Failure", Json.obj()).getResult
     }
-    Future.successful(res)
+
+    Future.successful(response)
   }
 
   def thumbnails(id : String) = SecuredAction.async(validateJson[List[RESTImageRequest]]) { request =>
     val response = request.body.map(_.toUploadedImage)
     this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> response)
-//      .getOrElse {
-//      WebAppResult.Bogus(request, "avatar.notExist", Nil, "Avatar.Thumbnail.Failure", Json.obj()).getResult
-//    }
     Future.successful(
       WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
         Json.toJson(response.map((thumb) => thumb.getRESTResponse(
@@ -78,10 +77,11 @@ class Avatar @Inject() (
 
   def get(id: String) = SecuredAction.async { request =>
     Future.successful(this.files.get(id) match {
-      case Some(file) => Ok.sendFile(
-        content = file,
-        fileName = _ => id
-      )
+      case Some(img) => {
+        val temp = TemporaryFile(img.getName, img.format).file
+        ImageIO.write(img.bufferedImage, img.format, temp)
+        Ok.sendFile(temp).as(img.getContentType)
+      }
       case _ => WebAppResult.NotFound(request, "avatar.get.notFound", Nil, "Avatar.Get.NotFound", Map(
         "id" -> id
       )).getResult
@@ -103,10 +103,4 @@ class Avatar @Inject() (
       )).getResult
     })
   }
-
-//  def upload = SecuredAction.async(parse.temporaryFile) { request =>
-//    request.body.moveTo(Paths.get("/tmp/picture/uploaded"), replace = true)
-//    Ok("File uploaded")
-//  }
-
 }

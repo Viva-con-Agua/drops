@@ -1,10 +1,11 @@
 package models
 
 import java.awt.image.BufferedImage
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
+import java.util.Base64
+
 import sun.misc.BASE64Decoder
 import javax.imageio.ImageIO
-
 import play.api.libs.json.Json
 
 case class UploadedImage(name: String, contentType : String, base64: String, bufferedImage : BufferedImage, thumbnails : List[UploadedImage]) {
@@ -38,23 +39,25 @@ case class UploadedImage(name: String, contentType : String, base64: String, buf
 
 object UploadedImage {
   def apply(name: String, contentType : String, base64: String): UploadedImage = {
-
-    // tokenize the data
     val parts = base64.split(",")
     val decoder = new BASE64Decoder
     val imageByte = decoder.decodeBuffer(parts(1))
     val bis = new ByteArrayInputStream(imageByte)
     val image = ImageIO.read(bis)
 
-//    val data = Base64.decodeBase64(base64)
-//    val bis = new ByteArrayInputStream(data)
-
-    // only get the last part of the filename
-    // otherwise someone can send a path like ../../home/foo/bar.txt to write to other files on the system
-    //      import java.io.File
-    //      val file = picture.ref.file //.moveTo(new File(s"tmp/picture/$filename"))
-//    def img = ImageIO.read(bis)
     UploadedImage(name, contentType, base64, image, Nil)
+  }
+
+  def apply(file: File, name: Option[String], contentType: Option[String] = None): UploadedImage = {
+    val bufferedImage = ImageIO.read(file)
+    val n = name.getOrElse(file.getName)
+    val format = contentType.flatMap(_.split("/").lastOption).getOrElse("png")
+    val ct = contentType.getOrElse("image/" + format)
+    val os = new ByteArrayOutputStream
+    ImageIO.write(bufferedImage, format, os)
+    val base64 = Base64.getEncoder().encodeToString(os.toByteArray())
+
+    UploadedImage(n, ct, base64, bufferedImage, Nil)
   }
 }
 
@@ -63,6 +66,11 @@ case class RESTImageRequest(id: String, contentType: String, base64: String) {
 }
 object RESTImageRequest {
   implicit val restImageFormat = Json.format[RESTImageRequest]
+}
+
+case class RESTMetaRequest(id: String, contentType: String)
+object RESTMetaRequest {
+  implicit val restMetaFormat = Json.format[RESTMetaRequest]
 }
 
 case class RESTImageResponse(url: String, id: String, width: Int, height: Int)
