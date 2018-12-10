@@ -35,6 +35,8 @@ case class UploadedImage(name: String, contentType : String, base64: String, buf
 
   def ~(name: String, width: Int, height: Int) : Boolean =
     this.name == name && this.width == width && this.height == height
+
+  def addThumbs(thumbs: Seq[UploadedImage]) = this.copy(thumbnails = this.thumbnails ++ thumbs.toList)
 }
 
 object UploadedImage {

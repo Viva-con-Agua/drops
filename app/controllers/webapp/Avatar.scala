@@ -30,7 +30,6 @@ class Avatar @Inject() (
   implicit val mApi = messagesApi
   override val logger = Logger(Action.getClass)
   var files : Map[String, UploadedImage] = Map()
-  var thumbnailFiles : Map[String, List[UploadedImage]] = Map()
 
   def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
 
@@ -65,14 +64,19 @@ class Avatar @Inject() (
 
   def thumbnails(id : String) = SecuredAction.async(parse.multipartFormData) { request =>
     val uploadedImages = request.body.files.map((img) => UploadedImage(img.ref.file, Some(id), img.contentType))
-    this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> uploadedImages.toList)
-    Future.successful(
-      WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
-        Json.toJson(uploadedImages.map((thumb) => thumb.getRESTResponse(
-          controllers.webapp.routes.Avatar.getThumb(id, thumb.width, thumb.height).url
-        )))
-      ).getResult
-    )
+//    this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> uploadedImages.toList)
+    val response = this.files.get(id) match {
+      case Some(original) => {
+        this.files = (this.files - id) + (id -> original.addThumbs(uploadedImages))
+        WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
+          Json.toJson(uploadedImages.map((thumb) => thumb.getRESTResponse(
+            controllers.webapp.routes.Avatar.getThumb(id, thumb.width, thumb.height).url
+          )))
+        ).getResult
+      }
+      case _ => WebAppResult.Ok(request, "avatar.upload.failure", Nil, "Avatar.Thumbnail.Failure", Json.obj()).getResult
+    }
+    Future.successful(response)
   }
 
   def get(id: String) = SecuredAction.async { request =>
@@ -90,7 +94,9 @@ class Avatar @Inject() (
 
   def getThumb(id: String, width: Int, height: Int) = SecuredAction.async { request =>
     def finder(id: String, width: Int, height: Int, ui: UploadedImage) = ui ~ (id, width, height)
-    Future.successful(this.thumbnailFiles.get(id).flatMap(_.find((ui: UploadedImage) => finder(id, width, height, ui))) match {
+    Future.successful(this.files.get(id).flatMap(
+      _.thumbnails.find((ui: UploadedImage) => finder(id, width, height, ui))
+    ) match {
       case Some(thumb) => {
         val temp = TemporaryFile(thumb.getName, thumb.format).file
         ImageIO.write(thumb.bufferedImage, thumb.format, temp)
