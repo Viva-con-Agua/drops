@@ -113,4 +113,14 @@ class Avatar @Inject() (
       )).getResult
     })
   }
+
+  def remove(id: String) = SecuredAction.async { request =>
+    val uuid = UUID.fromString(id)
+    this.files = this.files - uuid
+    Future.successful(
+      WebAppResult.Ok(request, "avatar.remove.success", Nil, "Avatar.Remove.Success",
+        Json.obj("id" -> uuid.toString)
+      ).getResult
+    )
+  }
 }
