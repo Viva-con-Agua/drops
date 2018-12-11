@@ -44,6 +44,7 @@ class Module extends AbstractModule with ScalaModule {
     bind[AccessRightDao].to[MariadbAccessRightDao]
     bind[OauthClientDao].to[MariadbOauthClientDao]
     bind[OauthTokenDao].to[MariadbOauthTokenDao]
+    bind[AvatarDao].to[RAMAvatarDao]
     bind[PoolService].to[PoolServiceImpl]
     bind[OauthCodeDao].to[MariadbOauthCodeDao]
     bind[DelegableAuthInfoDAO[PasswordInfo]].to[MariadbPasswordInfoDao]

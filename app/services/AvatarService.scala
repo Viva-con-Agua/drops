@@ -1,49 +1,28 @@
 package services
 
+import javax.inject._
 import java.io.File
 import java.util.UUID
 
+import daos.AvatarDao
 import models.UploadedImage
 
 import scala.concurrent.Future
 
-class AvatarService {
-  var files : Map[UUID, UploadedImage] = Map()
+class AvatarService @Inject() (avatarDao : AvatarDao) {
 
-  def getAll : Future[List[UploadedImage]] = Future.successful(this.files.map(_._2).toList)
+  def getAll : Future[List[UploadedImage]] = avatarDao.getAll
 
-  def get(uuid: UUID): Future[Option[UploadedImage]] = Future.successful(this.files.get(uuid))
+  def get(uuid: UUID): Future[Option[UploadedImage]] = avatarDao.get(uuid)
 
-  def getThumb(uuid: UUID, width: Int, height: Int): Future[Option[UploadedImage]] = {
-    def finder(width: Int, height: Int, ui: UploadedImage) = ui ~ (width, height)
-    Future.successful(this.files.get(uuid).flatMap(
-      _.thumbnails.find((ui: UploadedImage) => finder(width, height, ui))
-    ))
-  }
+  def getThumb(uuid: UUID, width: Int, height: Int): Future[Option[UploadedImage]] =
+    avatarDao.getThumb(uuid, width, height)
 
-  def add(image: File, fileName: String, contentType: Option[String]): Future[Option[UploadedImage]] = {
-    val newImages = List(UploadedImage(image, Some(fileName), contentType))
-    this.files = this.files ++ newImages.map(uploaded => (uploaded.getID -> uploaded))
-    Future.successful(newImages.headOption)
-  }
+  def add(image: File, fileName: String, contentType: Option[String]): Future[Option[UploadedImage]] =
+    avatarDao.add(image, fileName, contentType)
 
-  def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage]): Future[Either[Exception, List[UploadedImage]]] = {
-    this.files.get(uuid) match {
-      case Some(original) => {
-        this.files = (this.files - uuid) + (uuid -> original.replaceThumbs(thumbs))
-        Future.successful(Right(thumbs))
-      }
-      case _ => Future.successful(Left(new Exception))
-    }
-  }
+  def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage]): Future[Either[Exception, List[UploadedImage]]] =
+    avatarDao.replaceThumbs(uuid, thumbs)
 
-  def remove(uuid: UUID) : Future[Int] = {
-    this.files.contains(uuid) match {
-      case true => {
-        this.files = this.files - uuid
-        Future.successful(1)
-      }
-      case false => Future.successful(0)
-    }
-  }
+  def remove(uuid: UUID) : Future[Int] = avatarDao.remove(uuid)
 }
