@@ -6,7 +6,8 @@ import java.util.{Base64, UUID}
 
 import sun.misc.BASE64Decoder
 import javax.imageio.ImageIO
-import play.api.libs.json.Json
+import play.api.libs.functional.syntax._
+import play.api.libs.json.{JsPath, Json, OWrites, Reads}
 
 case class UploadedImage(uuid: UUID, name: String, contentType : String, base64: String, bufferedImage : BufferedImage, thumbnails : List[UploadedImage]) {
   val width = bufferedImage.getWidth()
@@ -26,8 +27,6 @@ case class UploadedImage(uuid: UUID, name: String, contentType : String, base64:
     case "png" => "image/png"
     case _ => contentType
   }
-
-  def getRESTResponse(url: String) : RESTImageResponse = RESTImageResponse(url, uuid, width, height)
 
   def output: ByteArrayOutputStream = {
     val baos = new ByteArrayOutputStream()
@@ -65,7 +64,55 @@ object UploadedImage {
   }
 }
 
-case class RESTImageResponse(url: String, id: UUID, width: Int, height: Int)
+case class RESTImageThumbnailResponse(url: String, id: UUID, width: Int, height: Int)
+object RESTImageThumbnailResponse {
+  def apply(uploadedImage: UploadedImage, parentID: UUID) : RESTImageThumbnailResponse = {
+    val url = controllers.webapp.routes.Avatar.getThumb(parentID.toString, uploadedImage.width, uploadedImage.height).url
+    RESTImageThumbnailResponse(url, uploadedImage.getID, uploadedImage.width, uploadedImage.height)
+  }
+
+  def apply(t: (String, UUID, Int, Int)): RESTImageThumbnailResponse =
+    RESTImageThumbnailResponse(t._1, t._2, t._3, t._4)
+
+  implicit val restImageThumbnailWrites : OWrites[RESTImageThumbnailResponse] = (
+    (JsPath \ "url").write[String] and
+      (JsPath \ "id").write[UUID] and
+      (JsPath \ "width").write[Int] and
+      (JsPath \ "height").write[Int]
+    )(unlift(RESTImageThumbnailResponse.unapply))
+  implicit val restImageThumbnailReads : Reads[RESTImageThumbnailResponse] = (
+    (JsPath \ "url").read[String] and
+      (JsPath \ "id").read[UUID] and
+      (JsPath \ "width").read[Int] and
+      (JsPath \ "height").read[Int]
+    ).tupled.map(RESTImageThumbnailResponse( _ ))
+}
+
+case class RESTImageResponse(url: String, id: UUID, width: Int, height: Int, thumbnails: List[RESTImageThumbnailResponse])
 object RESTImageResponse {
-  implicit val restImageResponse = Json.format[RESTImageResponse]
+  def apply(uploadedImage: UploadedImage): RESTImageResponse = {
+    val url = controllers.webapp.routes.Avatar.get(uploadedImage.getID.toString).url
+    RESTImageResponse(
+      url, uploadedImage.getID, uploadedImage.width, uploadedImage.height,
+      uploadedImage.thumbnails.map(RESTImageThumbnailResponse(_, uploadedImage.getID))
+    )
+  }
+
+  def apply(t: (String, UUID, Int, Int, List[RESTImageThumbnailResponse])): RESTImageResponse =
+    RESTImageResponse(t._1, t._2, t._3, t._4, t._5)
+
+  implicit val restImageWrites : OWrites[RESTImageResponse] = (
+    (JsPath \ "url").write[String] and
+      (JsPath \ "id").write[UUID] and
+      (JsPath \ "width").write[Int] and
+      (JsPath \ "height").write[Int] and
+      (JsPath \ "thumbnails").write[List[RESTImageThumbnailResponse]]
+    )(unlift(RESTImageResponse.unapply))
+  implicit val restImageReads : Reads[RESTImageResponse] = (
+    (JsPath \ "url").read[String] and
+      (JsPath \ "id").read[UUID] and
+      (JsPath \ "width").read[Int] and
+      (JsPath \ "height").read[Int] and
+      (JsPath \ "thumbnails").read[List[RESTImageThumbnailResponse]]
+    ).tupled.map(RESTImageResponse( _ ))
 }

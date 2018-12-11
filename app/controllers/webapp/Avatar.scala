@@ -11,7 +11,7 @@ import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import javax.imageio.ImageIO
 import javax.inject.Inject
-import models.{UploadedImage, User}
+import models.{RESTImageResponse, RESTImageThumbnailResponse, UploadedImage, User}
 import play.api.Logger
 import play.api.i18n.MessagesApi
 import play.api.libs.Files.TemporaryFile
@@ -45,6 +45,12 @@ class Avatar @Inject() (
     )
   }}
 
+  def getAll = SecuredAction.async { request =>
+    Future.successful(WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
+      Json.toJson(this.files.map((entry) => RESTImageResponse(entry._2)))
+    ).getResult)
+  }
+
   def upload = SecuredAction.async(parse.multipartFormData) { request =>
     val image = request.body.file("image")
     val response = image match {
@@ -52,9 +58,7 @@ class Avatar @Inject() (
         val newImages = List(UploadedImage(img.ref.file, Some(img.filename), img.contentType))
         this.files = this.files ++ newImages.map(uploaded => (uploaded.getID -> uploaded))
         WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success",
-          Json.toJson(newImages.map((img) => img.getRESTResponse(
-            controllers.webapp.routes.Avatar.get(img.getID.toString).url
-          )))
+          Json.toJson(newImages.map((img) => RESTImageResponse(img)))
         ).getResult
       }
       case None => WebAppResult.Ok(request, "avatar.upload.failure", Nil, "Avatar.Upload.Failure", Json.obj()).getResult
@@ -71,9 +75,7 @@ class Avatar @Inject() (
       case Some(original) => {
         this.files = (this.files - uuid) + (uuid -> original.addThumbs(uploadedImages))
         WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
-          Json.toJson(uploadedImages.map((thumb) => thumb.getRESTResponse(
-            controllers.webapp.routes.Avatar.getThumb(uuid.toString, thumb.width, thumb.height).url
-          )))
+          Json.toJson(uploadedImages.map((thumb) => RESTImageThumbnailResponse(thumb, uuid)))
         ).getResult
       }
       case _ => WebAppResult.Ok(request, "avatar.upload.failure", Nil, "Avatar.Thumbnail.Failure", Json.obj()).getResult
