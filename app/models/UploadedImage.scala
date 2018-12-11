@@ -63,6 +63,15 @@ object UploadedImage {
 
     UploadedImage(UUID.randomUUID(), n, ct, base64, bufferedImage, Nil)
   }
+
+  def apply(uuid: UUID, name: String, contentType: String, bufferedImage : BufferedImage): UploadedImage = {
+    val format = contentType.split("/").lastOption.getOrElse("png")
+    val os = new ByteArrayOutputStream
+    ImageIO.write(bufferedImage, format, os)
+    val base64 = Base64.getEncoder().encodeToString(os.toByteArray())
+
+    UploadedImage(uuid, name, contentType, base64, bufferedImage, Nil)
+  }
 }
 
 case class RESTImageThumbnailResponse(url: String, id: UUID, width: Int, height: Int)
