@@ -73,7 +73,7 @@ class Avatar @Inject() (
     val uuid = UUID.fromString(id)
     val response = this.files.get(uuid) match {
       case Some(original) => {
-        this.files = (this.files - uuid) + (uuid -> original.addThumbs(uploadedImages))
+        this.files = (this.files - uuid) + (uuid -> original.replaceThumbs(uploadedImages))
         WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
           Json.toJson(uploadedImages.map((thumb) => RESTImageThumbnailResponse(thumb, uuid)))
         ).getResult

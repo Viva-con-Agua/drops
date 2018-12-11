@@ -38,6 +38,7 @@ case class UploadedImage(uuid: UUID, name: String, contentType : String, base64:
     this.width == width && this.height == height
 
   def addThumbs(thumbs: Seq[UploadedImage]) = this.copy(thumbnails = this.thumbnails ++ thumbs.toList)
+  def replaceThumbs(thumbs: Seq[UploadedImage]) = this.copy(thumbnails = thumbs.toList)
 }
 
 object UploadedImage {
