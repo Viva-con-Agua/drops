@@ -17,7 +17,7 @@ import play.api.i18n.MessagesApi
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
-import services.UserService
+import services.{AvatarService, UserService}
 import play.filters.csrf._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,12 +25,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class Avatar @Inject() (
                          userService: UserService,
+                         avatarService: AvatarService,
                          val messagesApi: MessagesApi,
                          val env: Environment[User, CookieAuthenticator]
                        ) extends Silhouette[User, CookieAuthenticator] {
   implicit val mApi = messagesApi
   override val logger = Logger(Action.getClass)
-  var files : Map[UUID, UploadedImage] = Map()
 
   def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
 
@@ -46,46 +46,40 @@ class Avatar @Inject() (
   }}
 
   def getAll = SecuredAction.async { request =>
-    Future.successful(WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
-      Json.toJson(this.files.map((entry) => RESTImageResponse(entry._2)))
+    avatarService.getAll.map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
+      Json.toJson(list.map((uploadedImage) => RESTImageResponse(uploadedImage)))
     ).getResult)
   }
 
   def upload = SecuredAction.async(parse.multipartFormData) { request =>
-    val image = request.body.file("image")
-    val response = image match {
-      case Some(img) => {
-        val newImages = List(UploadedImage(img.ref.file, Some(img.filename), img.contentType))
-        this.files = this.files ++ newImages.map(uploaded => (uploaded.getID -> uploaded))
-        WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success",
-          Json.toJson(newImages.map((img) => RESTImageResponse(img)))
+    request.body.file("image") match {
+      case Some(img) => avatarService.add(img.ref.file, img.filename, img.contentType).map(_ match {
+        case Some(uploadedImage) => WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success",
+          Json.toJson(RESTImageResponse(uploadedImage))
         ).getResult
-      }
-      case None => WebAppResult.Ok(request, "avatar.upload.failure", Nil, "Avatar.Upload.Failure", Json.obj()).getResult
+        case _ => WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "avatar.upload.internalServerError",
+          Nil, "Avatar.Upload.InternalServerError", Map[String, String]()).getResult
+      })
+      case _ => Future.successful(
+        WebAppResult.Bogus(request, "avatar.upload.noImageInRequest", Nil, "Avatar.Upload.NoImageInRequest", Json.obj()).getResult
+      )
     }
-
-    Future.successful(response)
   }
 
   def thumbnails(id : String) = SecuredAction.async(parse.multipartFormData) { request =>
     val uploadedImages = request.body.files.map((img) => UploadedImage(img.ref.file, Some(img.filename), img.contentType))
-//    this.thumbnailFiles = this.thumbnailFiles ++ Map(id -> uploadedImages.toList)
     val uuid = UUID.fromString(id)
-    val response = this.files.get(uuid) match {
-      case Some(original) => {
-        this.files = (this.files - uuid) + (uuid -> original.replaceThumbs(uploadedImages))
-        WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Thumbnail.Success",
-          Json.toJson(uploadedImages.map((thumb) => RESTImageThumbnailResponse(thumb, uuid)))
-        ).getResult
-      }
-      case _ => WebAppResult.Ok(request, "avatar.upload.failure", Nil, "Avatar.Thumbnail.Failure", Json.obj()).getResult
-    }
-    Future.successful(response)
+    avatarService.replaceThumbs(uuid, uploadedImages.toList).map(_ match {
+      case Left( _ ) => WebAppResult.NotFound(request, "avatar.upload.thumbnail.failure", Nil, "Avatar.Thumbnail.Failure", Map()).getResult
+      case Right(thumbs) => WebAppResult.Ok(request, "avatar.upload.thumbnail.success", Nil, "Avatar.Thumbnail.Success",
+        Json.toJson(thumbs.map((thumb) => RESTImageThumbnailResponse(thumb, uuid)))
+      ).getResult
+    })
   }
 
   def get(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    Future.successful(this.files.get(uuid) match {
+    avatarService.get(uuid).map(_ match {
       case Some(img) => {
         val temp = TemporaryFile(img.getName, img.format).file
         ImageIO.write(img.bufferedImage, img.format, temp)
@@ -99,10 +93,7 @@ class Avatar @Inject() (
 
   def getThumb(id: String, width: Int, height: Int) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    def finder(width: Int, height: Int, ui: UploadedImage) = ui ~ (width, height)
-    Future.successful(this.files.get(uuid).flatMap(
-      _.thumbnails.find((ui: UploadedImage) => finder(width, height, ui))
-    ) match {
+    avatarService.getThumb(uuid, width, height).map(_ match {
       case Some(thumb) => {
         val temp = TemporaryFile(thumb.getName, thumb.format).file
         ImageIO.write(thumb.bufferedImage, thumb.format, temp)
@@ -118,11 +109,16 @@ class Avatar @Inject() (
 
   def remove(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    this.files = this.files - uuid
-    Future.successful(
-      WebAppResult.Ok(request, "avatar.remove.success", Nil, "Avatar.Remove.Success",
-        Json.obj("id" -> uuid.toString)
-      ).getResult
+    avatarService.remove(uuid).map(i =>
+      if(i >= 1) {
+        WebAppResult.Ok(request, "avatar.remove.success", Nil, "Avatar.Remove.Success",
+          Json.obj("id" -> uuid.toString)
+        ).getResult
+      } else {
+        WebAppResult.NotFound(request, "avatar.remove.notFound", Nil, "Avatar.Remove.NotFound",
+          Map("id" -> uuid.toString)
+        ).getResult
+      }
     )
   }
 }

@@ -252,3 +252,16 @@ socket.success.insert=save {0}
 
 socket.success.update={0} successful updated
 socket.success.delete={0} is deleted
+
+avatar.upload.csrf=CSRF token has been generated.
+avatar.error.noToken=Unfortunately, no CSRF token has been created.
+avatar.getAll.success=All avatars found.
+avatar.upload.success=Your avatar has been saved successfully.
+avatar.upload.internalServerError=An internal error occurred. Your avatar has not been saved.
+avatar.upload.noImageInRequest=Your request does not contain an image. Thus, no new avatar has been saved.
+avatar.upload.thumbnail.failure=It is not possible to create the thumbnails for your avatar.
+avatar.upload.thumbnail.success=Thumbnails for your avatar have been saved.
+avatar.get.notFound=The avatar can not be found in the database.
+avatar.getThumb.notFound=The thumbnail can not be found in the database.
+avatar.remove.success=The avatar has been deleted.
+avatar.remove.notFound=The avatar has not been found. Thus, it could not be deleted.

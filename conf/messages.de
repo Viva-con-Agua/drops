@@ -226,3 +226,16 @@ webapp.crews.error.queryParser=Die gegebene Query kann nicht geparsed werden.
 webapp.crews.error.noValues=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
 webapp.crews.error.generic=Die Query enthält einen Fehler.
 webapp.crews.error.sql=Die Query verursacht einen SQL Fehler.
+
+avatar.upload.csrf=CSRF Token erfolgreich generiert!
+avatar.error.noToken=Es konnte kein CSRF Token generiert werden.
+avatar.getAll.success=Alle Avatare konnten erfolgreich abgerufen werden.
+avatar.upload.success=Dein Avatar wurde gespeichert.
+avatar.upload.internalServerError=Es ist ein interner Fehler aufgetreten. Dein Avatar konnte nicht gespeichert werden.
+avatar.upload.noImageInRequest=Deine Anfrage enthält leider kein Bild. Daher kann auch kein neuer Avatar gespeichert werden.
+avatar.upload.thumbnail.failure=Es konnten keine Thumbnails deines Avatars angelegt werden.
+avatar.upload.thumbnail.success=Die Thumbnails zu deinem Avatar wurden gespeichert.
+avatar.get.notFound=Der Avatar konnte nicht gefunden werden.
+avatar.getThumb.notFound=Das Thumbnail konnte nicht gefunden werden.
+avatar.remove.success=Der Avatar wurde gelöscht.
+avatar.remove.notFound=Der Avatar wurde nicht gefunden und daher kann er nicht gelöscht werden.
