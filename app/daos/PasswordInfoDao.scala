@@ -88,7 +88,7 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
     remove(loginInfo).flatMap(_ => {
       dbConfig.db.run(loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey).result).flatMap(lInfo => {
         val profileId = lInfo.head.profileId
-        dbConfig.db.run(passwordInfos += PasswordInfoDB(0, authInfo, profileId)).flatMap(id => find(id))
+        dbConfig.db.run((passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, authInfo, profileId)).flatMap(id => find(id))
       })
     })
   }
