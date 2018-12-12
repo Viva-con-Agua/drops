@@ -24,5 +24,7 @@ class AvatarService @Inject() (avatarDao : AvatarDao) {
   def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage], email: String): Future[Either[Exception, List[UploadedImage]]] =
     avatarDao.replaceThumbs(uuid, thumbs, email)
 
+  def updateEmail(previousEmail: String, newEmail: String) : Future[Int] = avatarDao.updateEmail(previousEmail, newEmail)
+
   def remove(uuid: UUID, email: String) : Future[Int] = avatarDao.remove(uuid, email)
 }

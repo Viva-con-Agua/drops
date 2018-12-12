@@ -86,7 +86,11 @@ class MariadbAvatarDao extends AvatarDao {
     dbConfig.db.run(action).flatMap(this.getAll( _ )).map(Right( _ ))
   }
 
-  override def updateEmail(previousEmail: String, newEmail: String): Future[Int] = ???
+  override def updateEmail(previousEmail: String, newEmail: String): Future[Int] = {
+    val q = for { u <- uploads if u.email === previousEmail } yield u.email
+    val updateAction = q.update(newEmail)
+    dbConfig.db.run(updateAction)
+  }
 
   override def remove(uuid: UUID, email: String): Future[Int] = {
     val action = (for {
@@ -130,7 +134,14 @@ class RAMAvatarDao extends AvatarDao {
     }
   }
 
-  override def updateEmail(previousEmail: String, newEmail: String): Future[Int] = ???
+  override def updateEmail(previousEmail: String, newEmail: String): Future[Int] = {
+    var counter = 0
+    this.files.filter(_._1._2 == previousEmail).foreach(entry => {
+      this.files = (this.files - entry._1) + ((entry._1._1, newEmail) -> entry._2)
+      counter += 1
+    })
+    Future.successful(counter)
+  }
 
   def remove(uuid: UUID, email: String) : Future[Int] = {
     var counter = 0
