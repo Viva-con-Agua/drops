@@ -216,7 +216,7 @@ class Auth @Inject() (
         val credentials = Credentials(signInData.email, signInData.password)
         // Handle Pool 1 users
         pool1Service.pool1user(signInData.email).flatMap {
-          case Some(pooluser) if !pooluser.confirmed =>
+          case Some(pooluser) if pooluser.confirmed == false =>
             userService.retrieve(LoginInfo(CredentialsProvider.ID, signInData.email)).flatMap {
               case None => Future.successful(
                 // Possible Result: Internal error. because user was suddenly deleted

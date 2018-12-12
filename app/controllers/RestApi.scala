@@ -33,7 +33,7 @@ import utils.Query._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
 import scala.util.parsing.json.JSONArray
-
+import services.{CrewService}
 
 
 //import net.liftweb.json._
@@ -42,6 +42,7 @@ class RestApi @Inject() (
   val userDao : MariadbUserDao,
   val crewDao: MariadbCrewDao,
   val taskDao: TaskDao,
+  val crewService: CrewService,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
   val pool1UserDao : Pool1UserDao,
@@ -247,6 +248,17 @@ class RestApi @Inject() (
         case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
+  }}
+  
+  def createCrews = ApiAction.async(validateJson[CrewStub]) { implicit request => {
+    val crewData = request.request.body
+    crewService.get(crewData.name).flatMap{
+      case Some(crew) => Future.successful(BadRequest("ERROR"))
+      case _ => crewService.save(crewData).flatMap{
+        case (crew) => Future.successful(Ok("SUCCESS"))
+       // case _ => Future.successful(BadRequest("ERROR"))
+      }
+    }
   }}
 
   def getCrews = ApiAction.async(validateJson[rest.QueryBody]){ implicit request => {

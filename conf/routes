@@ -59,7 +59,7 @@ POST    /rest/user                                         controllers.RestApi.g
 POST    /rest/user/:id                                     controllers.RestApi.getUser(id : java.util.UUID)
 PUT     /rest/user/:id                                     controllers.RestApi.updateUser(id : java.util.UUID)
 DELETE  /rest/user/:id                                     controllers.RestApi.deleteUser(id: java.util.UUID)
-
+POST    /rest/crew/create                                  controllers.RestApi.createCrews
 GET     /rest/user/:id/task                                 controllers.RestApi.getTasksForUser(id: java.util.UUID)
 GET     /rest/user/:id/access                               controllers.RestApi.getAccessRightsForUser(id: java.util.UUID)
 POST    /rest/crew                                          controllers.RestApi.getCrews
