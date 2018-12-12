@@ -1,7 +1,7 @@
 package controllers.webapp
 
 import java.awt.image.BufferedImage
-import java.io.{ByteArrayInputStream, File}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
 import java.util.UUID
 
 import play.api.mvc._
@@ -37,6 +37,18 @@ class Avatar @Inject() (
   private def thumbId(id: String, width: Int, height: Int) : String = id + "_" + width + "x" + height
 
   private def getProfile[T](request: SecuredRequest[T]) : models.Profile = request.identity.profileFor(request.authenticator.loginInfo).get
+
+  private def getImage(img: UploadedImage) = {
+    val baos = new ByteArrayOutputStream()
+    ImageIO.write(img.bufferedImage, img.format, baos)
+    val ba = baos.toByteArray
+    val bais = new ByteArrayInputStream(ba)
+    val fileContent: Enumerator[Array[Byte]] = Enumerator.fromStream(bais)
+    Result(
+      header = ResponseHeader(200, Map(CONTENT_LENGTH -> ba.length.toString)),
+      body = fileContent
+    )
+  }
 
   def getCSRF = CSRFAddToken { SecuredAction.async { request =>
     Future.successful(
@@ -81,11 +93,7 @@ class Avatar @Inject() (
 
   def getSelected(userUUID: String) = SecuredAction.async { request =>
     avatarService.getSelected(UUID.fromString(userUUID)).map(_ match {
-      case Some(img) => {
-        val temp = TemporaryFile(img.getName, img.format).file
-        ImageIO.write(img.bufferedImage, img.format, temp)
-        Ok.sendFile(temp).as(img.getContentType)
-      }
+      case Some(img) => this.getImage(img)
       case _ => WebAppResult.NotFound(request, "avatar.get.notFound", Nil, "Avatar.Get.NotFound", Map(
         "uuid" -> userUUID
       )).getResult
@@ -95,11 +103,7 @@ class Avatar @Inject() (
   def get(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
     avatarService.get(uuid, this.getProfile(request)).map(_ match {
-      case Some(img) => {
-        val temp = TemporaryFile(img.getName, img.format).file
-        ImageIO.write(img.bufferedImage, img.format, temp)
-        Ok.sendFile(temp).as(img.getContentType)
-      }
+      case Some(img) => this.getImage(img)
       case _ => WebAppResult.NotFound(request, "avatar.get.notFound", Nil, "Avatar.Get.NotFound", Map(
         "id" -> uuid.toString
       )).getResult
@@ -109,11 +113,7 @@ class Avatar @Inject() (
   def getThumb(id: String, width: Int, height: Int) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
     avatarService.getThumb(uuid, width, height, this.getProfile(request)).map(_ match {
-      case Some(thumb) => {
-        val temp = TemporaryFile(thumb.getName, thumb.format).file
-        ImageIO.write(thumb.bufferedImage, thumb.format, temp)
-        Ok.sendFile(temp).as(thumb.getContentType)
-      }
+      case Some(thumb) => this.getImage(thumb)
       case _ => WebAppResult.NotFound(request, "avatar.getThumb.notFound", Nil, "Avatar.GetThumb.NotFound", Map(
         "id" -> uuid.toString,
         "width" -> width.toString,
