@@ -48,7 +48,7 @@ class Avatar @Inject() (
   }}
 
   def getAll = SecuredAction.async { request =>
-    avatarService.getAll.map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
+    avatarService.getAll(this.getEmail(request)).map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
       Json.toJson(list.map((uploadedImage) => RESTImageResponse(uploadedImage)))
     ).getResult)
   }
@@ -81,7 +81,7 @@ class Avatar @Inject() (
 
   def get(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    avatarService.get(uuid).map(_ match {
+    avatarService.get(uuid, this.getEmail(request)).map(_ match {
       case Some(img) => {
         val temp = TemporaryFile(img.getName, img.format).file
         ImageIO.write(img.bufferedImage, img.format, temp)
@@ -95,7 +95,7 @@ class Avatar @Inject() (
 
   def getThumb(id: String, width: Int, height: Int) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    avatarService.getThumb(uuid, width, height).map(_ match {
+    avatarService.getThumb(uuid, width, height, this.getEmail(request)).map(_ match {
       case Some(thumb) => {
         val temp = TemporaryFile(thumb.getName, thumb.format).file
         ImageIO.write(thumb.bufferedImage, thumb.format, temp)
@@ -111,7 +111,7 @@ class Avatar @Inject() (
 
   def remove(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    avatarService.remove(uuid).map(i =>
+    avatarService.remove(uuid, this.getEmail(request)).map(i =>
       if(i >= 1) {
         WebAppResult.Ok(request, "avatar.remove.success", Nil, "Avatar.Remove.Success",
           Json.obj("id" -> uuid.toString)

@@ -11,12 +11,12 @@ import scala.concurrent.Future
 
 class AvatarService @Inject() (avatarDao : AvatarDao) {
 
-  def getAll : Future[List[UploadedImage]] = avatarDao.getAll
+  def getAll(email: String) : Future[List[UploadedImage]] = avatarDao.getAll(email)
 
-  def get(uuid: UUID): Future[Option[UploadedImage]] = avatarDao.get(uuid)
+  def get(uuid: UUID, email: String): Future[Option[UploadedImage]] = avatarDao.get(uuid, email)
 
-  def getThumb(uuid: UUID, width: Int, height: Int): Future[Option[UploadedImage]] =
-    avatarDao.getThumb(uuid, width, height)
+  def getThumb(uuid: UUID, width: Int, height: Int, email: String): Future[Option[UploadedImage]] =
+    avatarDao.getThumb(uuid, width, height, email)
 
   def add(image: File, fileName: String, contentType: Option[String], email: String): Future[Option[UploadedImage]] =
     avatarDao.add(image, fileName, contentType, email)
@@ -24,5 +24,5 @@ class AvatarService @Inject() (avatarDao : AvatarDao) {
   def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage], email: String): Future[Either[Exception, List[UploadedImage]]] =
     avatarDao.replaceThumbs(uuid, thumbs, email)
 
-  def remove(uuid: UUID) : Future[Int] = avatarDao.remove(uuid)
+  def remove(uuid: UUID, email: String) : Future[Int] = avatarDao.remove(uuid, email)
 }
