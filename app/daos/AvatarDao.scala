@@ -22,8 +22,8 @@ trait AvatarDao {
   def get(uuid: UUID): Future[Option[UploadedImage]]
   def getThumb(uuid: UUID, width: Int, height: Int): Future[Option[UploadedImage]]
 
-  def add(image: File, fileName: String, contentType: Option[String]): Future[Option[UploadedImage]]
-  def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage]): Future[Either[Exception, List[UploadedImage]]]
+  def add(image: File, fileName: String, contentType: Option[String], email: String): Future[Option[UploadedImage]]
+  def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage], email: String): Future[Either[Exception, List[UploadedImage]]]
   def remove(uuid: UUID) : Future[Int]
 }
 
@@ -34,9 +34,9 @@ class MariadbAvatarDao extends AvatarDao {
   implicit val getUploadResult =
     GetResult(r => UploadDB(
       r.nextLong, UUID.fromString(r.nextString), r.nextStringOption().map(UUID.fromString( _ )), r.nextString,
-      r.nextString, r.nextInt, r.nextInt, r.nextBlob()))
+      r.nextString, r.nextInt, r.nextInt, r.nextBlob(), r.nextString()))
 
-  private def mapper(result : Seq[(Long, UUID, Option[UUID], String, String, Int, Int, Blob)]): Future[List[UploadedImage]] =
+  private def mapper(result : Seq[(Long, UUID, Option[UUID], String, String, Int, Int, Blob, String)]): Future[List[UploadedImage]] =
     Future.sequence(result.map(t => {
       val thumbs = dbConfig.db.run(uploads.filter(_.parentId === t._2).result).flatMap(mapper( _ ))
       thumbs.map(UploadDB(t).toUploadedImage( _ ))
@@ -67,17 +67,17 @@ class MariadbAvatarDao extends AvatarDao {
       .flatMap(mapper( _ )).map(_.headOption)
   }
 
-  override def add(image: File, fileName: String, contentType: Option[String]): Future[Option[UploadedImage]] = {
+  override def add(image: File, fileName: String, contentType: Option[String], email: String): Future[Option[UploadedImage]] = {
     val action = (uploads returning uploads.map(_.id)) +=
-      UploadDB.unapply(UploadDB(UploadedImage(image, Some(fileName), contentType))).get
+      UploadDB.unapply(UploadDB(UploadedImage(image, Some(fileName), contentType), email)).get
 
     dbConfig.db.run(action).flatMap(this.get( _ ))
   }
 
-  override def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage]): Future[Either[Exception, List[UploadedImage]]] = {
+  override def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage], email: String): Future[Either[Exception, List[UploadedImage]]] = {
     val action = (for {
       removes <- uploads.filter(_.parentId === uuid).delete
-      inserts <- uploads returning uploads.map(_.id) ++= thumbs.map((thumb) => UploadDB.unapply(UploadDB(thumb, Some(uuid))).get)
+      inserts <- uploads returning uploads.map(_.id) ++= thumbs.map((thumb) => UploadDB.unapply(UploadDB(thumb, email, Some(uuid))).get)
     } yield inserts).transactionally
 
     dbConfig.db.run(action).flatMap(this.getAll( _ )).map(Right( _ ))
@@ -93,29 +93,30 @@ class MariadbAvatarDao extends AvatarDao {
 }
 
 class RAMAvatarDao extends AvatarDao {
-  var files : Map[UUID, UploadedImage] = Map()
+  var files : Map[(UUID, String), UploadedImage] = Map()
 
   def getAll : Future[List[UploadedImage]] = Future.successful(this.files.map(_._2).toList)
 
-  def get(uuid: UUID): Future[Option[UploadedImage]] = Future.successful(this.files.get(uuid))
+  def get(uuid: UUID): Future[Option[UploadedImage]] = Future.successful(this.files.find(_._1._1 == uuid).map(_._2))
 
   def getThumb(uuid: UUID, width: Int, height: Int): Future[Option[UploadedImage]] = {
     def finder(width: Int, height: Int, ui: UploadedImage) = ui ~ (width, height)
-    Future.successful(this.files.get(uuid).flatMap(
-      _.thumbnails.find((ui: UploadedImage) => finder(width, height, ui))
+    Future.successful(this.files.find(_._1._1 == uuid).flatMap(
+      _._2.thumbnails.find((ui: UploadedImage) => finder(width, height, ui))
     ))
   }
 
-  def add(image: File, fileName: String, contentType: Option[String]): Future[Option[UploadedImage]] = {
+  def add(image: File, fileName: String, contentType: Option[String], email: String): Future[Option[UploadedImage]] = {
     val newImages = List(UploadedImage(image, Some(fileName), contentType))
-    this.files = this.files ++ newImages.map(uploaded => (uploaded.getID -> uploaded))
+    this.files = this.files ++ newImages.map(uploaded => ((uploaded.getID, email) -> uploaded))
     Future.successful(newImages.headOption)
   }
 
-  def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage]): Future[Either[Exception, List[UploadedImage]]] = {
-    this.files.get(uuid) match {
+  def replaceThumbs(uuid: UUID, thumbs: List[UploadedImage], email: String): Future[Either[Exception, List[UploadedImage]]] = {
+    val id = (uuid, email)
+    this.files.get(id) match {
       case Some(original) => {
-        this.files = (this.files - uuid) + (uuid -> original.replaceThumbs(thumbs))
+        this.files = (this.files - id) + (id -> original.replaceThumbs(thumbs))
         Future.successful(Right(thumbs))
       }
       case _ => Future.successful(Left(new Exception))
@@ -123,12 +124,11 @@ class RAMAvatarDao extends AvatarDao {
   }
 
   def remove(uuid: UUID) : Future[Int] = {
-    this.files.contains(uuid) match {
-      case true => {
-        this.files = this.files - uuid
-        Future.successful(1)
-      }
-      case false => Future.successful(0)
-    }
+    var counter = 0
+    this.files.filter(_._1._1 == uuid).foreach(pair => {
+      this.files = this.files - pair._1
+      counter += 1
+    })
+    Future.successful(counter)
   }
 }

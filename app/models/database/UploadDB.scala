@@ -14,7 +14,8 @@ case class UploadDB(id: Long,
                     contentType: String,
                     width: Int,
                     height: Int,
-                    data: Blob
+                    data: Blob,
+                    email: String
                    ) {
   def toUploadedImage(thumbnails : List[UploadedImage] = Nil) : UploadedImage = {
     val in = data.getBinaryStream
@@ -24,11 +25,11 @@ case class UploadDB(id: Long,
   }
 }
 
-object UploadDB extends ((Long, UUID, Option[UUID], String, String, Int, Int, Blob) => UploadDB) {
-  def apply(t: (Long, UUID, Option[UUID], String, String, Int, Int, Blob)): UploadDB =
-    UploadDB(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)
+object UploadDB extends ((Long, UUID, Option[UUID], String, String, Int, Int, Blob, String) => UploadDB) {
+  def apply(t: (Long, UUID, Option[UUID], String, String, Int, Int, Blob, String)): UploadDB =
+    UploadDB(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)
 
-  def apply(uploadedImage: UploadedImage, parentId: Option[UUID] = None): UploadDB = {
+  def apply(uploadedImage: UploadedImage, email: String, parentId: Option[UUID] = None): UploadDB = {
     val baos = new ByteArrayOutputStream
     ImageIO.write(uploadedImage.bufferedImage, uploadedImage.format, baos)
     baos.flush()
@@ -37,6 +38,6 @@ object UploadDB extends ((Long, UUID, Option[UUID], String, String, Int, Int, Bl
 
     val blob = new javax.sql.rowset.serial.SerialBlob(imageInByte)
     UploadDB(0, uploadedImage.uuid, parentId, uploadedImage.getName, uploadedImage.getContentType, uploadedImage.width,
-      uploadedImage.height, blob)
+      uploadedImage.height, blob, email)
   }
 }
