@@ -59,13 +59,13 @@ class Avatar @Inject() (
     )
   }}
 
-  def getAll = SecuredAction.async { request =>
+  def getAll= SecuredAction.async { request =>
     avatarService.getAll(this.getProfile(request)).map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
       Json.toJson(list.map((uploadedImage) => RESTImageResponse(uploadedImage)))
     ).getResult)
   }
 
-  def upload = SecuredAction.async(parse.multipartFormData) { request =>
+  def upload= SecuredAction.async(parse.multipartFormData) { request =>
     request.body.file("image") match {
       case Some(img) => avatarService.add(img.ref.file, img.filename, img.contentType, this.getProfile(request), true).map(_ match {
         case Some(uploadedImage) => WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success",
@@ -83,7 +83,7 @@ class Avatar @Inject() (
   def thumbnails(id : String) = SecuredAction.async(parse.multipartFormData) { request =>
     val uploadedImages = request.body.files.map((img) => UploadedImage(false, img.ref.file, Some(img.filename), img.contentType))
     val uuid = UUID.fromString(id)
-    avatarService.replaceThumbs(uuid, uploadedImages.toList, this.getProfile(request), false).map(_ match {
+    avatarService.replaceThumbs(uuid, uploadedImages.toList, this.getProfile(request)).map(_ match {
       case Left( _ ) => WebAppResult.NotFound(request, "avatar.upload.thumbnail.failure", Nil, "Avatar.Thumbnail.Failure", Map()).getResult
       case Right(thumbs) => WebAppResult.Ok(request, "avatar.upload.thumbnail.success", Nil, "Avatar.Thumbnail.Success",
         Json.toJson(thumbs.map((thumb) => RESTImageThumbnailResponse(thumb, uuid)))
@@ -91,8 +91,8 @@ class Avatar @Inject() (
     })
   }
 
-  def getSelected(userUUID: String) = SecuredAction.async { request =>
-    avatarService.getSelected(UUID.fromString(userUUID)).map(_ match {
+  def getSelected(userUUID: String, width: Int, height: Int) = SecuredAction.async { request =>
+    avatarService.getSelected(UUID.fromString(userUUID), width, height).map(_ match {
       case Some(img) => this.getImage(img)
       case _ => WebAppResult.NotFound(request, "avatar.get.notFound", Nil, "Avatar.Get.NotFound", Map(
         "uuid" -> userUUID
