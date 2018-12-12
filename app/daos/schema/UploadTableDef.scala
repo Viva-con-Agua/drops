@@ -8,7 +8,7 @@ import slick.driver.MySQLDriver.api._
 /**
   * Definition of the UPLOAD table.
   */
-class UploadTableDef(tag: Tag) extends Table[(Long, UUID, Option[UUID], String, String, Int, Int, Blob, String)](tag, "Upload") {
+class UploadTableDef(tag: Tag) extends Table[(Long, UUID, Option[UUID], String, String, Int, Int, Blob, String, Boolean)](tag, "Upload") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def publicId = column[UUID]("public_id")
   def parentId = column[Option[UUID]]("parent_id")
@@ -18,7 +18,8 @@ class UploadTableDef(tag: Tag) extends Table[(Long, UUID, Option[UUID], String, 
   def height = column[Int]("height")
   def data = column[Blob]("data")
   def email = column[String]("email")
-  def * = (id, publicId, parentId, name, contentType, width, height, data, email)
+  def selected = column[Boolean]("selected")
+  def * = (id, publicId, parentId, name, contentType, width, height, data, email, selected)
 
   def pk = primaryKey("primaryKey", id)
 }

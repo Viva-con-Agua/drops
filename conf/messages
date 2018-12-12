@@ -265,3 +265,5 @@ avatar.get.notFound=The avatar can not be found in the database.
 avatar.getThumb.notFound=The thumbnail can not be found in the database.
 avatar.remove.success=The avatar has been deleted.
 avatar.remove.notFound=The avatar has not been found. Thus, it could not be deleted.
+avatar.select.success=New avatar has been chosen.
+avatar.select.failure=The avatar has not been selected.

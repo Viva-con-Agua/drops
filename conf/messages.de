@@ -239,3 +239,5 @@ avatar.get.notFound=Der Avatar konnte nicht gefunden werden.
 avatar.getThumb.notFound=Das Thumbnail konnte nicht gefunden werden.
 avatar.remove.success=Der Avatar wurde gelöscht.
 avatar.remove.notFound=Der Avatar wurde nicht gefunden und daher kann er nicht gelöscht werden.
+avatar.select.success=Neuer Avatar gewählt.
+avatar.select.failure=Leider konnte der neue Avatar nicht ausgewählt werden.

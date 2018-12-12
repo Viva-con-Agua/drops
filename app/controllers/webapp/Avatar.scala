@@ -36,7 +36,7 @@ class Avatar @Inject() (
 
   private def thumbId(id: String, width: Int, height: Int) : String = id + "_" + width + "x" + height
 
-  private def getEmail[T](request: SecuredRequest[T]) : String = request.identity.profiles.head.email.get
+  private def getProfile[T](request: SecuredRequest[T]) : models.Profile = request.identity.profileFor(request.authenticator.loginInfo).get
 
   def getCSRF = CSRFAddToken { SecuredAction.async { request =>
     Future.successful(
@@ -48,14 +48,14 @@ class Avatar @Inject() (
   }}
 
   def getAll = SecuredAction.async { request =>
-    avatarService.getAll(this.getEmail(request)).map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
+    avatarService.getAll(this.getProfile(request)).map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
       Json.toJson(list.map((uploadedImage) => RESTImageResponse(uploadedImage)))
     ).getResult)
   }
 
   def upload = SecuredAction.async(parse.multipartFormData) { request =>
     request.body.file("image") match {
-      case Some(img) => avatarService.add(img.ref.file, img.filename, img.contentType, this.getEmail(request)).map(_ match {
+      case Some(img) => avatarService.add(img.ref.file, img.filename, img.contentType, this.getProfile(request), true).map(_ match {
         case Some(uploadedImage) => WebAppResult.Ok(request, "avatar.upload.success", Nil, "Avatar.Upload.Success",
           Json.toJson(RESTImageResponse(uploadedImage))
         ).getResult
@@ -69,9 +69,9 @@ class Avatar @Inject() (
   }
 
   def thumbnails(id : String) = SecuredAction.async(parse.multipartFormData) { request =>
-    val uploadedImages = request.body.files.map((img) => UploadedImage(img.ref.file, Some(img.filename), img.contentType))
+    val uploadedImages = request.body.files.map((img) => UploadedImage(false, img.ref.file, Some(img.filename), img.contentType))
     val uuid = UUID.fromString(id)
-    avatarService.replaceThumbs(uuid, uploadedImages.toList, this.getEmail(request)).map(_ match {
+    avatarService.replaceThumbs(uuid, uploadedImages.toList, this.getProfile(request), false).map(_ match {
       case Left( _ ) => WebAppResult.NotFound(request, "avatar.upload.thumbnail.failure", Nil, "Avatar.Thumbnail.Failure", Map()).getResult
       case Right(thumbs) => WebAppResult.Ok(request, "avatar.upload.thumbnail.success", Nil, "Avatar.Thumbnail.Success",
         Json.toJson(thumbs.map((thumb) => RESTImageThumbnailResponse(thumb, uuid)))
@@ -79,9 +79,22 @@ class Avatar @Inject() (
     })
   }
 
+  def getSelected(userUUID: String) = SecuredAction.async { request =>
+    avatarService.getSelected(UUID.fromString(userUUID)).map(_ match {
+      case Some(img) => {
+        val temp = TemporaryFile(img.getName, img.format).file
+        ImageIO.write(img.bufferedImage, img.format, temp)
+        Ok.sendFile(temp).as(img.getContentType)
+      }
+      case _ => WebAppResult.NotFound(request, "avatar.get.notFound", Nil, "Avatar.Get.NotFound", Map(
+        "uuid" -> userUUID
+      )).getResult
+    })
+  }
+
   def get(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    avatarService.get(uuid, this.getEmail(request)).map(_ match {
+    avatarService.get(uuid, this.getProfile(request)).map(_ match {
       case Some(img) => {
         val temp = TemporaryFile(img.getName, img.format).file
         ImageIO.write(img.bufferedImage, img.format, temp)
@@ -95,7 +108,7 @@ class Avatar @Inject() (
 
   def getThumb(id: String, width: Int, height: Int) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    avatarService.getThumb(uuid, width, height, this.getEmail(request)).map(_ match {
+    avatarService.getThumb(uuid, width, height, this.getProfile(request)).map(_ match {
       case Some(thumb) => {
         val temp = TemporaryFile(thumb.getName, thumb.format).file
         ImageIO.write(thumb.bufferedImage, thumb.format, temp)
@@ -111,7 +124,7 @@ class Avatar @Inject() (
 
   def remove(id: String) = SecuredAction.async { request =>
     val uuid = UUID.fromString(id)
-    avatarService.remove(uuid, this.getEmail(request)).map(i =>
+    avatarService.remove(uuid, this.getProfile(request)).map(i =>
       if(i >= 1) {
         WebAppResult.Ok(request, "avatar.remove.success", Nil, "Avatar.Remove.Success",
           Json.obj("id" -> uuid.toString)
@@ -122,5 +135,17 @@ class Avatar @Inject() (
         ).getResult
       }
     )
+  }
+
+  def select(id: String) = SecuredAction.async { request =>
+    val uuid = UUID.fromString(id)
+    avatarService.select(uuid, this.getProfile(request)).map(_ match {
+      case true => WebAppResult.Ok(request, "avatar.select.success", Nil, "Avatar.Select.Success",
+        Json.obj("id" -> uuid.toString)
+      ).getResult
+      case false => WebAppResult.Bogus(request, "avatar.select.failure", Nil, "Avatar.Select.Failure",
+        Json.obj("id" -> uuid.toString)
+      ).getResult
+    })
   }
 }

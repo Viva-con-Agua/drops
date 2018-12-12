@@ -15,21 +15,22 @@ case class UploadDB(id: Long,
                     width: Int,
                     height: Int,
                     data: Blob,
-                    email: String
+                    email: String,
+                    selected: Boolean
                    ) {
   def toUploadedImage(thumbnails : List[UploadedImage] = Nil) : UploadedImage = {
     val in = data.getBinaryStream
     val bi = javax.imageio.ImageIO.read(in)
-    val ui = UploadedImage(publicId, name, contentType, bi)
+    val ui = UploadedImage(publicId, selected, name, contentType, bi)
     ui.addThumbs(thumbnails)
   }
 }
 
-object UploadDB extends ((Long, UUID, Option[UUID], String, String, Int, Int, Blob, String) => UploadDB) {
-  def apply(t: (Long, UUID, Option[UUID], String, String, Int, Int, Blob, String)): UploadDB =
-    UploadDB(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)
+object UploadDB extends ((Long, UUID, Option[UUID], String, String, Int, Int, Blob, String, Boolean) => UploadDB) {
+  def apply(t: (Long, UUID, Option[UUID], String, String, Int, Int, Blob, String, Boolean)): UploadDB =
+    UploadDB(t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)
 
-  def apply(uploadedImage: UploadedImage, email: String, parentId: Option[UUID] = None): UploadDB = {
+  def apply(uploadedImage: UploadedImage, email: String, selected: Boolean, parentId: Option[UUID] = None): UploadDB = {
     val baos = new ByteArrayOutputStream
     ImageIO.write(uploadedImage.bufferedImage, uploadedImage.format, baos)
     baos.flush()
@@ -38,6 +39,6 @@ object UploadDB extends ((Long, UUID, Option[UUID], String, String, Int, Int, Bl
 
     val blob = new javax.sql.rowset.serial.SerialBlob(imageInByte)
     UploadDB(0, uploadedImage.uuid, parentId, uploadedImage.getName, uploadedImage.getContentType, uploadedImage.width,
-      uploadedImage.height, blob, email)
+      uploadedImage.height, blob, email, selected)
   }
 }
