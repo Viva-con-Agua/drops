@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.30.37 (2018-12-04)
+## Version 0.30.38 (2018-12-12)
+* [[B] #294 - Sign Up not possible](https://github.com/Viva-con-Agua/drops/issues/294)
 * [[B] #292 - Error on reset password](https://github.com/Viva-con-Agua/drops/issues/292)
 * [[B] #291 - Error on calling users widget](https://github.com/Viva-con-Agua/drops/issues/291)
 * [[I] #290 - Non-JSON endpoint sign up mail link](https://github.com/Viva-con-Agua/drops/issues/290)
