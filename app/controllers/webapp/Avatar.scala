@@ -59,6 +59,18 @@ class Avatar @Inject() (
     )
   }}
 
+  def has(userUUID: String, width: Int, height: Int) = SecuredAction.async { request =>
+    val id = UUID.fromString(userUUID)
+    avatarService.has(id, width, height).map(_ match {
+      case true => WebAppResult.Ok(request, "avatar.has.success", Nil, "Avatar.Has.Success",
+        Json.obj()
+      ).getResult
+      case false => WebAppResult.NotFound(request, "avatar.has.success", Nil, "Avatar.Has.Success",
+        Map()
+      ).getResult
+    })
+  }
+
   def getAll= SecuredAction.async { request =>
     avatarService.getAll(this.getProfile(request)).map((list) => WebAppResult.Ok(request, "avatar.getAll.success", Nil, "Avatar.GetAll.Success",
       Json.toJson(list.map((uploadedImage) => RESTImageResponse(uploadedImage)))

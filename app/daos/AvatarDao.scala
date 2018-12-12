@@ -7,7 +7,7 @@ import java.util.UUID
 import daos.schema.UploadTableDef
 import models.UploadedImage
 import models.database.UploadDB
-import play.api.Play
+import play.api.{Logger, Play}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.dbio.DBIOAction
 import slick.driver.JdbcProfile
@@ -18,6 +18,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait AvatarDao {
+  def has(email: String, width: Int, height: Int): Future[Boolean]
   def getAll(email: String) : Future[List[UploadedImage]]
   def getSelected(email: String, width: Int, height: Int): Future[Option[UploadedImage]]
   def get(uuid: UUID, email: String): Future[Option[UploadedImage]]
@@ -33,6 +34,8 @@ trait AvatarDao {
 class MariadbAvatarDao extends AvatarDao {
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   val uploads = TableQuery[UploadTableDef]
+
+  val logger = Logger(this.getClass)
 
   implicit val getUploadResult =
     GetResult(r => UploadDB(
@@ -72,6 +75,12 @@ class MariadbAvatarDao extends AvatarDao {
       thumbSelectCount <- thumbSelection
     } yield oldDeselectCount > 0 && newSelectCount > 0).transactionally
     dbConfig.db.run(update)
+  }
+
+  override def has(email: String, width: Int, height: Int): Future[Boolean] = {
+    dbConfig.db.run(uploads.filter(row =>
+      row.email === email && row.selected && row.width === width && row.height === height
+    ).map(_.id).result).map(_.nonEmpty)
   }
 
   override def getAll(email: String): Future[List[UploadedImage]] =
@@ -142,6 +151,12 @@ class MariadbAvatarDao extends AvatarDao {
 
 class RAMAvatarDao extends AvatarDao {
   var files : Map[(UUID, String), (UploadedImage, Boolean)] = Map()
+
+  override def has(email: String, width: Int, height: Int): Future[Boolean] =
+    Future.successful(this.files
+      .filter(row => row._1._2 == email && row._2._2 && row._2._1.thumbnails.find(ui => ui ~ (width, height)).isDefined)
+      .nonEmpty
+    )
 
   def getAll(email: String) : Future[List[UploadedImage]] =
     Future.successful(this.files.filter(_._1._2 == email).map(_._2._1).toList)

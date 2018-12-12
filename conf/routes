@@ -53,6 +53,7 @@ GET     /webapp/organization/get/:name                      controllers.webapp.O
 
 POST    /webapp/avatar/upload                               controllers.webapp.Avatar.upload
 GET     /webapp/avatar/get                                  controllers.webapp.Avatar.getAll
+GET     /webapp/avatar/has/me/:userUUID/:width/:height      controllers.webapp.Avatar.has(userUUID : String, width: Int, height: Int)
 GET     /webapp/avatar/get/me/:userUUID/:width/:height      controllers.webapp.Avatar.getSelected(userUUID : String, width: Int, height: Int)
 GET     /webapp/avatar/get/:id                              controllers.webapp.Avatar.get(id: String)
 GET     /webapp/avatar/get/:id/:width/:height               controllers.webapp.Avatar.getThumb(id: String, width: Int, height: Int)

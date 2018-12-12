@@ -6,11 +6,24 @@ import java.util.UUID
 
 import daos.{AvatarDao, UserDao}
 import models.{Profile, UploadedImage}
+import play.api.Logger
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AvatarService @Inject() (avatarDao : AvatarDao, userDao: UserDao) {
+  val logger = Logger(this.getClass)
+
+  def has(userUUID: UUID, width: Int, height: Int) : Future[Boolean] = userDao.find(userUUID).flatMap(_ match {
+    case Some(user) => user.profiles.headOption match {
+      case Some(profile) => profile.email match {
+        case Some(email) => avatarDao.has(email, width: Int, height: Int)
+        case None => Future.successful(false)
+      }
+      case None => Future.successful(false)
+    }
+    case None => Future.successful(false)
+  })
 
   def getAll(profile: Profile) : Future[List[UploadedImage]] = profile.email match {
     case Some(email) => avatarDao.getAll(email)
