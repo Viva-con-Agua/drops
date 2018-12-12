@@ -67,9 +67,12 @@ class CrewSocketController @Inject() (
           val crewJsonResult: JsResult[CrewStub] = firstElement.validate[CrewStub]
           crewJsonResult match {
             case s: JsSuccess[CrewStub] => {
-              crewService.save(s.get).flatMap{
-                case (crew) => Future.successful(WebSocketEvent("SUCCESS", Option(List(Json.toJson(crew))), Option(Messages("socket.success.insert", s.get.name))))
-                //case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.insert"))))
+              crewService.get(s.get.name).flatMap{
+                case Some(crew) => Future.successful(WebSocketEvent("ERROR", None, Option("created")))
+                case _ => crewService.save(s.get).flatMap{
+                  case (crew) => Future.successful(WebSocketEvent("SUCCESS", Option(List(Json.toJson(crew))), Option(Messages("socket.success.insert", s.get.name))))
+                  //case _ => Future.successful(WebSocketEvent("ERROR", None, Option(Messages("socket.error.insert"))))
+                }
               }
             }
             case e: JsError => Future.successful(WebSocketEvent("ERROR", Option(List(JsError.toJson(e))), Option(Messages("socket.error.model", socketModel)))) 
