@@ -56,6 +56,15 @@ profile.upload.hint=Hover here to change the image
 profile.get=Return current Profile
 profile.notExist=Profile not exist
 profile.emailNotExist=There is no Email for searching Profile
+profile.assign.crew.success=Crew has been successfully assigned to your user.
+profile.removeAssign.crew.success=The user has been removed from the crew.
+profile.assign.error.nothingAssigned=An error occurred and the crew has not been assigned to your user.
+profile.removeAssign.error.nothingAssigned=An error occurred and you has not been removed from the crew.
+service.user.error.notFound.profile=Your user has not been found.
+service.user.error.notFound.crew=Found no crew for delete.
+service.user.error.oldCrewNotDeleted=An error occurred. Thus, you are still assigned to your previous crew.
+dao.user.error.notFound.supporter=Your user has not been found.
+dao.user.error.notFound.crew=The crew is unknown.
 task.title=Task Overview
 
 signup.title=Sign up

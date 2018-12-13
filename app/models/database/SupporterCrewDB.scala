@@ -27,9 +27,13 @@ object SupporterCrewDB extends ((Long, Long, Option[String], Option[String], Lon
              supporterId: Long,
              crewId: Long,
              roles: Set[Role]
-           ): Set[SupporterCrewDB] =
-    Set(SupporterCrewDB(supporterId, crewId, roles.headOption)) ++
-      roles.tail.map(role => SupporterCrewDB(supporterId, crewId, Some(role)))
+           ): Set[SupporterCrewDB] = {
+    val res = roles.map(role => SupporterCrewDB(supporterId, crewId, Some(role)))
+    res.size match {
+      case i if i > 0 => res
+      case _ => Set(SupporterCrewDB(supporterId, crewId, None))
+    }
+  }
 
   def mapperTo(supporterId: Long, crewId: Long, role: Option[String], pillar: Option[String], created: Long, updated: Long) =
     apply(supporterId, crewId, role, pillar, created, updated)

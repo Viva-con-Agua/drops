@@ -1,10 +1,11 @@
 package daos
 
 import java.util.UUID
+
 import javax.inject.Inject
 
 import scala.concurrent.Future
-import play.api.Play
+import play.api.{Logger, Play}
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
@@ -43,7 +44,11 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def getProfile (email: String): Future[Option[Profile]]
   def profileListByRole(id: UUID, role: String): Future[List[Profile]]
   def profileByRole(id: UUID, role: String): Future[Option[Profile]]
-  def updateSupporter(updated: Profile):Future[Option[Profile]] 
+  def updateSupporter(updated: Profile):Future[Option[Profile]]
+  def setCrew(profile: Profile): Future[Either[Int, String]]
+  def setCrew(crew: Crew, profile: Profile): Future[Either[Int, String]]
+  def setCrew(crewUUID: UUID, profile: Profile): Future[Either[Int, String]]
+  def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]]
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -134,6 +139,10 @@ class MongoUserDao extends UserDao {
   override def listOfStubs: Future[List[UserStub]] = this.getCount.flatMap(c =>
     users.find(Json.obj()).sort(Json.obj()).cursor[UserStub]().collect[List](c)
   )
+  def setCrew(profile: Profile): Future[Either[Int, String]] = ???
+  def setCrew(crew: Crew, profile: Profile): Future[Either[Int, String]] = ???
+  def setCrew(crewUUID: UUID, profile: Profile): Future[Either[Int, String]] = ???
+  def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]] = ???
 
   class MongoUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] =
@@ -145,7 +154,9 @@ class MongoUserDao extends UserDao {
   val ws = new MongoUserWS()
 }
 
-class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao{
+class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
+  val logger : Logger = Logger(this.getClass())
+
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
 
   val users = TableQuery[UserTableDef]
@@ -167,20 +178,18 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao{
   implicit val getOauth1InfoResult = GetResult(r => Some(OAuth1InfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
 
   private def toUser(users: Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]): Future[Seq[User]] = {
-    Future.sequence(users.map(current =>
+    Future.sequence(users.map(current => {
       toUserProfiles(Seq((current._2, current._3, current._4, current._5, current._6, current._7))).map((current._1, _))
-    )).map(UserConverter.convertPair( _ ))
+    })).map(UserConverter.convertPair( _ ))
   }
 
   private def toUserProfiles(profiles: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]): Future[Seq[Profile]] = {
     val withCrews = Future.sequence(profiles.map(current =>
       current._6 match {
         case Some(supporterCrew) => crewDao.find(supporterCrew.crewId).map(crew =>
-          (current._1, current._2, current._3, current._4, current._5, current._6, crew)
-        )
-        case _ => Future.successful(
-          (current._1, current._2, current._3, current._4, current._5, current._6, None)
-        )
+            (current._1, current._2, current._3, current._4, current._5, current._6, crew)
+          )
+        case _ => Future.successful((current._1, current._2, current._3, current._4, current._5, current._6, None))
       }
     ))
     withCrews.map(UserConverter.toProfileList(_))
@@ -311,7 +320,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao{
       val loginInfo: LoginInfo = profile.loginInfo
 
       val crewId : Future[Option[Long]] = supporter.crew match {
-        case Some(crew) => crewDao.findDBCrewModel(crew.id).map(crewDB => Some( crewDB.id ))
+        case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_.map(_.id ))
         case _ => Future.successful(None)
       }
 
@@ -513,21 +522,46 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao{
     */
   def setCrew(profile: Profile): Future[Either[Int, String]] = {
     profile.supporter.crew match {
-      case Some(crew) => crewDao.findDBCrewModel(crew.id).flatMap(crewDB => {
-        val action = for {
-          p <- profiles.filter(_.email === profile.email)
-          s <- supporters.filter(_.profileId === p.id)
-        } yield s
-        dbConfig.db.run(action.result).flatMap(_.headOption match {
-          case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles)).map( sc =>
-            dbConfig.db.run(supporterCrews.insertOrUpdate( sc ))
-          )).map(_.foldLeft(0)((sum, i) => sum + i )).map(Left( _ ))
-          case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
-        })
-      })
+      case Some(crew) => this.setCrew(crew.id, profile)
       case _ => Future.successful(Right("dao.user.error.notFound.crew"))
     }
   }
+
+  def setCrew(crew: Crew, profile: Profile): Future[Either[Int, String]] = {
+    this.setCrew(crew.id, profile)
+  }
+
+  def setCrew(crewUUID: UUID, profile: Profile): Future[Either[Int, String]] = {
+    crewDao.findDBCrewModel(crewUUID).flatMap(_.map(crewDB => {
+      val action = for {
+        p <- profiles.filter(_.email === profile.email)
+        s <- supporters.filter(_.profileId === p.id)
+      } yield s
+      dbConfig.db.run(action.result).flatMap(_.headOption match {
+        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles)).map( sc =>
+          dbConfig.db.run(supporterCrews.insertOrUpdate( sc ))
+        )).map(_.foldLeft(0)((sum, i) => sum + i )).map(Left( _ ))
+        case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
+      })
+    }).getOrElse(Future.successful(Right("dao.user.error.notFound.crew"))))
+  }
+
+  def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]] = {
+    crewDao.findDBCrewModel(crewUUID).flatMap(_.map(crewDB => {
+      val action = for {
+        p <- profiles.filter(_.email === profile.email)
+        s <- supporters.filter(_.profileId === p.id)
+      } yield s
+      dbConfig.db.run(action.result).flatMap(_.headOption match {
+        case Some(supporter) => {
+          val q = supporterCrews.filter(row => row.crewId === crewDB.id && row.supporterId === supporter.id)
+          dbConfig.db.run(q.delete).map(Left( _ ))
+        }
+        case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
+      })
+    }).getOrElse(Future.successful(Right("dao.user.error.notFound.crew"))))
+  }
+
   //Wenn er private ist kann ich ihn nutzen. Ansonsten muss ich schauen wo er verwendet wird
   class MariadbUserWS extends UserWS {
     override def find(userId: UUID, queryExtension: JsObject): Future[Option[User]] = ???

@@ -146,4 +146,36 @@ class Profile @Inject() (
     case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
+
+  def assignCrew(uuidCrew: String) = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.assignOnlyOne(UUID.fromString(uuidCrew), user).map(_ match {
+        case Left(i) if i > 0 => WebAppResult.Ok(request, "profile.assign.crew.success", Nil, "Profile.Assign.Crew.Success", Json.obj()).getResult
+        case Left(i) => WebAppResult.Bogus(request, "profile.assign.error.nothingAssigned", Nil, "Profile.Assign.Error.NothingAssigned", Json.obj(
+          "crewID" -> uuidCrew,
+          "userID" -> user.id
+        )).getResult
+        case Right(msg) => WebAppResult.NotFound(request, msg, Nil, msg, Map(
+          "crewID" -> uuidCrew.toString,
+          "userID" -> user.id.toString
+        )).getResult
+      })
+      case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def removeCrew = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.deAssign(user).map(_ match {
+        case Left(i) if i > 0 => WebAppResult.Ok(request, "profile.removeAssign.crew.success", Nil, "Profile.RemoveAssign.Crew.Success", Json.obj()).getResult
+        case Left(i) => WebAppResult.Bogus(request, "profile.removeAssign.error.nothingAssigned", Nil, "Profile.RemoveAssign.Error.NothingAssigned", Json.obj(
+          "userID" -> user.id
+        )).getResult
+        case Right(msg) => WebAppResult.NotFound(request, msg, Nil, msg, Map(
+          "userID" -> user.id.toString
+        )).getResult
+      })
+      case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
 }

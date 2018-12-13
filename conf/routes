@@ -36,6 +36,8 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 # WebApp profile
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
+GET     /webapp/profile/assign/:crewUUID                    controllers.webapp.Profile.assignCrew(crewUUID: String)
+DELETE  /webapp/profile/remove/crew                         controllers.webapp.Profile.removeCrew
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)

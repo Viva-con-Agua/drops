@@ -1,6 +1,7 @@
 package services
 
 import java.util.UUID
+
 import javax.inject._
 
 import scala.concurrent.Future
@@ -14,9 +15,11 @@ import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, TaskDao, UserDao}
 import models.AccessRight
 import models.{Profile, ProfileImage, User}
+import play.api.Logger
 import utils.Nats
 
 class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao, nats: Nats) extends IdentityService[User] {
+  val logger: Logger = Logger(this.getClass())
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = userDao.save(user)
   def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
@@ -58,4 +61,32 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
   def getProfile(email: String) = userDao.getProfile(email)
   def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
   def profileByRole(id: UUID, role: String) = userDao.profileByRole(id, role)
+
+  def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
+    case Some(profile) => userDao.setCrew(crewUUID, profile)
+    case _ => Future.successful(Right("service.user.error.notFound.profile"))
+  }
+
+  /**
+    * Removes a crew from a user.
+    * @author Johann Sell
+    * @param user
+    */
+  def deAssign(user: User) = user.profiles.headOption match {
+    case Some(profile) => profile.supporter.crew match {
+      case Some(crew) => userDao.removeCrew(crew.id, profile)
+      case None => Future.successful(Right("service.user.error.notFound.crew"))
+    }
+    case None => Future.successful(Right("service.user.error.notFound.profile"))
+  }
+
+  def assignOnlyOne(crewUUID: UUID, user: User) = user.profiles.headOption match {
+    case Some(profile) if profile.supporter.crew.isDefined => this.deAssign(user).flatMap(_ match {
+      case Left(i) if i > 0 => this.assign(crewUUID, user)
+      case Left(i) => Future.successful(Right("service.user.error.oldCrewNotDeleted"))
+      case Right(x) => Future.successful( Right( x ) )
+    })
+    case Some(profile) => this.assign(crewUUID, user)
+    case None => Future.successful(Right("service.user.error.notFound.profile"))
+  }
 }

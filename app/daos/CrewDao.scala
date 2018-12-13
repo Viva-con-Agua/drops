@@ -134,8 +134,8 @@ class MariadbCrewDao extends CrewDao {
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
   }
 
-  def findDBCrewModel(crewId : UUID) : Future[CrewDB] = {
-    dbConfig.db.run(crews.filter(_.publicId === crewId).result).map(r => r.head)
+  def findDBCrewModel(crewId : UUID) : Future[Option[CrewDB]] = {
+    dbConfig.db.run(crews.filter(_.publicId === crewId).result).map(r => r.headOption)
   }
 
   override def save(crew: Crew): Future[Crew] = {
@@ -214,9 +214,7 @@ class MariadbCrewDao extends CrewDao {
 
 
   override def getObjectId(id: UUID) : Future[Option[ObjectIdWrapper]] = {
-    findDBCrewModel(id).map(c => {
-      Option(ObjectIdWrapper(ObjectId(c.id.toString)))
-    })
+    findDBCrewModel(id).map(_.map(c => ObjectIdWrapper(ObjectId(c.id.toString))))
   }
 
   override def getObjectId(name: String) : Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))

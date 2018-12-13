@@ -55,7 +55,15 @@ profile.upload.msg=Für Upload klicken
 profile.upload.hint=Bewege die Maus hier rüber, um das Bild zu ändern.
 profile.notExist=Profile konnte nicht gefunden werden.
 profile.emailNotExist=Die Email ist nicht angegeben.
-
+profile.assign.crew.success=Du bist jetzt Teil der Crew!
+profile.removeAssign.crew.success=Du bist jetzt kein Teil der Crew mehr.
+profile.assign.error.nothingAssigned=Ein Fehler ist aufgetreten und du konntest leider nicht der Crew zugeordnet werden.
+profile.removeAssign.error.nothingAssigned=Ein Fehler ist aufgetreten und du bist noch Teil der Crew.
+service.user.error.notFound.profile=Dein Nutzer konnte nicht gefunden werden.
+service.user.error.notFound.crew=Es konnte keine Crew gefunden werden, zu der der Nutzer gehört.
+service.user.error.oldCrewNotDeleted=Ein Fehler ist aufgetreten. Daher bist du immer noch Teil deiner bisherigen Crew.
+dao.user.error.notFound.supporter=Dein Nutzer konnte nicht gefunden werden.
+dao.user.error.notFound.crew=Die angegebene Crew konnte nicht gefunden werden.
 
 task.title=Todo Übersicht
 

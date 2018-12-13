@@ -46,8 +46,8 @@ class ProfileOrganizationTableDef(tag: Tag) extends Table[(Long, Long)](tag, "Pr
 class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Supporter_Crew"){
   def supporterId = column[Long]("supporter_id")
   def crewId = column[Long]("crew_id")
-  def role = column[String]("role")
-  def pillar = column[String]("pillar")
+  def role = column[Option[String]]("role")
+  def pillar = column[Option[String]]("pillar")
   def created = column[Long]("created")
   def updated = column[Long]("updated")
 
@@ -56,7 +56,7 @@ class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Suppo
 //  }
 //
   def * =
-    (supporterId, crewId, role.?, pillar.?, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
+    (supporterId, crewId, role, pillar, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
 //a
 //  def * : ProvenShape[SupporterCrewDB] = ProvenShape.proveShapeOf(
 //    (supporterId, crewId, role.?, pillar.?, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
