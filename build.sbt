@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.docker.Cmd
 
 name := """Drops"""
 
-version := "0.31.38"
+version := "0.31.39"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
