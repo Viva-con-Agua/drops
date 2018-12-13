@@ -51,6 +51,17 @@ GET     /webapp/organization/ws                             controllers.webapp.O
 GET     /webapp/organization/get/:name                      controllers.webapp.OrganizationController.get(name: String)
 #GET     /webapp/organization/list                           controllers.webapp.OrganizationController.list
 
+POST    /webapp/avatar/upload                               controllers.webapp.Avatar.upload
+GET     /webapp/avatar/get                                  controllers.webapp.Avatar.getAll
+GET     /webapp/avatar/has/me/:userUUID/:width/:height      controllers.webapp.Avatar.has(userUUID : String, width: Int, height: Int)
+GET     /webapp/avatar/get/me/:userUUID/:width/:height      controllers.webapp.Avatar.getSelected(userUUID : String, width: Int, height: Int)
+GET     /webapp/avatar/get/:id                              controllers.webapp.Avatar.get(id: String)
+GET     /webapp/avatar/get/:id/:width/:height               controllers.webapp.Avatar.getThumb(id: String, width: Int, height: Int)
+GET     /webapp/avatar/csrf                                 controllers.webapp.Avatar.getCSRF
+POST    /webapp/avatar/upload/thumbnails/:id                controllers.webapp.Avatar.thumbnails(id: String)
+DELETE  /webapp/avatar/delete/:id                           controllers.webapp.Avatar.remove(id: String)
+GET     /webapp/avatar/select/:id                           controllers.webapp.Avatar.select(id: String)
+
 # Rest api
 GET     /rest/profile                                       controllers.RestApi.profile
 POST    /rest/user/create                                  controllers.RestApi.createUser
