@@ -62,6 +62,7 @@ class Profile @Inject() (
   val env: Environment[User, CookieAuthenticator]
 ) extends Silhouette[User, CookieAuthenticator]  {
  implicit val mApi = messagesApi
+  override val logger = Logger(Action.getClass)
 
 
   /*def get = SecuredAction.async { implicit request =>
@@ -69,6 +70,20 @@ class Profile @Inject() (
   }*/
   
   def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
+  def getUser(uuid: String) = UserAwareAction.async { implicit request =>
+    this.logger.info(uuid)
+    this.logger.info(UUID.fromString(uuid).toString)
+    request.identity match {
+      case Some( u ) => userService.find(UUID.fromString(uuid)).map(_ match {
+        case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(user)).getResult
+        case None => WebAppResult.NotFound(request, "profile.notFound.user", Nil, "Profile.NotFound.User", Map[String, String]("uuid" -> uuid) ).getResult
+      })
+      case None => Future.successful(
+        WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult
+      )
+    }
+  }
 
   def get = UserAwareAction.async { implicit request =>
     request.identity match {

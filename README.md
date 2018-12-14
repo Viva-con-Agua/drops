@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.31.41 (2018-12-14)
+## Version 0.31.42 (2018-12-15)
+* [[I] #301 - Add route to receive user from WebApp](https://github.com/Viva-con-Agua/drops/issues/301)
 * [[B] #299 - Cities are not deleted on crew update](https://github.com/Viva-con-Agua/drops/issues/299)
 * [[I] #298 - WebApp-REST interface for crew selection](https://github.com/Viva-con-Agua/drops/issues/298)
 * [[B] #297 - Crews view is outdated](https://github.com/Viva-con-Agua/drops/issues/297)
