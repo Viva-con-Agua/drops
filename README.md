@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.31.40 (2018-12-13)
+## Version 0.31.41 (2018-12-14)
+* [[B] #299 - Cities are not deleted on crew update](https://github.com/Viva-con-Agua/drops/issues/299)
 * [[I] #298 - WebApp-REST interface for crew selection](https://github.com/Viva-con-Agua/drops/issues/298)
 * [[B] #297 - Crews view is outdated](https://github.com/Viva-con-Agua/drops/issues/297)
 * [[F] #82 - Extend profile image CRUD](https://github.com/Viva-con-Agua/drops/issues/82)
