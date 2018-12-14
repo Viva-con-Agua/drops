@@ -184,10 +184,10 @@ class MariadbCrewDao extends CrewDao {
   override def delete(crew: Crew): Future[Boolean] = {
     dbConfig.db.run(crews.filter(c => c.publicId === crew.id).result)
       .flatMap(cr => {
-        dbConfig.db.run(cities.filter(city => city.crewId === cr.head.id).delete)
+        dbConfig.db.run(cities.filter(_.crewId === cr.head.id).delete)
         .flatMap {
-          case 0 => Future.successful(false)
-          case _ => dbConfig.db.run(crews.filter(cre => cre.publicId === crew.id).delete)
+          case x if crew.cities.size != x => Future.successful(false)
+          case _ => dbConfig.db.run(crews.filter(c => c.publicId === crew.id).delete)
           .flatMap {
             case 0 => Future.successful(false)
             case _ => Future.successful(true)
