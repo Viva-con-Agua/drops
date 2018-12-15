@@ -55,6 +55,7 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
   }
   //todo
   def delete(userId: UUID) = {
+    userDao.delete(userId)
     nats.publishDelete("USER", userId)
   }
   

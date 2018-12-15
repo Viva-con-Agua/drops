@@ -437,12 +437,11 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
 
   override def delete(userId: UUID): Future[Boolean] = {
     val deleteUser = users.filter(u => u.publicId === userId)
-
     val deleteProfile = profiles.filter(_.userId.in(deleteUser.map(_.id)))
     val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
     val deleteSupporterCrew = supporterCrews.filter(_.supporterId.in(deleteSupporter.map(_.id)))
     val deleteLoginInfo = loginInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
-    dbConfig.db.run((deleteLoginInfo.delete andThen deleteSupporter.delete andThen deleteSupporterCrew.delete andThen
+    dbConfig.db.run((deleteSupporterCrew.delete andThen deleteSupporter.delete andThen deleteLoginInfo.delete andThen
       deleteProfile.delete andThen deleteUser.delete).transactionally).map(_ match {
         case 1 => true
         case 0 => false
