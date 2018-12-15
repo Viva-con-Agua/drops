@@ -72,8 +72,6 @@ class Profile @Inject() (
   def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
 
   def getUser(uuid: String) = UserAwareAction.async { implicit request =>
-    this.logger.info(uuid)
-    this.logger.info(UUID.fromString(uuid).toString)
     request.identity match {
       case Some( u ) => userService.find(UUID.fromString(uuid)).map(_ match {
         case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(user)).getResult
@@ -191,6 +189,32 @@ class Profile @Inject() (
         )).getResult
       })
       case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def assignRole(userUUID: String, pillar: String) = UserAwareAction.async { implicit request =>
+    val otherUserID = UUID.fromString(userUUID)
+    request.identity match {
+      case Some(user) => userService.find(otherUserID).flatMap(_ match {
+        case Some(otherUser) => {
+          val p = Pillar(pillar)
+          p.isKnown match {
+            case true => user.profiles.headOption match {
+              case Some(profile) => profile.supporter.crew match {
+                case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, p), otherUser).map(_ match {
+                  case Left(i) => WebAppResult.Ok(request, "profile.assignRole.success", Nil, "Profile.AssignRole.Success", Json.obj()).getResult
+                  case Right(error) => WebAppResult.NotFound(request, error, Nil, error, Map[String, String]()).getResult
+                })
+                case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.crewNotFoundExecutingUser", Nil, "Profile.AssignRole.CrewNotFoundExecutingUser", Map[String, String]()).getResult)
+              }
+              case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.profileNotFoundExecutingUser", Nil, "Profile.AssignRole.ProfileNotFoundExecutingUser", Map[String, String]()).getResult)
+            }
+            case false => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.givePillarUnknown", Nil, "Profile.AssignRole.GivePillarUnknown", Map[String, String]()).getResult)
+          }
+        }
+        case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.otherUserNotFound", Nil, "Profile.AssignRole.OtherUserNotFound", Map[String, String]()).getResult)
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
 }

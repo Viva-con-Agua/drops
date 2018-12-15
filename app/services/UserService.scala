@@ -12,13 +12,12 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.modules.reactivemongo.ReactiveMongoApi
 import play.modules.reactivemongo.json.collection.JSONCollection
-import daos.{AccessRightDao, TaskDao, UserDao}
-import models.AccessRight
-import models.{Profile, ProfileImage, User}
+import daos.{AccessRightDao, CrewDao, TaskDao, UserDao}
+import models._
 import play.api.Logger
 import utils.Nats
 
-class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: AccessRightDao, nats: Nats) extends IdentityService[User] {
+class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, crewDao: CrewDao, accessRightDao: AccessRightDao, nats: Nats) extends IdentityService[User] {
   val logger: Logger = Logger(this.getClass())
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = userDao.save(user)
@@ -65,6 +64,16 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
   def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
     case Some(profile) => userDao.setCrew(crewUUID, profile)
     case _ => Future.successful(Right("service.user.error.notFound.profile"))
+  }
+
+  def assignCrewRole(crew: Crew, role: VolunteerManager, user: User): Future[Either[Int, String]] = {
+    crewDao.findDB(crew).flatMap(_ match {
+      case Some(crewDB) => user.profiles.headOption match {
+        case Some(profile) => userDao.setCrewRole(crew.id, crewDB.id, role, profile)
+        case None => Future.successful(Right("service.user.assignCrewRole.hasNoProfile"))
+      }
+      case None => Future.successful(Right("service.user.assignCrewRole.foundNoCrew"))
+    })
   }
 
   /**

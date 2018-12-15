@@ -49,6 +49,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def setCrew(crew: Crew, profile: Profile): Future[Either[Int, String]]
   def setCrew(crewUUID: UUID, profile: Profile): Future[Either[Int, String]]
   def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]]
+  def setCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]]
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -133,6 +134,8 @@ class MongoUserDao extends UserDao {
   def profileListByRole(id: UUID, role: String): Future[List[Profile]] = ???
   def profileByRole(id: UUID, role: String): Future[Option[Profile]] = profileListByRole(id, role).map(_.headOption)
   def updateSupporter(updated: Profile):Future[Option[Profile]] = ???
+
+  override def setCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]] = ???
 
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 
@@ -560,6 +563,41 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
       })
     }).getOrElse(Future.successful(Right("dao.user.error.notFound.crew"))))
+  }
+
+  /**
+    * Assigns a role to a supporter if and onl if, the supporter has already the mentioned crew.
+    * @param crewUUID
+    * @param crewDBID
+    * @param role
+    * @param profile
+    * @return
+    */
+  override def setCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]] = {
+    profile.supporter.crew match {
+      case Some(crew) if crew.id == crewUUID => {
+        // get the SupporterDB
+        val supporterQuery = (for {
+          p <- profiles.filter(_.email === profile.email)
+          s <- supporters.filter(_.profileId === p.id)
+        } yield s)
+        dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
+          case Some(supporterDB) => {
+            // does the supporter already has the new role?
+            (SupporterCrewDB * (supporterDB.id, crewDBID, Set(role))).headOption match {
+              case Some(sc) => dbConfig.db.run(supporterCrews.insertOrUpdate(sc)).map(_ match {
+                case i if i > 0 => Left(i)
+                case _ => Right("dao.user.error.nothingUpdated")
+              })
+              case None => Future.successful(Right("dao.user.error.canNotCreateDBRelationObj"))
+            }
+          }
+          case None => Future.successful(Right("dao.user.error.supporterNotFound"))
+        })
+      }
+      case Some(crew) => Future.successful(Right("dao.user.error.anotherCrewAssigned"))
+      case None => Future.successful(Right("dao.user.error.crewNotAssigned"))
+    }
   }
 
   //Wenn er private ist kann ich ihn nutzen. Ansonsten muss ich schauen wo er verwendet wird
