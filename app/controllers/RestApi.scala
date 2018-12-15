@@ -142,8 +142,8 @@ class RestApi @Inject() (
 
     val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
     userService.retrieve(loginInfo).flatMap{
-      case Some(_) =>
-        Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserExists", Messages("error.userExists", signUpData.email)))
+      case Some(user) =>
+        Future.successful(Created(Json.toJson(PublicUser(user))))
       case None =>{
         var passwordInfo : Option[PasswordInfo] = None
         if(signUpData.password.isDefined)
@@ -253,9 +253,9 @@ class RestApi @Inject() (
   def createCrews = ApiAction.async(validateJson[CrewStub]) { implicit request => {
     val crewData = request.request.body
     crewService.get(crewData.name).flatMap{
-      case Some(crew) => Future.successful(BadRequest("ERROR"))
+      case Some(crew) => Future.successful(Created(Json.toJson(crew)))
       case _ => crewService.save(crewData).flatMap{
-        case (crew) => Future.successful(Ok("SUCCESS"))
+        case (crew) => Future.successful(Ok(Json.toJson(crew)))
        // case _ => Future.successful(BadRequest("ERROR"))
       }
     }
@@ -281,6 +281,17 @@ class RestApi @Inject() (
       }
     }
   }}
+
+  def assignUserToCrew(uuidUser: UUID, uuidCrew: UUID) = ApiAction.async { implicit request => 
+    userService.find(uuidUser).flatMap{
+      case Some(user) => userService.assignOnlyOne(uuidCrew, user).map(_ match {
+        case Left(i) if i > 0 => Ok(Messages("profile.assign.crew.success"))
+        case Left(i) => NotModified
+        case Right(msg) => NotFound(msg)
+      })
+      case _ => Future.successful(NotFound(Messages("rest.api.canNotFindGivenUser", uuidUser)))
+    }
+  }
 
   //ToDo: ApiAction instead of Action
   def getTasks = ApiAction.async{ implicit  request => {
