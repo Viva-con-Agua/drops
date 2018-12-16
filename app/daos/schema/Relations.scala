@@ -44,6 +44,7 @@ class ProfileOrganizationTableDef(tag: Tag) extends Table[(Long, Long)](tag, "Pr
 }
 
 class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Supporter_Crew"){
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def supporterId = column[Long]("supporter_id")
   def crewId = column[Long]("crew_id")
   def role = column[Option[String]]("role")
@@ -56,7 +57,7 @@ class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Suppo
 //  }
 //
   def * =
-    (supporterId, crewId, role, pillar, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
+    (id, supporterId, crewId, role, pillar, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
 //a
 //  def * : ProvenShape[SupporterCrewDB] = ProvenShape.proveShapeOf(
 //    (supporterId, crewId, role.?, pillar.?, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
@@ -64,7 +65,7 @@ class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Suppo
 
 //  def * = (supporterId, crewId)
 
-  def pk = primaryKey("primaryKey", (supporterId, crewId))
+  def pk = primaryKey("primaryKey", id)
   def sK = foreignKey("supporterId", supporterId, TableQuery[SupporterTableDef])(_.id)
   def cK = foreignKey("crewId", crewId, TableQuery[CrewTableDef])(_.id)
 }

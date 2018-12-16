@@ -295,20 +295,9 @@ class Auth @Inject() (
   }
 
   def signOut = SecuredAction.async { implicit request =>
-    userService.retrieve(request.authenticator.loginInfo).flatMap {
-      case None =>
-        Future.successful(
-          WebAppResult.Unauthorized(request, "error.noUser", Nil, "AuthProvider.SignOut.NoUser", Map(
-            "providerKey" -> request.authenticator.loginInfo.providerKey,
-            "providerID" -> request.authenticator.loginInfo.providerID
-          )).getResult
-        )
-      case Some(user) => {
-        pool.logout(user)
-        Future.successful(nats.publishLogout(user.id))
-      }
-    }
-    env.authenticatorService.discard(request.authenticator, WebAppResult.Ok(request, "signout.msg", Nil, "AuthProvider.SignOut.Success").getResult)
+    pool.logout(request.identity)
+    //nats.publishLogout(request.identity.id)
+    env.authenticatorService.discard(request.authenticator,WebAppResult.Ok(request, "signout.msg", Nil, "AuthProvider.SignOut.Success").getResult)
   }
 
   def handleResetPasswordStartData = Action.async(parse.json) { implicit request =>

@@ -157,7 +157,7 @@ class MongoUserDao extends UserDao {
   val ws = new MongoUserWS()
 }
 
-class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
+class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao, val userConverter: UserConverter) extends UserDao {
   val logger : Logger = Logger(this.getClass())
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
@@ -177,26 +177,35 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   implicit val getLoginInfoResult = GetResult(r => LoginInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
   implicit val getPasswordInfoResult = GetResult(r => Some(PasswordInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
   implicit val getSupporterInfoResult = GetResult(r => SupporterDB(r.nextLong, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextLongOption, r.nextStringOption, r.nextLong))
-  implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong)))
+  implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong)))
   implicit val getOauth1InfoResult = GetResult(r => Some(OAuth1InfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
 
   private def toUser(users: Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]): Future[Seq[User]] = {
     Future.sequence(users.map(current => {
-      toUserProfiles(Seq((current._2, current._3, current._4, current._5, current._6, current._7))).map((current._1, _))
-    })).map(UserConverter.convertPair( _ ))
+      addCrews(Seq((current._2, current._3, current._4, current._5, current._6, current._7))).map(_.map(tuple =>
+        (current._1, tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
+      ))
+    })).map(_.foldLeft[
+      Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]
+      ](Seq())((acc, currentList) => acc ++ currentList)).map(UserDB.read( _ ))
+//    })).map(userConverter.convertPair( _ ))
   }
 
   private def toUserProfiles(profiles: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]): Future[Seq[Profile]] = {
-    val withCrews = Future.sequence(profiles.map(current =>
-      current._6 match {
+//    withCrews.flatMap(userConverter.toProfileList(_))
+    addCrews(profiles).map(profiles => ProfileDB.read(profiles))
+  }
+
+  private def addCrews(profiles: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]):
+    Future[Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]] =
+    Future.sequence(profiles.map(current =>
+      current._6.headOption match {
         case Some(supporterCrew) => crewDao.find(supporterCrew.crewId).map(crew =>
-            (current._1, current._2, current._3, current._4, current._5, current._6, crew)
-          )
+          (current._1, current._2, current._3, current._4, current._5, current._6, crew)
+        )
         case _ => Future.successful((current._1, current._2, current._3, current._4, current._5, current._6, None))
       }
     ))
-    withCrews.map(UserConverter.toProfileList(_))
-  }
 
   /** Find a user object by loginInfo providerId and providerKey
     *
@@ -225,7 +234,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   private def find(id : Long):Future[Option[User]] = {
     val action = for{
       ((((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info), supporterCrew) <- (users.filter(u => u.id === id)
-        join profiles on (_.id === _.userId) //user.id === profile.userId
+        join profiles on (_.id === _.userId) //user.id === profAile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
         join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
         joinLeft passwordInfos on(_._1._1._2.id === _.profileId)
@@ -328,7 +337,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       }
 
       def supporterCrewAssignment(crewDBiD: Option[Long], s: Long, r: Option[Role]) = crewDBiD match {
-        case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += SupporterCrewDB(s, crewId, r)
+        case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += (SupporterCrewDB(s, crewId, r, None))
         case _ => DBIO.successful(false)
       }
 
@@ -377,7 +386,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   override def link(user: User, profile: Profile): Future[User] = {
     find(profile.loginInfo).flatMap(user => {
       findDBUserModel(user.get.id).flatMap(userDB => {
-        addProfiles(userDB, List(profile))
+          addProfiles(userDB, List(profile))
       })
     })
   }
@@ -434,7 +443,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
 
   override def listOfStubs: Future[List[UserStub]] = {
     list.map(userList => {
-      UserConverter.buildUserStubListFromUserList(userList)
+      userConverter.buildUserStubListFromUserList(userList)
     })
   }
 
@@ -514,6 +523,17 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   )
  }
 
+//  def getSupporterCrewDB(sc: SupporterCrewDB) : Future[SupporterCrewDB] = dbConfig.db.run(
+//    supporterCrews.filter((row) =>
+//      row.supporterId === sc.supporterId && row.crewId === sc.crewId &&
+//        ((row.role === sc.role && row.pillar === sc.pillar) || (row.role.isEmpty && row.pillar.isEmpty)))
+//      .map(_.id)
+//      .result
+//  ).map(_.headOption match {
+//    case Some(id) => sc.copy(id = id)
+//    case None => sc
+//  })
+
   /**
     * Returns left an Int indicating if the database operation was successful and how many rows are changed / added.
     * If it returns right a String, that means, there was no database operation executed, because of missing data.
@@ -541,8 +561,8 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         s <- supporters.filter(_.profileId === p.id)
       } yield s
       dbConfig.db.run(action.result).flatMap(_.headOption match {
-        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles)).map( sc =>
-          dbConfig.db.run(supporterCrews.insertOrUpdate( sc ))
+        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles, None)).map( sc =>
+          dbConfig.db.run(supporterCrews += ( sc ))
         )).map(_.foldLeft(0)((sum, i) => sum + i )).map(Left( _ ))
         case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
       })
@@ -584,13 +604,33 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
           case Some(supporterDB) => {
             // does the supporter already has the new role?
-            (SupporterCrewDB * (supporterDB.id, crewDBID, Set(role))).headOption match {
-              case Some(sc) => dbConfig.db.run(supporterCrews.insertOrUpdate(sc)).map(_ match {
+            def update = {
+              val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDBID } yield (sc.role, sc.pillar)
+              dbConfig.db.run(updateQ.update((Some(role.name), Some(role.getPillar.name)))).map(_ match {
                 case i if i > 0 => Left(i)
                 case _ => Right("dao.user.error.nothingUpdated")
               })
-              case None => Future.successful(Right("dao.user.error.canNotCreateDBRelationObj"))
             }
+            def insert = {
+              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None )
+              dbConfig.db.run(supporterCrews += sc).map(_ match {
+                case i if i > 0 => Left(i)
+                case _ => Right("dao.user.error.nothingUpdated")
+              })
+            }
+            dbConfig.db.run(supporterCrews.filter(row =>
+              row.supporterId === supporterDB.id && row.crewId === crewDBID && row.role.isEmpty && row.pillar.isEmpty
+            ).exists.result).flatMap(_ match {
+              case true => update
+              case false => insert
+            })
+//            (SupporterCrewDB * (supporterDB.id, crewDBID, Set(role), None)).headOption match {
+//              case Some(sc) => getSupporterCrewDB(sc).flatMap(dbsc => dbConfig.db.run(supporterCrews.insertOrUpdate(dbsc))).map(_ match {
+//                case i if i > 0 => Left(i)
+//                case _ => Right("dao.user.error.nothingUpdated")
+//              })
+//              case None => Future.successful(Right("dao.user.error.canNotCreateDBRelationObj"))
+//            }
           }
           case None => Future.successful(Right("dao.user.error.supporterNotFound"))
         })

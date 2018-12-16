@@ -26,6 +26,7 @@ import slick.jdbc.{GetResult, PositionedParameters, SQLActionBuilder, SetParamet
 trait CrewDao extends ObjectIdResolver with CountResolver {
   def findDB(crew: Crew): Future[Option[CrewDB]]
   def find(id: UUID):Future[Option[Crew]]
+  def find(id: Long):Future[Option[Crew]]
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def update(crew: Crew):Future[Crew]
@@ -63,6 +64,8 @@ class MongoCrewDao extends CrewDao {
     crews.find(Json.obj(
       "id" -> id
     )).one[Crew]
+
+  override def find(id: Long): Future[Option[Crew]] = ???
 
   def find(crewName: String):Future[Option[Crew]] =
     crews.find(Json.obj(
@@ -119,7 +122,6 @@ class MariadbCrewDao extends CrewDao {
     
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
   }
-
 
   override def find(crewName: String): Future[Option[Crew]] = {
     val action = for {
