@@ -209,7 +209,7 @@ class Profile @Inject() (
               }
               case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.profileNotFoundExecutingUser", Nil, "Profile.AssignRole.ProfileNotFoundExecutingUser", Map[String, String]()).getResult)
             }
-            case false => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.givePillarUnknown", Nil, "Profile.AssignRole.GivePillarUnknown", Map[String, String]()).getResult)
+            case false => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.givenPillarUnknown", Nil, "Profile.AssignRole.GivePillarUnknown", Map[String, String]()).getResult)
           }
         }
         case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.otherUserNotFound", Nil, "Profile.AssignRole.OtherUserNotFound", Map[String, String]()).getResult)

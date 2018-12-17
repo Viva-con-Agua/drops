@@ -70,9 +70,9 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, crewDao: CrewDao
     crewDao.findDB(crew).flatMap(_ match {
       case Some(crewDB) => user.profiles.headOption match {
         case Some(profile) => userDao.setCrewRole(crew.id, crewDB.id, role, profile)
-        case None => Future.successful(Right("service.user.assignCrewRole.hasNoProfile"))
+        case None => Future.successful(Right("service.user.error.notFound.profile"))
       }
-      case None => Future.successful(Right("service.user.assignCrewRole.foundNoCrew"))
+      case None => Future.successful(Right("service.user.error.notFound.crew"))
     })
   }
 

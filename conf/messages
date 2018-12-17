@@ -61,10 +61,16 @@ profile.removeAssign.crew.success=The user has been removed from the crew.
 profile.assign.error.nothingAssigned=An error occurred and the crew has not been assigned to your user.
 profile.removeAssign.error.nothingAssigned=An error occurred and you has not been removed from the crew.
 service.user.error.notFound.profile=Your user has not been found.
-service.user.error.notFound.crew=Found no crew for delete.
+service.user.error.notFound.crew=Found no crew for this user.
 service.user.error.oldCrewNotDeleted=An error occurred. Thus, you are still assigned to your previous crew.
 dao.user.error.notFound.supporter=Your user has not been found.
 dao.user.error.notFound.crew=The crew is unknown.
+dao.user.error.nothingUpdated=The new role has not been saved for the user.
+dao.user.error.anotherCrewAssigned=The user can not get a role for this crew, since the user is assigned to another crew.
+profile.assignRole.crewNotFoundExecutingUser=Your crew has not been found.
+profile.assignRole.profileNotFoundExecutingUser=Your user has not been found.
+profile.assignRole.givenPillarUnknown=You can not assign the role for the given area, since the area is unknown.
+profile.assignRole.otherUserNotFound=You can not assign a role to an unknown user.
 task.title=Task Overview
 
 signup.title=Sign up

@@ -620,19 +620,12 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
               case true => update
               case false => insert
             })
-//            (SupporterCrewDB * (supporterDB.id, crewDBID, Set(role), None)).headOption match {
-//              case Some(sc) => getSupporterCrewDB(sc).flatMap(dbsc => dbConfig.db.run(supporterCrews.insertOrUpdate(dbsc))).map(_ match {
-//                case i if i > 0 => Left(i)
-//                case _ => Right("dao.user.error.nothingUpdated")
-//              })
-//              case None => Future.successful(Right("dao.user.error.canNotCreateDBRelationObj"))
-//            }
           }
-          case None => Future.successful(Right("dao.user.error.supporterNotFound"))
+          case None => Future.successful(Right("dao.user.error.notFound.supporter"))
         })
       }
       case Some(crew) => Future.successful(Right("dao.user.error.anotherCrewAssigned"))
-      case None => Future.successful(Right("dao.user.error.crewNotAssigned"))
+      case None => Future.successful(Right("dao.user.error.notFound.crew"))
     }
   }
 
