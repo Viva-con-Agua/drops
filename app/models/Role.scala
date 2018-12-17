@@ -95,6 +95,9 @@ case class VolunteerManager(name: String, context: (Crew, Pillar)) extends Role 
   def forCrew(other: Crew): Boolean = this.context._1 == other
   def forCrew(crewName: String): Boolean = this.context._1.name == crewName
   def isResponsibleFor(pillar: Pillar): Boolean = this.context._2 == pillar
+
+  def getPillar = this.context._2
+  def getCrew = this.context._1
 }
 
 object VolunteerManager {

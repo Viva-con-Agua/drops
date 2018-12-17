@@ -7,6 +7,8 @@ import play.api.libs.json.Json
   */
 trait Pillar {
   def name : String
+
+  def isKnown: Boolean = this != Unknown
 }
 
 object Pillar {
