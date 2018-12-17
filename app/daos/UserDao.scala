@@ -25,7 +25,6 @@ import slick.dbio.DBIOAction
 import slick.driver.JdbcProfile
 import slick.driver.MySQLDriver.api._
 import models.converter
-import models.converter.UserConverter
 import slick.jdbc.{GetResult, SQLActionBuilder}
 
 trait UserDao extends ObjectIdResolver with CountResolver{
@@ -157,7 +156,7 @@ class MongoUserDao extends UserDao {
   val ws = new MongoUserWS()
 }
 
-class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao, val userConverter: UserConverter) extends UserDao {
+class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val logger : Logger = Logger(this.getClass())
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
@@ -188,11 +187,9 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao, val userConverter: U
     })).map(_.foldLeft[
       Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]
       ](Seq())((acc, currentList) => acc ++ currentList)).map(UserDB.read( _ ))
-//    })).map(userConverter.convertPair( _ ))
   }
 
   private def toUserProfiles(profiles: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]): Future[Seq[Profile]] = {
-//    withCrews.flatMap(userConverter.toProfileList(_))
     addCrews(profiles).map(profiles => ProfileDB.read(profiles))
   }
 
@@ -432,7 +429,6 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao, val userConverter: U
 
   def list_with_statement(statement: SQLActionBuilder) : Future[List[User]] = {
     val sql_action = statement.as[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]
-//    dbConfig.db.run(sql_action).map(UserConverter.buildUserListFromResult(_))
     dbConfig.db.run(sql_action).flatMap(toUser( _ )).map(_.toList)
   }
 
@@ -443,7 +439,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao, val userConverter: U
 
   override def listOfStubs: Future[List[UserStub]] = {
     list.map(userList => {
-      userConverter.buildUserStubListFromUserList(userList)
+      userList.map(_.toUserStub)
     })
   }
 
