@@ -287,7 +287,7 @@ class RestApi @Inject() (
       pillar match {
         case Some(p) => Pillar(p) match {
           case Unknown => Future.successful(NotFound(Messages("rest.assignUserToCrew.assignRole.unknownPillar")))
-          case pillarInstance : _ => crewService.get(uuidCrew).flatMap(_ match {
+          case pillarInstance : Pillar => crewService.get(uuidCrew).flatMap(_ match {
             case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, pillarInstance), user).map(_ match {
               case Left(i) if i > 0 => Ok(Messages("profile.assign.crew.success"))
               case Left(i) => NotModified
