@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.32.42 (2018-12-17)
+## Version 0.32.43 (2018-12-17)
+* [[B] #305 - Stolen Access Right](https://github.com/Viva-con-Agua/drops/issues/305)
 * [[F] #303 - Role selection](https://github.com/Viva-con-Agua/drops/issues/303)
 * [[I] #301 - Add route to receive user from WebApp](https://github.com/Viva-con-Agua/drops/issues/301)
 * [[B] #299 - Cities are not deleted on crew update](https://github.com/Viva-con-Agua/drops/issues/299)

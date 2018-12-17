@@ -91,9 +91,12 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, crewDao: CrewDao
 
   def assignOnlyOne(crewUUID: UUID, user: User) = user.profiles.headOption match {
     case Some(profile) if profile.supporter.crew.isDefined => this.deAssign(user).flatMap(_ match {
-      case Left(i) if i > 0 => this.assign(crewUUID, user)
+      case Left(i) if i > 0 => userDao.find(user.id).flatMap(_ match {
+        case Some(updatedUser) => this.assign(crewUUID, updatedUser)
+        case None => Future.successful(Right("service.user.error.cannotFindUpdatedUser"))
+      })
       case Left(i) => Future.successful(Right("service.user.error.oldCrewNotDeleted"))
-      case Right(x) => Future.successful( Right( x ) )
+      case Right(x) => Future.successful(Right(x))
     })
     case Some(profile) => this.assign(crewUUID, user)
     case None => Future.successful(Right("service.user.error.notFound.profile"))
