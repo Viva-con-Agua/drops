@@ -49,7 +49,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def setCrew(crew: Crew, profile: Profile): Future[Either[Int, String]]
   def setCrew(crewUUID: UUID, profile: Profile): Future[Either[Int, String]]
   def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]]
-  def updateProfileEmail(profile: Profile): Future[Boolean]
+  def updateProfileEmail(email: String, profile: Profile): Future[Boolean]
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -134,7 +134,7 @@ class MongoUserDao extends UserDao {
   def profileListByRole(id: UUID, role: String): Future[List[Profile]] = ???
   def profileByRole(id: UUID, role: String): Future[Option[Profile]] = profileListByRole(id, role).map(_.headOption)
   def updateSupporter(updated: Profile):Future[Option[Profile]] = ???
-    def updateProfileEmail(profile: Profile): Future[Boolean] = ???
+    def updateProfileEmail(email: String, profile: Profile): Future[Boolean] = ???
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 
   override def listOfStubs: Future[List[UserStub]] = this.getCount.flatMap(c =>
@@ -169,6 +169,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val organizations = TableQuery[OrganizationTableDef]
   val profileOrganizations = TableQuery[ProfileOrganizationTableDef]
   val supporterCrews = TableQuery[SupporterCrewTableDef]
+  val pool1users = TableQuery[Pool1UserTableDef]
 
   implicit val getUserResult = GetResult(r => UserDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextLong, r.nextLong))
   implicit val getProfileResult = GetResult(r => ProfileDB(r.nextLong, r.nextBoolean, r.nextString, r.nextLong))
@@ -407,15 +408,22 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   }
  
   
-  def updateProfileEmail(profile: Profile): Future[Boolean] = {
+  def updateProfileEmail(email: String, profile: Profile): Future[Boolean] = {
     val action = for {
-      p <- profiles.filter(_.email === profile.email).map(pr => 
-        (pr.confirmed, pr.email)
-      ).update((profile.confirmed, profile.email.get))
-    } yield p
-    dbConfig.db.run((action)).map(_ match {
-      case 1 => true
-      case 0 => false
+      p <- profiles.filter(_.email === email).map(p => 
+        (p.email)
+      ).update((profile.email.get))
+      l <- loginInfos.filter(_.providerKey === email).map(l =>
+        (l.providerKey)
+      ).update((profile.email.get))
+      p1 <- pool1users.filter(_.email === email).map(p1 =>
+          (p1.email)
+      ).update((profile.email.get))
+    } yield (p, l, p1)
+    dbConfig.db.run((action).transactionally).map(_ match {
+      case (1, 1, 1) => true
+      case (1, 1, 0) => true
+      case _ => false
     })
   }
   override def list: Future[List[User]] = {
@@ -450,9 +458,10 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     })
   }
 
+
   override def delete(userId: UUID): Future[Boolean] = {
     val deleteUser = users.filter(u => u.publicId === userId)
-    val deleteProfile = profiles.filter(_.userId.in(deleteUser.map(_.id)))
+    val deleteProfile = profiles.filter(p => p.userId.in(deleteUser.map(_.id)) )
     val deleteSupporter = supporters.filter(_.profileId.in(deleteProfile.map(_.id)))
     val deleteSupporterCrew = supporterCrews.filter(_.supporterId.in(deleteSupporter.map(_.id)))
     val deleteLoginInfo = loginInfos.filter(_.profileId.in(deleteProfile.map(_.id)))

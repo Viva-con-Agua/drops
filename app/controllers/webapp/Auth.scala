@@ -431,9 +431,10 @@ class Auth @Inject() (
               WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
             )
           case Some(token) if !token.isSignUp && !token.isExpired => {
-            userService.getProfile(token.email).map(_ match {
+            userService.getProfile(token.email).flatMap {
               case Some(profile) => {
                 userService.updateProfileEmail(
+                  token.email,
                   Profile(
                     LoginInfo(CredentialsProvider.ID, emails.email),
                     profile.confirmed,
@@ -443,22 +444,14 @@ class Auth @Inject() (
                     profile.oauth1Info,
                     profile.avatar
                   )
-                )
+                ).flatMap {
+                  case true => Future.successful(WebAppResult.Ok(request, "reset.done", Nil, "handleResetEmail.Success").getResult)
+                case false => Future.successful(WebAppResult.Bogus(request, "error.bogusResetEmail", Nil, "handleResetEmail.UnSuccess", Json.toJson(Map("error" -> "not valid"))).getResult)
+                }
               }
-              case _ =>  WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
-            })}
-           /* for {
-              _ <- authInfoRepository.save(loginInfo, passwordHasher.hash(passwords.password1))
-              authenticator <- env.authenticatorService.create(loginInfo)
-              value <- env.authenticatorService.init(authenticator)
-              _ <- userTokenService.remove(id)
-              //pool1 user
-              _ <- pool1Service.confirmed(token.email)
-              _ <- userService.confirm(loginInfo)
-              result <- env.authenticatorService.embed(value, WebAppResult.Ok(request, "reset.done", Nil, "AuthProvider.HandleResetPassword.Success").getResult)
-            } yield result*/
-            Future.successful(WebAppResult.Ok(request, "reset.done", Nil, "AuthProvider.HandleResetPassword.Success").getResult)
-        }
+              case _ =>  Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "handleResetEmail.EmailInvalid", Json.toJson(Map("error" -> "not valid"))).getResult)
+            }
+        }}
       }
     )
   }
