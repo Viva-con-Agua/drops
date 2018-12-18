@@ -54,9 +54,14 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
     taskDao.idsForUser(userId).flatMap(taskIds => accessRightDao.forTaskList(taskIds))
   }
   //todo
-  def delete(userId: UUID) = {
-    userDao.delete(userId)
-    nats.publishDelete("USER", userId)
+  def delete(userId: UUID): Future[Boolean] = {
+    userDao.delete(userId).map(_ match {
+      case true => {
+        nats.publishDelete("USER", userId) 
+        true
+      }
+      case false => false
+    })
   }
   
   def updateProfileEmail(email: String, profile: Profile) = userDao.updateProfileEmail(email, profile)

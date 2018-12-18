@@ -327,8 +327,10 @@ class Auth @Inject() (
           )).getResult
         )
       case Some(user) => {
-        userService.delete(user.id)
-        Future.successful(WebAppResult.Ok(request, "signout.msg", Nil, "AuthProvider.deleteUser.success").getResult)
+        userService.delete(user.id).map(_ match {
+          case true => WebAppResult.Ok(request, "signout.msg", Nil, "deleteUser.success").getResult
+          case false => WebAppResult.Bogus(request, "error.bogusDeleteUser", Nil, "deleteUser.failure", Json.toJson(Map("error" -> "not valid"))).getResult
+        })
       }
     }
   }
@@ -382,7 +384,7 @@ class Auth @Inject() (
   def handleResetPassword(tokenId:String) = Action.async(parse.json) { implicit request =>
     val data = request.body.validate[Password]
     data.fold(
-      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetEmailData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
+      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordlData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
       passwords => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
@@ -394,7 +396,7 @@ class Auth @Inject() (
             )
           case Some(token) if !passwords.valid =>
             Future.successful(
-              WebAppResult.Bogus(request, "error.bogusResetEmailData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
+              WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
             )
           case Some(token) if !token.isSignUp && !token.isExpired =>
             val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
