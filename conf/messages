@@ -234,6 +234,13 @@ pool1.error.config.noURI=No Pool 1 system configured (missing URL)
 pool1.debug.not.activated=Export not activated in configuration! Set `pool1.export=true` in your applications conf file.
 pool1.debug.export.success=Successful export!\n{0}
 pool1.debug.export.failure=Failure on export!\n{0}
+pool1.debug.export.userNotComplete=Cannot create a valid Pool 1 user representation, since not all required attributes are defined.
+pool1.api.canNotReadResponse=Cannot read the answer that has been received from the Pool 1.
+pool1.debug.export.errorResponseCode=The action was not valid. The Pool 1 answered with HTTP Status Code {0} and the following message: {1}
+profile.getNewsletterSetting.success=Successful import of newsletter setting.  
+profile.getNewsletterSetting.notFound=Failure on import of newsletter setting.
+profile.setNewsletterSetting.success=Successfully updated newsletter settings.
+profile.setNewsletterSetting.bogus=Failure on updating the newsletter settings.
 
 organization.error.exist=Organization already exist
 organization.error.notFound=Organization not found
