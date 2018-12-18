@@ -255,3 +255,15 @@ avatar.remove.success=Der Avatar wurde gelöscht.
 avatar.remove.notFound=Der Avatar wurde nicht gefunden und daher kann er nicht gelöscht werden.
 avatar.select.success=Neuer Avatar gewählt.
 avatar.select.failure=Leider konnte der neue Avatar nicht ausgewählt werden.
+
+pool1.error.config.noURI=Der Pool 1 ist nicht konfiguriert.
+pool1.debug.not.activated=Der Export zum Pool 1 ist nicht aktiviert. Ändere die Konfiguration `pool1.export=true`.
+pool1.debug.export.success=Erfolgreich exportiert!\n{0}
+pool1.debug.export.failure=Ein Fehler ist beim Export aufgetreten!\n{0}
+pool1.debug.export.userNotComplete=Leider fehlen einige Attribute des Nutzers, so dass dieser nicht im Pool 1 erzeugt werden kann.
+pool1.api.canNotReadResponse=Die Antwort des Pool 1 kann nicht interpretiert werden.
+pool1.debug.export.errorResponseCode=Die Aktion konnte nicht erfolgreich ausgeführt werden. Der Pool 1 antwortet mit HTTP Status Code {0} und der Nachricht: {1}
+profile.getNewsletterSetting.success=Erfolgreiche Abfrage der Newsletter-Einstellungen.  
+profile.getNewsletterSetting.notFound=Fehler bei der Abfrage der Newsletter-Einstellungen.
+profile.setNewsletterSetting.success=Erfolgreich aktualisierte Newsletter-Einstellungen.
+profile.setNewsletterSetting.bogus=Fehler bei der Aktualisierung der Newsletter-Einstellungen.

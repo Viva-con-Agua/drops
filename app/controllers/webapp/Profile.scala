@@ -217,4 +217,24 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
+
+  def getNewsletterSettingsPool1 = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.getNewsletterPool1Settings(user.id).map(_ match {
+        case Some(setting) => WebAppResult.Ok(request, "profile.getNewsletterSetting.success", Nil, "Profile.GetNewsletterSetting.Success", Json.obj("setting" -> setting)).getResult
+        case None => WebAppResult.NotFound(request, "profile.getNewsletterSetting.notFound", Nil, "Profile.GetNewsletterSetting.NotFound", Map[String, String]()).getResult
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def setNewsletterSettingsPool1(setting: String) = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.setNewsletterPool1Settings(user, setting).map(_ match {
+        case true => WebAppResult.Ok(request, "profile.setNewsletterSetting.success", Nil, "Profile.SetNewsletterSetting.Success", Json.obj("setting" -> setting)).getResult
+        case false => WebAppResult.Bogus(request, "profile.setNewsletterSetting.bogus", Nil, "Profile.SetNewsletterSetting.Bogus", Json.obj("setting" -> setting)).getResult
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
 }
