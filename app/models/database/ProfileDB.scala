@@ -1,6 +1,9 @@
 package models.database
 
-import models.Profile
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.api.util.PasswordInfo
+import com.mohiva.play.silhouette.impl.providers.OAuth1Info
+import models.{Crew, Profile, Supporter}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -16,7 +19,10 @@ case class ProfileDB(
                   confirmed: Boolean,
                   email: String,
                   userId: Long
-                ) 
+                ) {
+  def toProfile(loginInfo: LoginInfo, supporter: Supporter, passwordInfo: Option[PasswordInfo], oauthInfo: Option[OAuth1Info]): Profile =
+    Profile(loginInfo, confirmed, email, supporter, passwordInfo, oauthInfo)
+}
         
 
 
@@ -25,6 +31,30 @@ object ProfileDB extends ((Long, Boolean , String, Long) => ProfileDB ){
     ProfileDB(tuple._1, tuple._2, tuple._3, tuple._4)
   def apply(profile:Profile, userId:Long): ProfileDB =
     ProfileDB(0, profile.confirmed, profile.email.get, userId)
+
+  def read(entries: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]): Seq[Profile] = {
+    val sorted = entries.foldLeft[Map[ProfileDB, Seq[(SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
+      (mapped, entry) =>
+        mapped.contains(entry._1) match {
+        case true => mapped.get(entry._1) match {
+          case Some(seq) => (mapped - entry._1) + (entry._1 -> (seq ++ Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7))))
+          case None => (mapped - entry._1) + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7)))
+        }
+        case false => mapped + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7)))
+      }).toSeq
+
+    sorted.map(pair => {
+      val supporter: Seq[Supporter] = SupporterDB.read(pair._2.map(row => (row._1, row._5.flatMap(sc => row._6.map(crew => (sc, crew))))))
+      pair._2.headOption.flatMap(head => {
+        val loginInfo : LoginInfo = head._2.toLoginInfo
+        val passwordInfo : Option[PasswordInfo] = head._3.map(_.toPasswordInfo)
+        val oauth1Info : Option[OAuth1Info] = head._4.map(_.toOAuth1Info)
+
+        supporter.headOption.map(supporti => pair._1.toProfile(loginInfo, supporti, passwordInfo, oauth1Info))
+      })
+
+    }).filter(_.isDefined).map(_.get)
+  }
 
   implicit val profileWrites : OWrites[ProfileDB] = (
     (JsPath \ "id").write[Long] and

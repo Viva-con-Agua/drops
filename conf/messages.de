@@ -64,6 +64,12 @@ service.user.error.notFound.crew=Es konnte keine Crew gefunden werden, zu der de
 service.user.error.oldCrewNotDeleted=Ein Fehler ist aufgetreten. Daher bist du immer noch Teil deiner bisherigen Crew.
 dao.user.error.notFound.supporter=Dein Nutzer konnte nicht gefunden werden.
 dao.user.error.notFound.crew=Die angegebene Crew konnte nicht gefunden werden.
+dao.user.error.nothingUpdated=Die neue Rolle konnte dem Nutzer nicht zugewiesen werden.
+dao.user.error.anotherCrewAssigned=Dem Nutzer kann die Rolle nicht zugewiesen werden, da dieser einer anderen Crew angehört.
+profile.assignRole.crewNotFoundExecutingUser=Deine Crew konnte nicht gefunden werden.
+profile.assignRole.profileNotFoundExecutingUser=Dein Nutzer konnte nicht gefunden werden.
+profile.assignRole.givenPillarUnknown=Du kannst keine Rolle für den angegebenen Bereich veregeben. Dieser Bereich istr dem Pool unbekannt.
+profile.assignRole.otherUserNotFound=Du kannst Rollen nur an Nutzer zuweisen, die das System kennt. Der angegebene Nutzer existiert nicht.
 
 task.title=Todo Übersicht
 
@@ -249,3 +255,15 @@ avatar.remove.success=Der Avatar wurde gelöscht.
 avatar.remove.notFound=Der Avatar wurde nicht gefunden und daher kann er nicht gelöscht werden.
 avatar.select.success=Neuer Avatar gewählt.
 avatar.select.failure=Leider konnte der neue Avatar nicht ausgewählt werden.
+
+pool1.error.config.noURI=Der Pool 1 ist nicht konfiguriert.
+pool1.debug.not.activated=Der Export zum Pool 1 ist nicht aktiviert. Ändere die Konfiguration `pool1.export=true`.
+pool1.debug.export.success=Erfolgreich exportiert!\n{0}
+pool1.debug.export.failure=Ein Fehler ist beim Export aufgetreten!\n{0}
+pool1.debug.export.userNotComplete=Leider fehlen einige Attribute des Nutzers, so dass dieser nicht im Pool 1 erzeugt werden kann.
+pool1.api.canNotReadResponse=Die Antwort des Pool 1 kann nicht interpretiert werden.
+pool1.debug.export.errorResponseCode=Die Aktion konnte nicht erfolgreich ausgeführt werden. Der Pool 1 antwortet mit HTTP Status Code {0} und der Nachricht: {1}
+profile.getNewsletterSetting.success=Erfolgreiche Abfrage der Newsletter-Einstellungen.  
+profile.getNewsletterSetting.notFound=Fehler bei der Abfrage der Newsletter-Einstellungen.
+profile.setNewsletterSetting.success=Erfolgreich aktualisierte Newsletter-Einstellungen.
+profile.setNewsletterSetting.bogus=Fehler bei der Aktualisierung der Newsletter-Einstellungen.

@@ -24,7 +24,9 @@ import slick.driver.MySQLDriver.api._
 import slick.jdbc.{GetResult, PositionedParameters, SQLActionBuilder, SetParameter}
 
 trait CrewDao extends ObjectIdResolver with CountResolver {
+  def findDB(crew: Crew): Future[Option[CrewDB]]
   def find(id: UUID):Future[Option[Crew]]
+  def find(id: Long):Future[Option[Crew]]
   def find(crewName: String):Future[Option[Crew]]
   def save(crew: Crew):Future[Crew]
   def update(crew: Crew):Future[Crew]
@@ -56,10 +58,14 @@ class MongoCrewDao extends CrewDao {
   override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] =
     crews.find(Json.obj("id" -> name), Json.obj("_id" -> 1)).one[ObjectIdWrapper]
 
+  override def findDB(crew: Crew): Future[Option[CrewDB]] = ???
+
   def find(id: UUID):Future[Option[Crew]] =
     crews.find(Json.obj(
       "id" -> id
     )).one[Crew]
+
+  override def find(id: Long): Future[Option[Crew]] = ???
 
   def find(crewName: String):Future[Option[Crew]] =
     crews.find(Json.obj(
@@ -104,6 +110,10 @@ class MariadbCrewDao extends CrewDao {
   implicit val getCrewResult = GetResult(r => CrewDB(r.nextLong, UUID.fromString(r.nextString), r.nextString))
   implicit val getCityResult = GetResult(r => CityDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
 
+  override def findDB(crew: Crew): Future[Option[CrewDB]] = {
+    dbConfig.db.run(crews.filter(_.publicId === crew.id).result).map(_.headOption)
+  }
+
   override def find(id: UUID): Future[Option[Crew]] = {
     val action = for {
       (crew, city) <- (crews.filter(_.publicId === id)
@@ -112,7 +122,6 @@ class MariadbCrewDao extends CrewDao {
     
     dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
   }
-
 
   override def find(crewName: String): Future[Option[Crew]] = {
     val action = for {

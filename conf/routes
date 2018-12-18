@@ -39,10 +39,13 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 # WebApp profile
 GET     /webapp/user/delete                                 controllers.webapp.Auth.deleteUser
 GET     /webapp/user/:uuid                                  controllers.webapp.Profile.getUser(uuid : String)
+GET     /webapp/profile/role/:userUUID/:pillar              controllers.webapp.Profile.assignRole(userUUID : String, pillar : String)
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
 GET     /webapp/profile/assign/:crewUUID                    controllers.webapp.Profile.assignCrew(crewUUID: String)
 DELETE  /webapp/profile/remove/crew                         controllers.webapp.Profile.removeCrew
+GET     /webapp/profile/newsletter                          controllers.webapp.Profile.getNewsletterSettingsPool1
+POST    /webapp/profile/newsletter/:setting                 controllers.webapp.Profile.setNewsletterSettingsPool1(setting: String)
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
