@@ -87,8 +87,8 @@ object AuthForms {
   }
 //  val emailForm = Form(single("email" -> email))
   
-  case class EmailChange(email1: Email, email2: Email) {
-    def valid : Boolean = email1 == email2
+  case class EmailChange(email: String, checkEmail: String) {
+    def valid : Boolean = email == checkEmail
   }
   object EmailChange {
     implicit val emailChangeJsonFormat = Json.format[EmailChange]
@@ -430,8 +430,23 @@ class Auth @Inject() (
             Future.successful(
               WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
             )
-          case Some(token) if !token.isSignUp && !token.isExpired =>
-            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
+          case Some(token) if !token.isSignUp && !token.isExpired => {
+            userService.getProfile(token.email).map(_ match {
+              case Some(profile) => {
+                userService.updateProfileEmail(
+                  Profile(
+                    LoginInfo(CredentialsProvider.ID, emails.email),
+                    profile.confirmed,
+                    Option(emails.email),
+                    profile.supporter,
+                    profile.passwordInfo,
+                    profile.oauth1Info,
+                    profile.avatar
+                  )
+                )
+              }
+              case _ =>  WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
+            })}
            /* for {
               _ <- authInfoRepository.save(loginInfo, passwordHasher.hash(passwords.password1))
               authenticator <- env.authenticatorService.create(loginInfo)

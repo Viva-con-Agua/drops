@@ -29,7 +29,7 @@ GET     /webapp/identity                                    controllers.webapp.A
 POST    /webapp/authenticate                                controllers.webapp.Auth.authenticate
 GET     /webapp/out                                         controllers.webapp.Auth.signOut
 GET     /webapp/email/reset/:tokenId                        controllers.webapp.Auth.resetEmail(tokenId: String)
-POST    /webapp/email/reset/:tokenId                                 controllers.webapp.Auth.handleResetEmail(tokenId: String)
+POST    /webapp/email/reset/:tokenId                        controllers.webapp.Auth.handleResetEmail(tokenId: String)
 POST    /webapp/email/reset                                 controllers.webapp.Auth.handleResetEmailStartData
 GET     /webapp/reset/:tokenId                              controllers.webapp.Auth.resetPassword(tokenId: String)
 POST    /webapp/reset/:tokenId                              controllers.webapp.Auth.handleResetPassword(tokenId: String)

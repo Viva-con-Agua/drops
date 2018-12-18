@@ -49,6 +49,7 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def setCrew(crew: Crew, profile: Profile): Future[Either[Int, String]]
   def setCrew(crewUUID: UUID, profile: Profile): Future[Either[Int, String]]
   def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]]
+  def updateProfileEmail(profile: Profile): Future[Boolean]
 
   trait UserWS {
     def find(userId:UUID, queryExtension: JsObject):Future[Option[User]]
@@ -133,7 +134,7 @@ class MongoUserDao extends UserDao {
   def profileListByRole(id: UUID, role: String): Future[List[Profile]] = ???
   def profileByRole(id: UUID, role: String): Future[Option[Profile]] = profileListByRole(id, role).map(_.headOption)
   def updateSupporter(updated: Profile):Future[Option[Profile]] = ???
-
+    def updateProfileEmail(profile: Profile): Future[Boolean] = ???
   def list = ws.list(Json.obj(), 20, Json.obj())//users.find(Json.obj()).cursor[User]().collect[List]()
 
   override def listOfStubs: Future[List[UserStub]] = this.getCount.flatMap(c =>
@@ -379,6 +380,8 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     })
   }
 
+
+
   /**
     * replace a profile
     * @param profile
@@ -394,15 +397,27 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         val deleteSupporterCrew = supporterCrews.filter(_.supporterId.in(deleteSupporter.map(_.id)))
         val deletePasswordInfo = passwordInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
         dbConfig.db.run(
-          (deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteSupporter.delete andThen
-            deleteSupporterCrew.delete andThen deleteProfile.delete).transactionally
+          (deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteSupporterCrew.delete andThen
+            deleteSupporter.delete andThen deleteProfile.delete).transactionally
         ).flatMap(_ =>
           addProfiles(userDB, List(profile))
         )
       })
     })
   }
+ 
   
+  def updateProfileEmail(profile: Profile): Future[Boolean] = {
+    val action = for {
+      p <- profiles.filter(_.email === profile.email).map(pr => 
+        (pr.confirmed, pr.email)
+      ).update((profile.confirmed, profile.email.get))
+    } yield p
+    dbConfig.db.run((action)).map(_ match {
+      case 1 => true
+      case 0 => false
+    })
+  }
   override def list: Future[List[User]] = {
     val action = for{
       ((((((user, profile), supporter), loginInfo),passwordInfo), oauth1Info), supporterCrew) <- (users

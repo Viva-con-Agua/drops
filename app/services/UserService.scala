@@ -59,6 +59,7 @@ class UserService @Inject() (userDao:UserDao, taskDao: TaskDao, accessRightDao: 
     nats.publishDelete("USER", userId)
   }
   
+  def updateProfileEmail(profile: Profile) = userDao.updateProfileEmail(profile)
   def getProfile(email: String) = userDao.getProfile(email)
   def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
   def profileByRole(id: UUID, role: String) = userDao.profileByRole(id, role)

@@ -37,6 +37,7 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
 
   def apply(id: Long, supporter: Supporter, profileId: Long) : SupporterDB =
     SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId)
+  
 
   implicit val supporterWrites : OWrites[SupporterDB] = (
     (JsPath \ "id").write[Long] and
