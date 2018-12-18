@@ -87,7 +87,13 @@ object AuthForms {
     implicit val emailJsonFormat = Json.format[Email]
   }
 //  val emailForm = Form(single("email" -> email))
-
+  
+  case class EmailChange(email: String, checkEmail: String) {
+    def valid : Boolean = email == checkEmail
+  }
+  object EmailChange {
+    implicit val emailChangeJsonFormat = Json.format[EmailChange]
+  }
   // Passord recovery
   case class Password(password1: String, password2: String) {
     def valid : Boolean = password1 == password2
@@ -301,6 +307,26 @@ class Auth @Inject() (
     env.authenticatorService.discard(request.authenticator,WebAppResult.Ok(request, "signout.msg", Nil, "AuthProvider.SignOut.Success").getResult)
   }
 
+  def deleteUser = SecuredAction.async { implicit request =>
+    userService.retrieve(request.authenticator.loginInfo).flatMap {
+      case None => 
+        Future.successful(
+          WebAppResult.Unauthorized(request, "error.noUser", Nil, "AuthProvider.SignOut.NoUser", Map(
+            "providerKey" -> request.authenticator.loginInfo.providerKey,
+            "providerID" -> request.authenticator.loginInfo.providerID
+          )).getResult
+        )
+      case Some(user) => {
+        userService.delete(user.id).map(_ match {
+          case true => WebAppResult.Ok(request, "signout.msg", Nil, "deleteUser.success").getResult
+          case false => WebAppResult.Bogus(request, "error.bogusDeleteUser", Nil, "deleteUser.failure", Json.toJson(Map("error" -> "not valid"))).getResult
+        })
+      }
+    }
+  }
+  
+  
+
   def handleResetPasswordStartData = Action.async(parse.json) { implicit request =>
       val data = request.body.validate[Email]
       data.fold(
@@ -348,7 +374,7 @@ class Auth @Inject() (
   def handleResetPassword(tokenId:String) = Action.async(parse.json) { implicit request =>
     val data = request.body.validate[Password]
     data.fold(
-      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
+       errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
       passwords => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
@@ -379,9 +405,90 @@ class Auth @Inject() (
     )
   }
 
-  private case class WebApp(host: String, base: String, notFound: String, resetPassword: String, tokenRPIdentifier: String, handleToken: String, tokenSUidentifier: String) {
+  def handleResetEmail(tokenId:String) = Action.async(parse.json) { implicit request =>
+    val data = request.body.validate[EmailChange]
+    data.fold(
+      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetEmaildData", Nil, "AuthProvider.HandleResetEmail.BogusData", JsError.toJson(errors)).getResult),
+      emails => {
+        val id = UUID.fromString(tokenId)
+        userTokenService.find(id).flatMap {
+          case None =>
+            Future.successful(
+              WebAppResult.NotFound(request, "error.reset.toToken", List(tokenId), "AuthProvider.HandleResetEmail.NoToken", Map(
+                "tokenId" -> tokenId
+              )).getResult
+            )
+          case Some(token) if !emails.valid =>
+            Future.successful(
+              WebAppResult.Bogus(request, "error.bogusResetEmailData", Nil, "AuthProvider.HandleResetPassword.EmailInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
+            )
+          case Some(token) if !token.isSignUp && !token.isExpired => {
+            userService.getProfile(token.email).flatMap {
+              case Some(profile) => {
+                userService.updateProfileEmail(
+                  token.email,
+                  Profile(
+                    LoginInfo(CredentialsProvider.ID, emails.email),
+                    profile.confirmed,
+                    Option(emails.email),
+                    profile.supporter,
+                    profile.passwordInfo,
+                    profile.oauth1Info,
+                    profile.avatar
+                  )
+                ).flatMap {
+                  case true => Future.successful(WebAppResult.Ok(request, "reset.done", Nil, "handleResetEmail.Success").getResult)
+                case false => Future.successful(WebAppResult.Bogus(request, "error.bogusResetEmail", Nil, "handleResetEmail.UnSuccess", Json.toJson(Map("error" -> "not valid"))).getResult)
+                }
+              }
+              case _ =>  Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "handleResetEmail.EmailInvalid", Json.toJson(Map("error" -> "not valid"))).getResult)
+            }
+        }}
+      }
+    )
+  }
+  
+  
+  def handleResetEmailStartData = Action.async(parse.json) { implicit request =>
+      val data = request.body.validate[Email]
+      data.fold(
+        errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.ResetEmail.BogusData", JsError.toJson(errors)).getResult),
+        email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address)).flatMap {
+          case None => Future.successful(
+            WebAppResult.NotFound(request, "error.noUser", Nil, "AuthProvider.ResetEmail.NoUser", Map(
+              "email" -> email.address
+            )).getResult
+          )
+          case Some(user) => for {
+            token <- userTokenService.save(UserToken.create(user.id, email.address, isSignUp = false))
+          } yield {
+            mailer.resetPassword(email.address, link = controllers.webapp.routes.Auth.resetEmail(token.id.toString).absoluteURL())
+            WebAppResult.Ok(request, "reset.instructions", List(email.address), "AuthProvider.ResetEmail.Success").getResult
+          }
+        }
+      )
+  }
+  
+  def resetEmail(tokenId:String) = Action.async { implicit request =>
+    val id = UUID.fromString(tokenId)
+    getWebApp match {
+      case Left(message) => Future.successful(NotFound(message._2))
+      case Right(webapp) => userTokenService.find(id).flatMap {
+        case None =>
+          Future.successful(Redirect(webapp.getNotFound))
+        case Some(token) if !token.isSignUp && !token.isExpired =>
+          Future.successful(Redirect(webapp.getResetEmail(tokenId)))
+        case _ => for {
+          _ <- userTokenService.remove(id)
+        } yield Redirect(webapp.getNotFound)
+      }
+    }
+  }
+
+  private case class WebApp(host: String, base: String, notFound: String, resetPassword: String, resetEmail: String, tokenRPIdentifier: String, handleToken: String, tokenSUidentifier: String) {
     def getNotFound: String = base + notFound
     def getResetPassword(token: String): String = base + resetPassword + "/" + token //"?" + tokenRPIdentifier + "=" + token
+    def getResetEmail(token: String): String = base + resetEmail + "/" + token 
     def getSignUpTokenEndpoint(token: String): String = base + handleToken + "/" + token //+ "?" + tokenSUidentifier + "=" + token
     def getAbsoluteSignUpTokenEndpoint(token: String): String = host + getSignUpTokenEndpoint(token)
   }
@@ -411,11 +518,12 @@ class Auth @Inject() (
         val base = getValue("webapp.base", "error.webapp.missing.base")
         val notFound = getValue("webapp.notFound.path", "error.webapp.missing.notFound")
         val resetPassword = getValue("webapp.resetPassword.path", "error.webapp.missing.resetPassword")
+        val resetEmail = getValue("webapp.resetEmail.path", "error.webapp.missing.resetPassword")
         val tokenIdentifier = getValue("webapp.resetPassword.tokenIdentifier", "error.webapp.missing.tokenidentifier")
         val signUpToken = getValue("webapp.signUpToken.path", "error.webapp.missing.signUpToken")
         val tokenSUidentifier = getValue("webapp.signUpToken.identifier", "error.webapp.missing.tokenSUidentifier")
-        transform(Seq( host, base, notFound, resetPassword, tokenIdentifier, signUpToken, tokenSUidentifier )) match {
-          case Right(args) => Right(WebApp(args(0), args(1), args(2), args(3), args(4), args(5), args(6)))
+        transform(Seq( host, base, notFound, resetPassword, resetEmail, tokenIdentifier, signUpToken, tokenSUidentifier )) match {
+          case Right(args) => Right(WebApp(args(0), args(1), args(2), args(3), args(4), args(5), args(6), args(7)))
           case Left((i18n, message)) => Left((i18n, message))
         }
       }

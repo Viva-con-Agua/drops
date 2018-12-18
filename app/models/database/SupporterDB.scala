@@ -37,6 +37,7 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
 
   def apply(id: Long, supporter: Supporter, profileId: Long) : SupporterDB =
     SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId)
+  
 
   def read(entries: Seq[(SupporterDB, Option[(SupporterCrewDB, Crew)])]): Seq[Supporter] = {
     entries.foldLeft[Map[SupporterDB, Seq[Option[(SupporterCrewDB, Crew)]]]](Map())((mapped, entry) => mapped.contains(entry._1) match {

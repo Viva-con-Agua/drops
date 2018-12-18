@@ -100,12 +100,19 @@ class UserService @Inject() (
   def accessRights(userId: UUID) : Future[Seq[AccessRight]] = {
     taskDao.idsForUser(userId).flatMap(taskIds => accessRightDao.forTaskList(taskIds))
   }
-  //todo
-  def delete(userId: UUID) = {
-    nats.publishDelete("USER", userId)
-    poolService.delete(userId)
+  
+  def delete(userId: UUID): Future[Boolean] = {
+    userDao.delete(userId).map(_ match {
+      case true => {
+        nats.publishDelete("USER", userId) 
+        poolService.delete(userId)
+        true
+      }
+      case false => false
+    })
   }
   
+  def updateProfileEmail(email: String, profile: Profile) = userDao.updateProfileEmail(email, profile)
   def getProfile(email: String) = userDao.getProfile(email)
   def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
   def profileByRole(id: UUID, role: String) = userDao.profileByRole(id, role)
