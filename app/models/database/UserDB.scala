@@ -2,7 +2,7 @@ package models.database
 
 import java.util.UUID
 
-import models.User
+import models.{Crew, Profile, Role, User}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -17,7 +17,10 @@ case class UserDB(
   roles: String,
   updated: Long,
   created: Long
-                )
+                ) {
+  def toUser(profiles: Seq[Profile]) : User =
+    User(publicId, profiles.toList, updated, created, roles.split(",").map(Role( _ )).toSet)
+}
 
 
 object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
@@ -30,6 +33,22 @@ object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
       roles += role.name
     )
     UserDB(0, user.id, roles.mkString(","), user.updated, user.created)
+  }
+
+  def read(entries : Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]) : Seq[User] = {
+    val sorted = entries.foldLeft[Map[UserDB, Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
+      (mapped, entry) =>
+        mapped.contains(entry._1) match {
+          case true => mapped.get(entry._1) match {
+            case Some(seq) => (mapped - entry._1) + (entry._1 -> (seq ++ Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7, entry._8))))
+            case None => (mapped - entry._1) + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7, entry._8)))
+          }
+          case false => mapped + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7, entry._8)))
+        }).toSeq
+
+    sorted.map(pair => {
+      pair._1.toUser(ProfileDB.read(pair._2))
+    })
   }
 
   implicit val userWrites : OWrites[UserDB] = (
