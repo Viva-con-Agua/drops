@@ -382,7 +382,7 @@ class Auth @Inject() (
   def handleResetPassword(tokenId:String) = Action.async(parse.json) { implicit request =>
     val data = request.body.validate[Password]
     data.fold(
-      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
+      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetEmailData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
       passwords => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
@@ -394,7 +394,7 @@ class Auth @Inject() (
             )
           case Some(token) if !passwords.valid =>
             Future.successful(
-              WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
+              WebAppResult.Bogus(request, "error.bogusResetEmailData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
             )
           case Some(token) if !token.isSignUp && !token.isExpired =>
             val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
@@ -416,19 +416,19 @@ class Auth @Inject() (
   def handleResetEmail(tokenId:String) = Action.async(parse.json) { implicit request =>
     val data = request.body.validate[EmailChange]
     data.fold(
-      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
+      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetEmaildData", Nil, "AuthProvider.HandleResetEmail.BogusData", JsError.toJson(errors)).getResult),
       emails => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
           case None =>
             Future.successful(
-              WebAppResult.NotFound(request, "error.reset.toToken", List(tokenId), "AuthProvider.HandleResetPassword.NoToken", Map(
+              WebAppResult.NotFound(request, "error.reset.toToken", List(tokenId), "AuthProvider.HandleResetEmail.NoToken", Map(
                 "tokenId" -> tokenId
               )).getResult
             )
           case Some(token) if !emails.valid =>
             Future.successful(
-              WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
+              WebAppResult.Bogus(request, "error.bogusResetEmailData", Nil, "AuthProvider.HandleResetPassword.EmailInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
             )
           case Some(token) if !token.isSignUp && !token.isExpired => {
             userService.getProfile(token.email).flatMap {
@@ -460,7 +460,7 @@ class Auth @Inject() (
   def handleResetEmailStartData = Action.async(parse.json) { implicit request =>
       val data = request.body.validate[Email]
       data.fold(
-        errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.ResetPassword.BogusData", JsError.toJson(errors)).getResult),
+        errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.ResetEmail.BogusData", JsError.toJson(errors)).getResult),
         email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address)).flatMap {
           case None => Future.successful(
             WebAppResult.NotFound(request, "error.noUser", Nil, "AuthProvider.ResetEmail.NoUser", Map(
@@ -471,7 +471,7 @@ class Auth @Inject() (
             token <- userTokenService.save(UserToken.create(user.id, email.address, isSignUp = false))
           } yield {
             mailer.resetPassword(email.address, link = controllers.webapp.routes.Auth.resetEmail(token.id.toString).absoluteURL())
-            WebAppResult.Ok(request, "reset.instructions", List(email.address), "AuthProvider.ResetPassword.Success").getResult
+            WebAppResult.Ok(request, "reset.instructions", List(email.address), "AuthProvider.ResetEmail.Success").getResult
           }
         }
       )

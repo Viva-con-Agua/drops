@@ -155,7 +155,7 @@ error.webapp.missing.resetPassword=The path for the ''Reset Password'' page of a
 error.webapp.missing.tokenidentifier=The token identifier used inside the query string of the reset password page is missing!
 error.webapp.missing.signUpToken=The path for the ''Sign Up'' page that takes a token has not been configured!
 error.webapp.missing.tokenSUidentifier=The token identifier used inside the query string of the sign up page is missing!
-
+error.bogusResetEmailData=There is something wrong with the submitted data.
 success.profile.image.upload=Profile image was successfully uploaded!
 
 mail.welcome.subject=VcA Pool | Welcome
