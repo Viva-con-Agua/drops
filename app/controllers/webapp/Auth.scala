@@ -373,7 +373,7 @@ class Auth @Inject() (
   def handleResetPassword(tokenId:String) = Action.async(parse.json) { implicit request =>
     val data = request.body.validate[Password]
     data.fold(
-      errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordlData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
+       errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.BogusData", JsError.toJson(errors)).getResult),
       passwords => {
         val id = UUID.fromString(tokenId)
         userTokenService.find(id).flatMap {
