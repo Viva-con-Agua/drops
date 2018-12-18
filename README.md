@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.33.43 (2018-12-18)
+## Version 0.33.44 (2018-12-18)
+* [[B] #310 - SignUp does not allow optional values](https://github.com/Viva-con-Agua/drops/issues/310)
 * [[F] #306 - Update Pool1 API calls](https://github.com/Viva-con-Agua/drops/issues/306)
 * [[B] #305 - Stolen Access Right](https://github.com/Viva-con-Agua/drops/issues/305)
 * [[F] #303 - Role selection](https://github.com/Viva-con-Agua/drops/issues/303)

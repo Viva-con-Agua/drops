@@ -42,7 +42,8 @@ import play.api.libs.json.{JsError, JsObject, JsValue, Json}
 object AuthForms {
 
   // Sign up
-  case class SignUpData(email:String, password:String, firstName:String, lastName:String, mobilePhone:String, placeOfResidence: String, birthday:Date, gender:String)
+  case class SignUpData(email:String, password:String, firstName: Option[String], lastName: Option[String],
+                        mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String)
 
   object SignUpData {
     implicit val signUpDataJsonFormat = Json.format[SignUpData]
@@ -133,7 +134,7 @@ class Auth @Inject() (
           case Some(_) =>
             Future.successful(WebAppResult.Bogus(request, "error.userExists", List(signUpData.email), "AuthProvider.SignUp.UserExists", Json.toJson(Map[String, String]())).getResult)
           case None =>
-            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender, List(new DefaultProfileImage))
+            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender)
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
               user <- userService.save(User(id = UUID.randomUUID(), profiles =
