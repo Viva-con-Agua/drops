@@ -23,8 +23,6 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
   )
 
   private def request(url: String, data: PoolRequest)(implicit messages: Messages): Future[Either[PoolResponseData, Exception]] = {
-    Logger.debug(url)
-    Logger.debug(data.toPost.toString())
     ws.url(url)
       .withHeaders("Accept" -> "application/json")
       .withHeaders("Content-Type" -> "application/json")
@@ -32,8 +30,10 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
       .withRequestTimeout(3000)
       .post(data.toPost)
       .map(response => {
-        Logger.debug(response.body)
-        response.json.validate[PoolResponseData].map(Left(_)).getOrElse(Right(new PoolException(Messages("pool1.api.canNotReadResponse"))))
+        response.json.validate[PoolResponseData].asEither match {
+          case Left(error) => Right(new PoolException(Messages("pool1.api.canNotReadResponse")))
+          case Right(res) => Left(res)
+        }
       })
   }
 
