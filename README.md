@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.36.50 (2018-12-19)
+## Version 0.36.51 (2018-12-19)
+* [[B] #317 - Failure on UUID requests for Pool1 API](https://github.com/Viva-con-Agua/drops/issues/317)
 * [[B] #315 - Failure on Pool1-API Response interpretation](https://github.com/Viva-con-Agua/drops/issues/315)
 * [[B] #313 - Failure on Pool1 configuration](https://github.com/Viva-con-Agua/drops/issues/313)
 * [[B] #312 - Pool 1 Service is called in controller and UserService](https://github.com/Viva-con-Agua/drops/issues/312)
