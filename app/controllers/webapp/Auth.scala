@@ -190,9 +190,8 @@ class Auth @Inject() (
             for {
               authenticator <- env.authenticatorService.create(loginInfo)
               value <- env.authenticatorService.init(authenticator)
-              _ <- userService.confirm(loginInfo)
+              _ <- userService.confirm(loginInfo) // ALSO SENDS USER TO POOL 1!
               _ <- userTokenService.remove(id)
-              _ <- pool.save(user)    // SEND USER TO POOL 1!
               result <- env.authenticatorService.embed(value, WebAppResult.Ok(request, "signin.success", Nil, "AuthProvider.SignUp.Success", Map("uuid" -> user.id.toString)).getResult)
             } yield result
         }
@@ -222,8 +221,8 @@ class Auth @Inject() (
       signInData => {
         val credentials = Credentials(signInData.email, signInData.password)
         // Handle Pool 1 users
-        pool1Service.pool1user(signInData.email).flatMap {
-          case Some(pooluser) if pooluser.confirmed == false =>
+        userService.findUnconfirmedPool1User(signInData.email).flatMap {
+          case Some( _ ) =>
             userService.retrieve(LoginInfo(CredentialsProvider.ID, signInData.email)).flatMap {
               case None => Future.successful(
                 // Possible Result: Internal error. because user was suddenly deleted
@@ -302,9 +301,10 @@ class Auth @Inject() (
   }
 
   def signOut = SecuredAction.async { implicit request =>
-    pool.logout(request.identity)
-    //nats.publishLogout(request.identity.id)
-    env.authenticatorService.discard(request.authenticator,WebAppResult.Ok(request, "signout.msg", Nil, "AuthProvider.SignOut.Success").getResult)
+    userService.logout(request.identity).flatMap(_ match {
+      case true => env.authenticatorService.discard(request.authenticator, WebAppResult.Ok(request, "signout.msg", Nil, "AuthProvider.SignOut.Success").getResult)
+      case false => Future.successful(WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "signout.pool1ServiceError", Nil, "AuthProvider.SignOut.Pool1ServiceError", Map[String, String]()).getResult)
+    })
   }
 
   def deleteUser = SecuredAction.async { implicit request =>
@@ -396,7 +396,7 @@ class Auth @Inject() (
               value <- env.authenticatorService.init(authenticator)
               _ <- userTokenService.remove(id)
               //pool1 user
-              _ <- pool1Service.confirmed(token.email)
+              _ <- userService.confirmPool1User(token.email)
               _ <- userService.confirm(loginInfo)
               result <- env.authenticatorService.embed(value, WebAppResult.Ok(request, "reset.done", Nil, "AuthProvider.HandleResetPassword.Success").getResult)
             } yield result

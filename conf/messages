@@ -106,6 +106,7 @@ signin.social=Or use one of the following services to sign in:
 signin.success=You''re successfully logged in!
 
 signout.msg=You has been logged off.
+signout.pool1ServiceError=An error occurred during logout Pool 1. Thus, you have not been logged out.
 
 reset.title=Reset password
 reset.startLegend=Have you forgot your password?

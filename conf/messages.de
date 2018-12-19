@@ -106,6 +106,7 @@ signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
 signin.success=Du bist ringeloggt!
 
 signout.msg=Du bist rausgeloggt!
+signout.pool1ServiceError=Da ist ein Fehler beim Pool 1 aufgetreten. Leider konntest du nicht ausgeloggt werden.
 
 reset.title=Passwort zurücksetzen
 reset.startLegend=Hast du dein Passwort vergessen??

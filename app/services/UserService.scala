@@ -23,6 +23,7 @@ import utils.Nats
 class UserService @Inject() (
                               userDao:UserDao,
                               poolService: PoolService,
+                              pool1DBService: Pool1Service,
                               taskDao: TaskDao,
                               crewDao: CrewDao,
                               accessRightDao: AccessRightDao,
@@ -34,7 +35,6 @@ class UserService @Inject() (
   def save(user:User) = {
     userDao.save(user).map(user => {
       nats.publishCreate("USER", user.id)
-      poolService.save(user) // Todo: Consider result?!
       user
     })
   }
@@ -59,7 +59,32 @@ class UserService @Inject() (
     })
   }
   def find(id:UUID) = userDao.find(id)
-  def confirm(loginInfo:LoginInfo) = userDao.confirm(loginInfo)
+  def findUnconfirmedPool1User(email: String) = pool1DBService.pool1user(email).map(_ match {
+    case Some(pool1user) if !pool1user.confirmed => Some(pool1user)
+    case _ => None
+  })
+
+  def logout(user: User) : Future[Boolean] = {
+    poolService.activated match {
+      case true => poolService.logout(user).map(success => {
+        nats.publishLogout(user.id)
+        success
+      })
+      case false => {
+        nats.publishLogout(user.id)
+        Future.successful(true)
+      }
+    }
+  }
+
+  def confirm(loginInfo:LoginInfo) = {
+    userDao.confirm(loginInfo).map(user => {
+      // Save the user in Pool 1 AFTER confirm
+      poolService.save(user) // Todo: Consider result?!
+    })
+  }
+  def confirmPool1User(email: String) = pool1DBService.confirmed(email)
+
   def link(user:User, socialProfile:CommonSocialProfile) = {
     val profile = Profile(socialProfile)
     if (user.profiles.exists(_.loginInfo == profile.loginInfo)) Future.successful(user) else userDao.link(user, profile)

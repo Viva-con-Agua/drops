@@ -12,6 +12,7 @@ import play.api.{Configuration, Logger}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait PoolService {
+  def activated: Boolean
   def save(user: User)(implicit messages: Messages) : Future[Boolean]
   def read(id: UUID)(implicit messages: Messages) : Future[Option[PoolMailSwitch]]
   def read(user: User)(implicit messages: Messages) : Future[Option[PoolMailSwitch]]
@@ -119,6 +120,8 @@ class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) ext
       Future.successful(false)
     })
   }}
+
+  override def activated: Boolean = configuration.getBoolean("pool1.export").getOrElse(false)
 
   private def PoolAction[T, P](defaultResult: T, param: P)(body: P => Future[T])(implicit messages: Messages) : Future[T] = {
     configuration.getBoolean("pool1.export").getOrElse(false) match {
