@@ -23,14 +23,17 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
   )
 
   private def request(url: String, data: PoolRequest)(implicit messages: Messages): Future[Either[PoolResponseData, Exception]] = {
+    Logger.debug(url)
     ws.url(url)
       .withHeaders("Accept" -> "application/json")
+      .withHeaders("Content-Type" -> "application/json")
       .withFollowRedirects(true)
       .withRequestTimeout(3000)
       .post(data.toPost)
-      .map(
-      _.json.validate[PoolResponseData].map(Left( _ )).getOrElse(Right( new PoolException(Messages("pool1.api.canNotReadResponse"))))
-    )
+      .map(response => {
+        Logger.debug(response.body)
+        response.json.validate[PoolResponseData].map(Left(_)).getOrElse(Right(new PoolException(Messages("pool1.api.canNotReadResponse"))))
+      })
   }
 
   def create(data: PoolRequestUserData)(implicit messages: Messages): Future[Either[PoolResponseData, Exception]] = {
