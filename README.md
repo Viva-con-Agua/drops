@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.36.52 (2018-12-19)
+## Version 0.36.53 (2018-12-19)
+* [[B] #319 - Case sensitivity not working for import](https://github.com/Viva-con-Agua/drops/issues/319)
 * [[I] #318 - Email for login should not be case sensitive](https://github.com/Viva-con-Agua/drops/issues/318)
 * [[B] #317 - Failure on UUID requests for Pool1 API](https://github.com/Viva-con-Agua/drops/issues/317)
 * [[B] #315 - Failure on Pool1-API Response interpretation](https://github.com/Viva-con-Agua/drops/issues/315)
