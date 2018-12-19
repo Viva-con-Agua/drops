@@ -27,14 +27,14 @@ class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) ext
 
   private def readResponse[T]
     (response: PoolResponseData, callback: (PoolResponseData, Boolean) => T)(implicit messages: Messages) : T =
-    response.status match {
+    response.code match {
     case 200 => {
       Logger.debug(Messages("pool1.debug.export.success", response.toString))
       callback(response, true)
     }
     case _ => {
       Logger.debug(Messages("pool1.debug.export.failure",
-        Messages("pool1.debug.export.errorResponseCode", response.status, response.message)))
+        Messages("pool1.debug.export.errorResponseCode", response.code, response.message)))
       callback(response, false)
     }
   }
@@ -57,7 +57,7 @@ class PoolServiceImpl @Inject() (api: PoolApi, configuration: Configuration) ext
     PoolRequest.read(configuration.getString("pool1.hash").getOrElse(""), id).map(request =>
       api.read(request).map(_ match {
         case Left(response) => readResponse[Option[PoolMailSwitch]](response, (r, success) => success match {
-          case true => r.data
+          case true => r.response
           case false => None
         })
         case Right(e) => {
