@@ -4,7 +4,7 @@ import play.api.libs.json.Json
 
 case class PoolMailSwitch(mail_switch: String)
 
-case class PoolResponseData(status: Int, message: String, data: Option[PoolMailSwitch])
+case class PoolResponseData(code: Int, message: String, response: Option[PoolMailSwitch])
 
 object PoolResponseData {
   implicit val poolMailSwitchFormat = Json.format[PoolMailSwitch]
