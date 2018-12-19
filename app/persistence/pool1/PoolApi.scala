@@ -24,6 +24,7 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
 
   private def request(url: String, data: PoolRequest)(implicit messages: Messages): Future[Either[PoolResponseData, Exception]] = {
     Logger.debug(url)
+    Logger.debug(data.toPost.toString())
     ws.url(url)
       .withHeaders("Accept" -> "application/json")
       .withHeaders("Content-Type" -> "application/json")
