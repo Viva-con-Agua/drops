@@ -135,7 +135,7 @@ class Auth @Inject() (
     data.fold(
       errors => Future.successful(WebAppResult.Bogus(request, "error.bogusSignUpData", Nil, "AuthProvider.SignUp.BogusData", JsError.toJson(errors)).getResult),
       signUpData => {
-        val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
+        val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email.toLowerCase())
         userService.retrieve(loginInfo).flatMap {
           case Some(_) =>
             Future.successful(WebAppResult.Bogus(request, "error.userExists", List(signUpData.email), "AuthProvider.SignUp.UserExists", Json.toJson(Map[String, String]())).getResult)
@@ -186,7 +186,7 @@ class Auth @Inject() (
               WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.noUser", Nil, "AuthProvider.SignUp.NoUserForToken", Map[String, String]()).getResult
             )
           case Some(user) =>
-            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
+            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email.toLowerCase)
             for {
               authenticator <- env.authenticatorService.create(loginInfo)
               value <- env.authenticatorService.init(authenticator)
@@ -219,11 +219,11 @@ class Auth @Inject() (
     data.fold(
       errors => Future.successful(WebAppResult.Bogus(request, "error.bogusAuthenticationData", Nil, "AuthProvider.Authenticate.BogusData", JsError.toJson(errors)).getResult),
       signInData => {
-        val credentials = Credentials(signInData.email, signInData.password)
+        val credentials = Credentials(signInData.email.toLowerCase, signInData.password)
         // Handle Pool 1 users
         userService.findUnconfirmedPool1User(signInData.email).flatMap {
           case Some( _ ) =>
-            userService.retrieve(LoginInfo(CredentialsProvider.ID, signInData.email)).flatMap {
+            userService.retrieve(LoginInfo(CredentialsProvider.ID, signInData.email.toLowerCase)).flatMap {
               case None => Future.successful(
                 // Possible Result: Internal error. because user was suddenly deleted
                 WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "error.missingUserForPool1User", List(signInData.email), "AuthProvider.NoUserForPool1User", Map[String, String]()).getResult
@@ -331,7 +331,7 @@ class Auth @Inject() (
       val data = request.body.validate[Email]
       data.fold(
         errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.ResetPassword.BogusData", JsError.toJson(errors)).getResult),
-        email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address)).flatMap {
+        email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address.toLowerCase)).flatMap {
           case None => Future.successful(
             WebAppResult.NotFound(request, "error.noUser", Nil, "AuthProvider.ResetPassword.NoUser", Map(
               "email" -> email.address
@@ -389,14 +389,14 @@ class Auth @Inject() (
               WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.HandleResetPassword.PasswordsInvalid", Json.toJson(Map("error" -> "not valid"))).getResult
             )
           case Some(token) if !token.isSignUp && !token.isExpired =>
-            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email)
+            val loginInfo = LoginInfo(CredentialsProvider.ID, token.email.toLowerCase)
             for {
               _ <- authInfoRepository.save(loginInfo, passwordHasher.hash(passwords.password1))
               authenticator <- env.authenticatorService.create(loginInfo)
               value <- env.authenticatorService.init(authenticator)
               _ <- userTokenService.remove(id)
               //pool1 user
-              _ <- userService.confirmPool1User(token.email)
+              _ <- userService.confirmPool1User(token.email.toLowerCase)
               _ <- userService.confirm(loginInfo)
               result <- env.authenticatorService.embed(value, WebAppResult.Ok(request, "reset.done", Nil, "AuthProvider.HandleResetPassword.Success").getResult)
             } yield result
@@ -428,7 +428,7 @@ class Auth @Inject() (
                 userService.updateProfileEmail(
                   token.email,
                   Profile(
-                    LoginInfo(CredentialsProvider.ID, emails.email),
+                    LoginInfo(CredentialsProvider.ID, emails.email.toLowerCase),
                     profile.confirmed,
                     Option(emails.email),
                     profile.supporter,
@@ -453,7 +453,7 @@ class Auth @Inject() (
       val data = request.body.validate[Email]
       data.fold(
         errors => Future.successful(WebAppResult.Bogus(request, "error.bogusResetPasswordData", Nil, "AuthProvider.ResetEmail.BogusData", JsError.toJson(errors)).getResult),
-        email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address)).flatMap {
+        email => userService.retrieve(LoginInfo(CredentialsProvider.ID, email.address.toLowerCase)).flatMap {
           case None => Future.successful(
             WebAppResult.NotFound(request, "error.noUser", Nil, "AuthProvider.ResetEmail.NoUser", Map(
               "email" -> email.address

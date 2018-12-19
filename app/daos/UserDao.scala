@@ -216,7 +216,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       ((((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info), supporterCrew) <- (users
         join profiles on (_.id === _.userId) //user.id === profile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
-        join loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)
+        join loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey.toLowerCase === loginInfo.providerKey.toLowerCase)
             on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
         joinLeft passwordInfos on(_._1._1._2.id ===   _.profileId)
         joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
