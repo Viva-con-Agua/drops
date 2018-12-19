@@ -19,7 +19,7 @@ class PoolApi @Inject() (ws: WSClient, configuration: Configuration, messageApi:
   private val hash = configuration.getString("pool1.hash")
 
   private def getConf(path: String) : Option[String] = configuration.getString("pool1.base").flatMap(url =>
-    configuration.getString("pathes." + path).map(url + _)
+    configuration.getString("pool1.pathes." + path).map(url + _)
   )
 
   private def request(url: String, data: PoolRequest)(implicit messages: Messages): Future[Either[PoolResponseData, Exception]] = {
