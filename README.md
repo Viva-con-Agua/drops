@@ -365,7 +365,7 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.36.47 (2018-12-19)
+## Version 0.36.49 (2018-12-19)
 * [[B] #313 - Failure on Pool1 configuration](https://github.com/Viva-con-Agua/drops/issues/313)
 * [[B] #312 - Pool 1 Service is called in controller and UserService](https://github.com/Viva-con-Agua/drops/issues/312)
 * [[F] #259 - New email](https://github.com/Viva-con-Agua/drops/issues/259)

@@ -296,7 +296,7 @@ class RestApi @Inject() (
             case None => Future.successful(NotFound(Messages("rest.assignUserToCrew.assignRole.unknownCrew")))
           })
         }
-        case None => Future.successful(onlyAssignmentInsert match {
+       case None => Future.successful(onlyAssignmentInsert match {
           case true => Ok(Messages("profile.assign.crew.success"))
           case false => BadRequest(Messages("rest.assignUserToCrew.assignRole.pillarNotGiven"))
         })
@@ -304,7 +304,7 @@ class RestApi @Inject() (
     }
     userService.find(uuidUser).flatMap{
       case Some(user) => userService.assignOnlyOne(uuidCrew, user).flatMap(_ match {
-        case Left(i) if i > 0 => assignRole(user, false)
+        case Left(i) if i > 0 => assignRole(user, true)
         case Left(i) => assignRole(user, false)
         case Right(msg) => Future.successful(NotFound(msg))
       })

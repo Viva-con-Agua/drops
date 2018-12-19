@@ -34,7 +34,7 @@ class UserService @Inject() (
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = {
     userDao.save(user).map(user => {
-      nats.publishCreate("USER", user.id)
+      //nats.publishCreate("USER", user.id)
       user
     })
   }
@@ -145,7 +145,7 @@ class UserService @Inject() (
   def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
     case Some(profile) => userDao.setCrew(crewUUID, profile).map(result => {
       if(result.isLeft && result.left.get > 0) {
-        nats.publishUpdate("USER", user.id)
+        //nats.publishUpdate("USER", user.id)
         userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
       }
       result
