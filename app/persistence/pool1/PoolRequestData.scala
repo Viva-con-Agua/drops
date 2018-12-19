@@ -3,6 +3,7 @@ package persistence.pool1
 import java.util.UUID
 
 import models.User
+import persistence.pool1.PoolRequestUUIDData.UUIDWrapper
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -16,7 +17,7 @@ object PoolRequest {
     PoolRequestUser.create(user).map(rq => PoolRequestUserData(hash, rq))
 
   def read(hash: String, id: UUID): Option[PoolRequestUUIDData] =
-    Some(PoolRequestUUIDData(hash, id))
+    Some(PoolRequestUUIDData(hash, UUIDWrapper(id)))
 
   def read(hash: String, user: User): Option[PoolRequestUUIDData] =
     read(hash, user.id)
@@ -25,13 +26,13 @@ object PoolRequest {
     PoolRequestUser.update(user, mailSwitch).map(rq => PoolRequestUserData(hash, rq))
 
   def delete(hash: String, id: UUID): Option[PoolRequestUUIDData] =
-    Some(PoolRequestUUIDData(hash, id))
+    Some(PoolRequestUUIDData(hash, UUIDWrapper(id)))
 
   def delete(hash: String, user: User): Option[PoolRequestUUIDData] =
     delete(hash, user.id)
 
   def logout(hash: String, id: UUID): Option[PoolRequestUUIDData] =
-    Some(PoolRequestUUIDData(hash, id))
+    Some(PoolRequestUUIDData(hash, UUIDWrapper(id)))
 
   def logout(hash: String, user: User): Option[PoolRequestUUIDData] =
     logout(hash, user.id)
@@ -54,18 +55,23 @@ object PoolRequestUserData {
   def toPost(rq : PoolRequestUserData): JsValue = Json.toJson(rq)
 }
 
-case class PoolRequestUUIDData(hash: String, uuid: UUID) extends PoolRequest {
+case class PoolRequestUUIDData(hash: String, user: UUIDWrapper) extends PoolRequest {
   override def toPost: JsValue = Json.toJson(this)
 }
 object PoolRequestUUIDData {
 
+  case class UUIDWrapper(uuid: UUID)
+  object UUIDWrapper {
+    implicit val poolUUIDWrapper = Json.format[UUIDWrapper]
+  }
+
   implicit val poolRequestUUIDDataWrites : OWrites[PoolRequestUUIDData] = (
     (JsPath \ "hash").write[String] and
-      (JsPath \ "uuid").write[UUID]
+      (JsPath \ "user").write[UUIDWrapper]
     )(unlift(PoolRequestUUIDData.unapply))
   implicit val poolRequestUUIDDataReads : Reads[PoolRequestUUIDData] = (
     (JsPath \ "hash").read[String] and
-      (JsPath \ "uuid").read[UUID]
+      (JsPath \ "user").read[UUIDWrapper]
     ).tupled.map(t => PoolRequestUUIDData( t._1, t._2 ))
 }
 
