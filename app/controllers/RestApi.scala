@@ -140,7 +140,7 @@ class RestApi @Inject() (
   def createUser() = ApiAction.async(validateJson[CreateUserBody]) { implicit request => {
     val signUpData = request.request.body
 
-    val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
+    val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email.toLowerCase)
     userService.retrieve(loginInfo).flatMap{
       case Some(user) =>
         Future.successful(Created(Json.toJson(PublicUser(user))))
@@ -178,7 +178,7 @@ class RestApi @Inject() (
 
   def updateUser(id : UUID) = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
     val userData = request.request.body
-    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email.toLowerCase)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match{
@@ -217,7 +217,7 @@ class RestApi @Inject() (
 
   def updateUserProfileImage(id : UUID) = ApiAction.async(validateJson[UpdateUserProfileImageBody]){implicit request =>{
     val userData = request.request.body
-    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email.toLowerCase)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match {
@@ -238,7 +238,7 @@ class RestApi @Inject() (
   }
 
   def deleteUser(id: UUID) = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
-    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email)
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email.toLowerCase)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match {
