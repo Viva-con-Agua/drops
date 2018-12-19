@@ -282,12 +282,31 @@ class RestApi @Inject() (
     }
   }}
 
-  def assignUserToCrew(uuidUser: UUID, uuidCrew: UUID) = ApiAction.async { implicit request => 
+  def assignUserToCrew(uuidUser: UUID, uuidCrew: UUID, pillar: Option[String]) = ApiAction.async { implicit request =>
+    def assignRole(user: User, onlyAssignmentInsert : Boolean = false) : Future[Result] = {
+      pillar match {
+        case Some(p) => Pillar(p) match {
+          case Unknown => Future.successful(NotFound(Messages("rest.assignUserToCrew.assignRole.unknownPillar")))
+          case pillarInstance : Pillar => crewService.get(uuidCrew).flatMap(_ match {
+            case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, pillarInstance), user).map(_ match {
+              case Left(i) if i > 0 => Ok(Messages("profile.assign.crew.success"))
+              case Left(i) => NotModified
+              case Right(msg) => NotFound(msg)
+            })
+            case None => Future.successful(NotFound(Messages("rest.assignUserToCrew.assignRole.unknownCrew")))
+          })
+        }
+        case None => Future.successful(onlyAssignmentInsert match {
+          case true => Ok(Messages("profile.assign.crew.success"))
+          case false => BadRequest(Messages("rest.assignUserToCrew.assignRole.pillarNotGiven"))
+        })
+      }
+    }
     userService.find(uuidUser).flatMap{
-      case Some(user) => userService.assignOnlyOne(uuidCrew, user).map(_ match {
-        case Left(i) if i > 0 => Ok(Messages("profile.assign.crew.success"))
-        case Left(i) => NotModified
-        case Right(msg) => NotFound(msg)
+      case Some(user) => userService.assignOnlyOne(uuidCrew, user).flatMap(_ match {
+        case Left(i) if i > 0 => assignRole(user, false)
+        case Left(i) => assignRole(user, false)
+        case Right(msg) => Future.successful(NotFound(msg))
       })
       case _ => Future.successful(NotFound(Messages("rest.api.canNotFindGivenUser", uuidUser)))
     }
