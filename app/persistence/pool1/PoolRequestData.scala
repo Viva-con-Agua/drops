@@ -91,7 +91,8 @@ case class PoolRequestUser(
                             gender: Option[String],
                             nation: Option[String], // cities head country
                             city: Option[String], // crew name
-                            region: Option[String] // empty
+                            region: Option[String], // empty
+                            crew_id: Option[UUID]
                           )
 
 object PoolRequestUser {
@@ -115,7 +116,8 @@ object PoolRequestUser {
       gender = profile.supporter.sex,
       nation = profile.supporter.crew.flatMap(_.cities.headOption).map(_.country),
       city = profile.supporter.crew.map(_.name),
-      region = Some("")
+      region = Some(""),
+      crew_id = profile.supporter.crew.map(_.id)
     )
   ))
   def create(user: User) : Option[PoolRequestUser] = PoolRequestUser(user, false, None)
@@ -137,7 +139,8 @@ object PoolRequestUser {
       (JsPath \ "gender").writeNullable[String] and
       (JsPath \ "nation").writeNullable[String] and
       (JsPath \ "city").writeNullable[String] and
-      (JsPath \ "region").writeNullable[String]
+      (JsPath \ "region").writeNullable[String] and
+      (JsPath \ "crew_id").writeNullable[UUID]
     )(unlift(PoolRequestUser.unapply))
   implicit val poolRequestUserReads : Reads[PoolRequestUser] = (
     (JsPath \ "uuid").readNullable[UUID] and
@@ -155,8 +158,9 @@ object PoolRequestUser {
       (JsPath \ "gender").readNullable[String] and
       (JsPath \ "nation").readNullable[String] and
       (JsPath \ "city").readNullable[String] and
-      (JsPath \ "region").readNullable[String]
+      (JsPath \ "region").readNullable[String] and
+      (JsPath \ "crew_id").readNullable[UUID]
     ).tupled.map(t => PoolRequestUser(
-        t._1, t._2, t._3, t._4, t._5, t._6, t._6, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16
+        t._1, t._2, t._3, t._4, t._5, t._6, t._6, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17
     ))
 }
