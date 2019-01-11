@@ -172,6 +172,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val profileOrganizations = TableQuery[ProfileOrganizationTableDef]
   val supporterCrews = TableQuery[SupporterCrewTableDef]
   val pool1users = TableQuery[Pool1UserTableDef]
+  val oauthTokens = TableQuery[OauthTokenTableDef]
 
   implicit val getUserResult = GetResult(r => UserDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextLong, r.nextLong))
   implicit val getProfileResult = GetResult(r => ProfileDB(r.nextLong, r.nextBoolean, r.nextString, r.nextLong))
@@ -474,8 +475,9 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     val deleteSupporterCrew = supporterCrews.filter(_.supporterId.in(deleteSupporter.map(_.id)))
     val deletePasswordInfo = passwordInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
     val deleteLoginInfo = loginInfos.filter(_.profileId.in(deleteProfile.map(_.id)))
+    val deleteOauthToken = oauthTokens.filter(t => t.userId === userId)
     dbConfig.db.run((deleteSupporterCrew.delete andThen deleteSupporter.delete andThen deleteLoginInfo.delete andThen deletePasswordInfo.delete andThen
-      deleteProfile.delete andThen deleteUser.delete).transactionally).map(_ match {
+      deleteProfile.delete andThen deleteOauthToken.delete andThen deleteUser.delete).transactionally).map(_ match {
         case 1 => true
         case 0 => false
       })
