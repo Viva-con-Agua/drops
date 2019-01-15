@@ -31,7 +31,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import models.dispenser._
-import services.{DispenserService, Pool1Service, UserService, UserTokenService}
+import services.{ Pool1Service, UserService, UserTokenService}
 import utils.{Mailer, Nats}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
@@ -122,7 +122,6 @@ class Auth @Inject() (
   configuration: Configuration,
   pool: PoolService,
   mailer: Mailer,
-  dispenserService: DispenserService,
   nats: Nats) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._

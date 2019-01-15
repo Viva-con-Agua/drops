@@ -1,21 +1,3 @@
-# Application
-GET     /                                                   controllers.Application.index
-GET     /profile                                            controllers.Application.profile
-POST    /crew                                               controllers.Application.updateCrew
-POST    /pillar                                             controllers.Application.updatePillar
-GET     /task                                               controllers.Application.task
-POST    /user/update                                        controllers.Application.updateBase
-
-GET     /delete                                             controllers.Application.userDelete
-
-
-#GET     /crews/init                                         controllers.Application.initCrews
-GET     /crews/fixID                                        controllers.Application.fixCrewsID
-GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
-
-# Roles
-GET     /roles                                              controllers.Roles.index
-POST    /roles/update                                       controllers.Roles.update
 
 # Widgets
 GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
@@ -102,45 +84,11 @@ GET     /oauth2/rest/profile                                controllers.Oauth2Re
 GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String, ajax: Option[Boolean])
 GET     /oauth2/code/get                                    controllers.OAuth2Controller.getCodeOAuth2Spec(scope: Option[String], client_id : String, response_type : String, state: String, redirect_uri: String, ajax: Option[Boolean])
 
-# Authentication
-GET     /auth/init                                          controllers.Auth.init
-
-GET     /auth/signup                                        controllers.Auth.startSignUp
-POST    /auth/signup                                        controllers.Auth.handleStartSignUp
-GET     /auth/signup/:token                                 controllers.Auth.signUp(token:String)
-
-GET     /auth/signin                                        controllers.Auth.signIn
-POST    /auth/authenticate                                  controllers.Auth.authenticate
-GET     /auth/signout                                       controllers.Auth.signOut
-
-
-GET     /auth/reset                                         controllers.Auth.startResetPassword
-POST    /auth/reset                                         controllers.Auth.handleStartResetPassword
-GET  	  /auth/pool1/:email																	controllers.Auth.handlePool1StartResetPassword(email:String)
-GET     /auth/reset/:token                                  controllers.Auth.resetPassword(token:String)
-POST    /auth/reset/:token                                  controllers.Auth.handleResetPassword(token:String)
-
-GET     /auth/social/:providerId                            controllers.Auth.socialAuthenticate(providerId:String)
-
-# Organizations
-POST   /organization/insert                                	controllers.OrganizationController.insert
-POST   /organization/addProfile    													controllers.OrganizationController.addProfileName
-DELETE   /organization/deleteProfile    											controllers.OrganizationController.deleteProfile
-DELETE   /organization/delete  																controllers.OrganizationController.delete
-POST   /organization/get																		controllers.OrganizationController.getOrganization
-POST   /organization/withProfile														controllers.OrganizationController.getOrganizationWithProfile
-POST 	 /organization/update																	controllers.OrganizationController.updateOrganization
-POST 	 /organization/addBankaccount													controllers.OrganizationController.addBankAccountName
-POST	 /organization/withBankaccounts												controllers.OrganizationController.withBankAccounts
 
 # OAuth 2 Server
 GET     /oauth2/access_token                                controllers.OAuth2Controller.accessToken
 POST    /oauth2/access_token                                controllers.OAuth2Controller.accessToken
-GET     /oauth2/register                                    controllers.Application.registration
-POST    /oauth2/register                                    controllers.Application.registerOAuth2Client
 
-# Imprint
-GET 	/impressum																						controllers.ImprintController.imprint
 # Public assets
 GET     /assets/*file                                       controllers.Assets.versioned(path="/public", file: Asset)
 GET     /webjars/*file                                      controllers.WebJarAssets.at(file)
