@@ -365,7 +365,8 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.36.54 (2019-1-11)
+## Version 0.36.55 (2019-1-15)
+* [[B] #333 - Delete failed](https://github.com/Viva-con-Agua/drops/issues/333)
 * [[I] #324 - Export users crew to Pool 1](https://github.com/Viva-con-Agua/drops/issues/324)
 * [[B] #319 - Case sensitivity not working for import](https://github.com/Viva-con-Agua/drops/issues/319)
 * [[I] #318 - Email for login should not be case sensitive](https://github.com/Viva-con-Agua/drops/issues/318)
