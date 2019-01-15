@@ -67,7 +67,7 @@ case class LocalProfileImage(uuid:UUID) extends ProfileImage {
     * @return
     */
   override def getImage(width: Int, height: Int): Future[Option[String]] =
-    Future.successful(Some(routes.Files.get(uuid.toString).url))
+    Future.successful(Some(controllers.webapp.routes.Avatar.get(uuid.toString).url))
 }
 
 class DefaultProfileImage extends ProfileImage {

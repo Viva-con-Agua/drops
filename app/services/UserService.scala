@@ -12,8 +12,6 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
-import play.modules.reactivemongo.ReactiveMongoApi
-import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, CrewDao, TaskDao, UserDao}
 import models._
 import persistence.pool1.PoolService

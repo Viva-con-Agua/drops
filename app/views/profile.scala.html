@@ -15,11 +15,6 @@
     @errors.alert(msg, "error")
   }
   @defining(loggedUser.profileFor(loginInfo).get) { profile =>
-      <div class="profileHeader">
-        @profile.getAvatar.map((ava) => Await.result(ava.getImage(400,400), 3000 millis)).map { url =>
-          @dropzone.profileImage(url)
-        }
-      </div>
     <div>
     @b3.form(routes.Application.updateBase) {
       <fieldset>

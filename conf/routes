@@ -5,8 +5,6 @@ POST    /crew                                               controllers.Applicat
 POST    /pillar                                             controllers.Application.updatePillar
 GET     /task                                               controllers.Application.task
 POST    /user/update                                        controllers.Application.updateBase
-POST    /user/uploadAvatar                                  controllers.Files.uploadProfileImage
-GET     /file/get/:id                                       controllers.Files.get(id: String)
 
 GET     /delete                                             controllers.Application.userDelete
 
