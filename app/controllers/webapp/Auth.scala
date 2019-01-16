@@ -142,11 +142,7 @@ class Auth @Inject() (
             val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender)
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
-              user <- userService.save(User(id = UUID.randomUUID(), profiles =
-                avatarUrl match {
-                  case Some(url) => List(profile.copy(avatar = List(GravatarProfileImage(url), new DefaultProfileImage)))
-                  case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-                }, updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
+              user <- userService.save(User(id = UUID.randomUUID(), List(profile), updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
               pw <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
             } yield {
@@ -432,8 +428,7 @@ class Auth @Inject() (
                     Option(emails.email),
                     profile.supporter,
                     profile.passwordInfo,
-                    profile.oauth1Info,
-                    profile.avatar
+                    profile.oauth1Info
                   )
                 ).flatMap {
                   case true => Future.successful(WebAppResult.Ok(request, "reset.done", Nil, "handleResetEmail.Success").getResult)

@@ -28,7 +28,6 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
   def save(user:User):Future[User]
-  def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User]
   def replace(user:User):Future[User]
   def confirm(loginInfo:LoginInfo):Future[User]
   def link(user:User, profile:Profile):Future[User]
@@ -184,14 +183,6 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     })
   }
 
-  override def saveProfileImage(profile: Profile, avatar: ProfileImage): Future[User] = {
-    val oldAvatar = profile.avatar.filter(_ match {
-      case pi: LocalProfileImage => false
-      case _ => true
-    })
-    val newProfile = profile.copy(avatar = avatar +: oldAvatar)
-    this.update(newProfile)
-  }
 
   override def replace(updatedUser: User): Future[User] = {
     findDBUserModel(updatedUser.id).flatMap(user => {

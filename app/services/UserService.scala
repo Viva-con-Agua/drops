@@ -36,7 +36,7 @@ class UserService @Inject() (
       user
     })
   }
-  def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
+  //def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
 
   def update(updatedUser: User) = {
     userDao.replace(updatedUser).map(user => {
