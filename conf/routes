@@ -1,3 +1,6 @@
+# Init
+GET     /crews/init                                         controllers.Application.initCrews
+GET     /users/init/:number/:specialRoleUsers               controllers.Application.initUsers(number: Int, specialRoleUsers : Int)
 
 # Widgets
 GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
@@ -82,6 +85,17 @@ POST 		/rest/pool1user/create							controllers.RestApi.createPool1User
 GET     /oauth2/rest/profile                                controllers.Oauth2RestApi.profile
 GET     /oauth2/code/get/:clientId                          controllers.OAuth2Controller.getCode(clientId : String, ajax: Option[Boolean])
 GET     /oauth2/code/get                                    controllers.OAuth2Controller.getCodeOAuth2Spec(scope: Option[String], client_id : String, response_type : String, state: String, redirect_uri: String, ajax: Option[Boolean])
+
+# Organizations
+POST    /organization/insert                                controllers.OrganizationController.insert
+POST    /organization/addProfile    												controllers.OrganizationController.addProfileName
+DELETE  /organization/deleteProfile    											controllers.OrganizationController.deleteProfile
+DELETE  /organization/delete  															controllers.OrganizationController.delete
+POST    /organization/get																		controllers.OrganizationController.getOrganization
+POST    /organization/withProfile														controllers.OrganizationController.getOrganizationWithProfile
+POST 	  /organization/update																controllers.OrganizationController.updateOrganization
+POST 	  /organization/addBankaccount                        controllers.OrganizationController.addBankAccountName
+POST    /organization/withBankaccounts                      controllers.OrganizationController.withBankAccounts
 
 
 # OAuth 2 Server
