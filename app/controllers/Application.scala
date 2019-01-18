@@ -16,7 +16,7 @@ import models._
 import models.dispenser._
 import play.api.data.Form
 import play.api.data.Forms._
-import services.{DispenserService, UserService}
+import services.{UserService}
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import play.api.libs.json.{JsPath, JsValue, Json, Reads}
 import play.api.libs.ws._
@@ -26,120 +26,13 @@ import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class Application @Inject() (
-  oauth2ClientDao: OauthClientDao,
   userService: UserService,
   crewDao: CrewDao,
-  taskDao: TaskDao,
   ws: WSClient,
   passwordHasher: PasswordHasher,
   val messagesApi: MessagesApi,
   val env:Environment[User,CookieAuthenticator],
-  configuration: Configuration,
-  dispenserService: DispenserService,
-  socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User,CookieAuthenticator] {
-
-  val pool1Export = configuration.getBoolean("pool1.export").getOrElse(false)
-  val pool1Url = configuration.getString("pool1.url").get
-
-  def index = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    if (!pool1Export) {
-      Future.successful(Ok(dispenserService.getTemplate(views.html.index(request.identity, request.authenticator.loginInfo))))
-    }else{
-      Future.successful(Redirect(pool1Url))
-    }
-  }
-
-  def profile = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    crewDao.list.map(l => {
-      Ok(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, PillarForms.define)))
-    })
-  }
-
-  /**
-    * Open todo: The part of DAO (removing the data from database) is not implemented yet. Take a look at the DAO and
-    * the service!
-    * @return
-    */
-  def userDelete = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    userService.delete(request.identity.id)
-    env.authenticatorService.discard(request.authenticator, Redirect(routes.Application.index()))
-  }
-
-  def updateBase = SecuredAction(Pool1Restriction(pool1Export)).async { implicit request =>
-    UserForms.userForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm, CrewForms.geoForm, l.toSet, PillarForms.define)))),
-      userData => request.identity.profileFor(request.authenticator.loginInfo) match {
-        case Some(profile) => {
-          val supporter = profile.supporter.copy(
-            firstName = Some(userData.firstName),
-            lastName = Some(userData.lastName),
-            fullName = Some(s"${userData.firstName} ${userData.lastName}"),
-            birthday = Some(userData.birthday.getTime),
-            mobilePhone = Some(userData.mobilePhone),
-            placeOfResidence = Some(userData.placeOfResidence),
-            sex = Some(userData.sex)
-          )
-          val updatedProfile = profile.copy(supporter = supporter, email = Some(userData.email))
-          userService.update(request.identity.updateProfile(updatedProfile)).map((u) => Redirect(routes.Application.profile))
-        }
-        case _ => Future.successful(Redirect(routes.Application.profile))
-      }
-    )
-  }
-
-  def updateCrew = SecuredAction(
-    WithRole(RoleAdmin) ||
-    WithRole(RoleEmployee) ||
-    IsVolunteerManager()
-  ).async { implicit request =>
-    CrewForms.geoForm.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, bogusForm, l.toSet, PillarForms.define)))),
-      crewData => {
-        request.identity.profileFor(request.authenticator.loginInfo) match {
-          case Some(profile) => {
-            crewDao.find(crewData.crewName).map( _ match {
-              case Some(crew) => {
-                val updatedSupporter = profile.supporter.copy(crew = Some(crew))
-                val updatedProfile = profile.copy(supporter = updatedSupporter)
-                userService.update(request.identity.updateProfile(updatedProfile))
-                Redirect("/profile")
-              }
-              case None => Redirect("/profile")
-            })
-
-          }
-          case None =>  Future.successful(InternalServerError(Messages("crew.update.noProfileForLogin")))
-        }
-      }
-    )
-  }
-
-  def updatePillar = SecuredAction(
-    WithRole(RoleAdmin) ||
-    WithRole(RoleEmployee) ||
-    IsVolunteerManager()
-  ).async { implicit request =>
-    PillarForms.define.bindFromRequest.fold(
-      bogusForm => crewDao.list.map(l => BadRequest(dispenserService.getTemplate(views.html.profile(request.identity, request.authenticator.loginInfo, socialProviderRegistry, UserForms.userForm, CrewForms.geoForm, l.toSet, bogusForm)))),
-      pillarData => request.identity.profileFor(request.authenticator.loginInfo) match {
-        case Some(profile) => {
-          val pillars = pillarData.toMap.foldLeft[Set[Pillar]](Set())((pillars, data) => data._2 match {
-            case true => pillars + Pillar(data._1)
-            case false => pillars
-          })
-          val supporter = profile.supporter.copy(pillars = pillars)
-          val updatedProfile = profile.copy(supporter = supporter)
-          userService.update(request.identity.updateProfile(updatedProfile)).map((u) => Redirect("/"))
-        }
-        case _ => Future.successful(Redirect("/"))
-      }
-    )
-  }
-
-  def task = SecuredAction { implicit request =>
-    val resultingTasks: Future[Seq[Task]] = taskDao.all()
-      Ok(dispenserService.getTemplate(views.html.task(request.identity, request.authenticator.loginInfo, resultingTasks)))
-  }
+  configuration: Configuration) extends Silhouette[User,CookieAuthenticator] {
 
   def initCrews = SecuredAction(WithRole(RoleAdmin)).async { request =>
     configuration.getConfigList("crews").map(_.toList.map(c =>
@@ -155,23 +48,7 @@ class Application @Inject() (
     ))
     Future.successful(Redirect("/"))
   }
-
-  def fixCrewsID = SecuredAction(WithRole(RoleAdmin)).async { request =>
-    val crews = crewDao.listOfStubs.flatMap(l => Future.sequence(l.map(oldCrew => crewDao.update(oldCrew.toCrew))))
-    val users = crews.flatMap(l => userService.listOfStubs.flatMap(ul => Future.sequence(ul.map(user => {
-      val profiles = user.profiles.map(profile => {
-        val newCrewSupporter = profile.supporter.crew.flatMap((crew) => l.find(_.name == crew.name))
-        profile.toProfile(newCrewSupporter)
-      })
-      userService.update(user.toUser(profiles))
-    }))))
-    val res = for {
-      crewsList <- crews
-      usersList <- users
-    } yield (crewsList, usersList)
-    res.map(pair => Ok(Json.arr(Json.toJson(pair._1), Json.toJson(pair._2))))
-  }
-
+  
   def initUsers(number: Int, specialRoleUsers : Int = 1) = SecuredAction(WithRole(RoleAdmin)).async { request => {
     val wsRequest = ws.url("https://randomuser.me/api/")
       .withHeaders("Accept" -> "application/json")
@@ -203,36 +80,4 @@ class Application @Inject() (
       })
     )
   }}
-
-  def registration = SecuredAction(WithRole(RoleAdmin)) { implicit request =>
-    val template: Template = dispenserService.buildTemplate(
-        NavigationData("GlobalNav", "", None),
-        "Drops", views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, OAuth2ClientForms.register).toString
-      )
-      Ok(views.html.dispenser(dispenserService.getSimpleTemplate(template)))
-  }
-
-  def registerOAuth2Client = SecuredAction(WithRole(RoleAdmin)).async { implicit request =>
-    OAuth2ClientForms.register.bindFromRequest.fold(
-      bogusForm => Future.successful(BadRequest(dispenserService.getTemplate(views.html.oauth2.register(request.identity, request.authenticator.loginInfo, socialProviderRegistry, bogusForm)))),
-      registerData => {
-        oauth2ClientDao.save(registerData.toClient)
-        Future.successful(Redirect("/"))
-      }
-    )
-  }
-}
-
-object OAuth2ClientForms {
-  case class OAuth2ClientRegister(id:String, secret: String, redirectUri: Option[String], grantTypes: Set[String]) {
-    def toClient = OauthClient(id, secret, redirectUri, grantTypes)
-  }
-  def register = Form(mapping(
-    "id" -> nonEmptyText,
-    "secret" -> nonEmptyText,
-    "redirectUri" -> optional(text),
-    "grantTypes" -> nonEmptyText
-  )
-  ((id, secret, redirectUri, grantTypes) => OAuth2ClientRegister(id, secret, redirectUri, grantTypes.split(",").toSet))
-  ((rawData) => Some((rawData.id, rawData.secret, rawData.redirectUri, rawData.grantTypes.mkString(",")))))
 }

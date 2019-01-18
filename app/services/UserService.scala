@@ -12,8 +12,6 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
-import play.modules.reactivemongo.ReactiveMongoApi
-import play.modules.reactivemongo.json.collection.JSONCollection
 import daos.{AccessRightDao, CrewDao, TaskDao, UserDao}
 import models._
 import persistence.pool1.PoolService
@@ -38,7 +36,7 @@ class UserService @Inject() (
       user
     })
   }
-  def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
+  //def saveImage(profile: Profile, avatar: ProfileImage) = userDao.saveProfileImage(profile, avatar)
 
   def update(updatedUser: User) = {
     userDao.replace(updatedUser).map(user => {

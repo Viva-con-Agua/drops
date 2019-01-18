@@ -130,8 +130,7 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
-     password: Option[String], //Password is optional, perhaps its necessary to set the pw on the first login
-     profileImageUrl: Option[String]
+     password: Option[String] //Password is optional, perhaps its necessary to set the pw on the first login
   )
   object CreateUserBody{
     implicit val createUserBodyJsonFormat = Json.format[CreateUserBody]
@@ -148,18 +147,10 @@ class RestApi @Inject() (
         var passwordInfo : Option[PasswordInfo] = None
         if(signUpData.password.isDefined)
           passwordInfo = Option(passwordHasher.hash(signUpData.password.get))
-        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo, List(new DefaultProfileImage))
-
-        avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
-          userService.save(User(id = UUID.randomUUID(), profiles =
-            (signUpData.profileImageUrl, avatarUrl) match {
-              case (Some(url), Some(gravatarUrl))  => List(profile.copy(avatar = List(UrlProfileImage(url),GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
-              case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
-              case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
-              case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            }, updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
-        })
-      }
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo)
+        userService.save(User(id = UUID.randomUUID(), List(profile),
+          updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
+        }
     }
   }}
 
@@ -211,7 +202,7 @@ class RestApi @Inject() (
                                          url : String
                                        )
 
-  object UpdateUserProfileImageBody {
+  /*object UpdateUserProfileImageBody {
     implicit val updateUserProfileImageBody = Json.format[UpdateUserProfileImageBody]
   }
 
@@ -230,7 +221,7 @@ class RestApi @Inject() (
         case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
-  }}
+  }}*/
 
   case class DeleteUserBody(email : String)
   object DeleteUserBody {

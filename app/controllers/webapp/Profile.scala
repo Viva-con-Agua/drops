@@ -31,7 +31,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import models.dispenser._
-import services.{DispenserService, Pool1Service, UserService, UserTokenService}
+import services.{ Pool1Service, UserService, UserTokenService}
 import utils.{Mailer, Nats}
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import org.joda.time.DateTime
@@ -56,7 +56,6 @@ class Profile @Inject() (
   ws: WSClient,
   passwordHasher: PasswordHasher,
   configuration: Configuration,
-  dispenserService: DispenserService,
   socialProviderRegistry: SocialProviderRegistry,
   val messagesApi: MessagesApi,
   val env: Environment[User, CookieAuthenticator]

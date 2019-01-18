@@ -27,7 +27,6 @@ import utils.authorization.WithRole
 class OrganizationController @Inject() (
       //forms: OrganizationForms,
       organizationService: OrganizationService,
-      dispenserService: DispenserService,
       val messagesApi: MessagesApi,
       val env:Environment[User,CookieAuthenticator]
   )extends Silhouette[User,CookieAuthenticator] {

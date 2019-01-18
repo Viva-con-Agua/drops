@@ -79,23 +79,22 @@ case class ProfileStub(
                     email:Option[String],
                     supporter: SupporterStub,
                     passwordInfo:Option[PasswordInfo],
-                    oauth1Info: Option[OAuth1Info],
-                    avatarUrl: Option[String]) {
+                    oauth1Info: Option[OAuth1Info]) {
   def toProfile(c: Option[Crew]) : Profile =
-    Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info, avatarUrl.map((url) => List(GravatarProfileImage( url ), new DefaultProfileImage)).getOrElse(List(new DefaultProfileImage)))
+    Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info)
 }
 
 object ProfileStub {
 
   def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : ProfileStub =
   // confirmation is false by default, because this apply function is designed for using it during the default sign up process
-    ProfileStub(loginInfo, false, Some(email), SupporterStub(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, None)
+    ProfileStub(loginInfo, false, Some(email), SupporterStub(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None)
 
-  def apply(tuple: (LoginInfo, Boolean, Option[String], SupporterStub, Option[PasswordInfo], Option[OAuth1Info], Option[String])) : ProfileStub =
-    ProfileStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
+  def apply(tuple: (LoginInfo, Boolean, Option[String], SupporterStub, Option[PasswordInfo], Option[OAuth1Info])) : ProfileStub =
+    ProfileStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
   def apply(p: CommonSocialProfile) : ProfileStub =
-    ProfileStub(p.loginInfo, true, p.email, SupporterStub(p.firstName, p.lastName, p.fullName), None, None, p.avatarURL)
+    ProfileStub(p.loginInfo, true, p.email, SupporterStub(p.firstName, p.lastName, p.fullName), None, None)
 
   implicit val passwordInfoJsonFormat = Json.format[PasswordInfo]
   implicit val oauth1InfoJsonFormat = Json.format[OAuth1Info]
@@ -105,8 +104,7 @@ object ProfileStub {
       (JsPath \ "email").writeNullable[String] and
       (JsPath \ "supporter").write[SupporterStub] and
       (JsPath \ "passwordInfo").writeNullable[PasswordInfo] and
-      (JsPath \ "oauth1Info").writeNullable[OAuth1Info] and
-      (JsPath \ "avatarUrl").writeNullable[String]
+      (JsPath \ "oauth1Info").writeNullable[OAuth1Info] 
     )(unlift(ProfileStub.unapply))
   implicit val profileReads : Reads[ProfileStub] = (
     (JsPath \ "loginInfo").read[LoginInfo] and
@@ -114,8 +112,7 @@ object ProfileStub {
       (JsPath \ "email").readNullable[String] and
       (JsPath \ "supporter").read[SupporterStub] and
       (JsPath \ "passwordInfo").readNullable[PasswordInfo] and
-      (JsPath \ "oauth1Info").readNullable[OAuth1Info] and
-      (JsPath \ "avatarUrl").readNullable[String]
+      (JsPath \ "oauth1Info").readNullable[OAuth1Info]
     ).tupled.map(ProfileStub( _ ))
 }
 

@@ -1,4 +1,0 @@
-@(request:RequestHeader, exception:Throwable)(implicit messages:Messages)
-
-  <h1>@Messages("error.serverError")</h1>
-  <div class="alert alert-danger" role="alert">@Messages(exception.getLocalizedMessage)</div>
