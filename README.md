@@ -365,7 +365,9 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.36.55 (2019-1-15)
+## Version 0.36.57 (2019-1-18)
+* [[I] #329 - Remove MongoDB](https://github.com/Viva-con-Agua/drops/issues/329)
+* [[I] #330 - Remove unused views](https://github.com/Viva-con-Agua/drops/issues/330)
 * [[B] #333 - Delete failed](https://github.com/Viva-con-Agua/drops/issues/333)
 * [[I] #324 - Export users crew to Pool 1](https://github.com/Viva-con-Agua/drops/issues/324)
 * [[B] #319 - Case sensitivity not working for import](https://github.com/Viva-con-Agua/drops/issues/319)
