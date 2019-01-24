@@ -14,9 +14,12 @@ class SupporterTableDef(tag: Tag) extends Table[SupporterDB](tag, "Supporter") {
   def birthday          = column[Long]("birthday")
   def sex               = column[String]("sex")
   def profileId         = column[Long]("profile_id")
+  def addressId         = column[Long]("address_id")
 
   def * =
-    (id, firstName.?, lastName.?, fullName.?, mobilePhone.?, placeOfResidence.?, birthday.?, sex.?, profileId)<>(SupporterDB.tupled, SupporterDB.unapply)
+    (id, firstName.?, lastName.?, fullName.?, mobilePhone.?, placeOfResidence.?, birthday.?, sex.?, profileId, addressId.?)<>(SupporterDB.tupled, SupporterDB.unapply)
 
   def profileKey = foreignKey("profile_id", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
+  def addressKey = foreignKey("address_id", addressId, TableQuery[AddressTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
+
 }
