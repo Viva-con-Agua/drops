@@ -204,4 +204,8 @@ class UserService @Inject() (
     case Some(profile) => this.assign(crewUUID, user)
     case None => Future.successful(Right("service.user.error.notFound.profile"))
   }
+
+  def requestNVM() = ???
+  
+  def checkNVM() = ???
 }

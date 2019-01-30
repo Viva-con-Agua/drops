@@ -236,4 +236,25 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
+  /**
+   * NVM = non voting membership
+   * The controller will check if a user is in the posebility to be active member. 
+   * Store the user in a list for Network-ASP to check if the request is valid
+   */
+  def requestNVM = UserAwareAction.async { implicit request =>
+    request.identity match {
+      //dummy function. Validation test not implemented
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "in progress")).getResult)
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+  
+  def checkNVM = UserAwareAction.async { implicit request =>
+    request.identity match {
+      //dummy function. Need Validation from requestNVM for check if a user is NVM
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "status")).getResult)
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
 }
