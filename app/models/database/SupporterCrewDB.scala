@@ -45,5 +45,27 @@ object SupporterCrewDB extends ((Long, Long, Long, Option[String], Option[String
   def mapperTo(id: Long, supporterId: Long, crewId: Long, role: Option[String], pillar: Option[String], created: Long, updated: Long) =
     apply(id, supporterId, crewId, role, pillar, created, updated)
 
+  def read(entries: Seq[(Option[(SupporterCrewDB, Crew)])]):  Option[(Crew, Seq[Role])] = {
+    // to Map[SupporterDB -> Seq[Option[(Option[Role], Crew)]]
+    Option((
+      entries.map(_.map(rc => 
+            (rc._1.toRole(rc._2), rc._2))
+            .filter(_._1.isDefined)
+            .map(rc => (rc._1.get, rc._2))
+            ).filter(_.isDefined).map(rc => rc.get).groupBy(_._2).toSeq.map(result => (result._1, result._2.map(entry => (entry._1)))).head
+          ))
+
+       //val roles: Option[(Crew, Seq[Roles])] = crewRoles.map
+    //map(head => (head._2, entry))) //flatMap(_.map(_._1)).filter(_.isDefined).map(_.get))))
+      /*(crewRoles).map(entry => {
+      // to Map[SupporterDB -> Option[(Crew, Seq[Roale])]
+        //crewRoles
+        (crewRoles).headOption.map(head =>
+          (head._2, (crewRoles).flatMap(_.map(_._1)).filter(_.isDefined).map(_.get))
+        ).headOption.getOrElse(None)
+        (crewRoles)
+    }).map(entry => entry._1)*/
+  }
+
 }
 

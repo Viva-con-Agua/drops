@@ -70,6 +70,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val pool1users = TableQuery[Pool1UserTableDef]
   val oauthTokens = TableQuery[OauthTokenTableDef]
 
+
   implicit val getUserResult = GetResult(r => UserDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextLong, r.nextLong))
   implicit val getProfileResult = GetResult(r => ProfileDB(r.nextLong, r.nextBoolean, r.nextString, r.nextLong))
   implicit val getLoginInfoResult = GetResult(r => LoginInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
@@ -77,6 +78,94 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   implicit val getSupporterInfoResult = GetResult(r => SupporterDB(r.nextLong, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextLongOption, r.nextStringOption, r.nextLong))
   implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong)))
   implicit val getOauth1InfoResult = GetResult(r => Some(OAuth1InfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
+  
+  
+ /* private def toUserDBSeq(users: 
+    Seq[(
+      UserDB, 
+      ProfileDB, 
+      SupporterDB, 
+      LoginInfoDB, 
+      Option[PasswordInfoDB], 
+      Option[OAuth1InfoDB], 
+      Option[SupporterCrewDB])]
+    ): Future[Seq[User]] = {
+    users.groupBy(_._1).mapValues(_.flatMap(_._2)).toSeq
+  }*/
+
+  /*private def supporterDBSeq(supporter: Seq[(SupporterDB, Option[SupporterCrewDB], Option[AddressDB])]): Future[Seq[(SupporterDB, Seq[(Option[AddressDB])], Seq[(Option[SupporterCrewDB], Option[Crew])])]] = { 
+    supporter.groupBy(_._1).toSeq.map(supporterMapped =>
+        (supporterMapped._1)
+      )
+  }*/
+  
+
+  /* build Seq[(Option[Crew], Seq[(Option[SupporterCrewDB])])] from Seq[(Option[SupporterCrewDB])]
+   *
+   * The Seq is contains all SupporterCrewDB for an Crew in a Seq.
+   */
+  private def getCrewSeq(supporterCrews: Seq[(Option[SupporterCrewDB])]): Future[Seq[(Option[Crew], Seq[(Option[SupporterCrewDB])])]] = {
+    Future.sequence(
+      supporterCrews.map(entry => {
+            //build Seq of pairs via getCrew function
+            val crews: Seq[(Option[Crew], Option[SupporterCrewDB])] = Seq()
+            entry.foreach( current => 
+                crews :+ getCrew(Seq(Option(current))).map(crew => crew)
+            )
+            //group Seq by Crews and take the head of the new Seq. This is because of the Seq[Seq[]] struct by supporterCrews.map and toSeq 
+            crews.groupBy(_._1).toSeq.map(crewMapped =>
+              Future.successful((crewMapped._1, crewMapped._2.map(supporterCrewMapped =>
+                  (supporterCrewMapped._2)
+                  )
+                ))
+            ).head
+            
+      })
+    )
+  }
+  /* build  Future[Seq[(Option[Crew], Option[SupporterCrewDB])]] from Seq[(Option[SupporterCrewDB])]
+   *
+   * search Crew for every SupporterCrewDB and pair them
+   *  
+   *
+   */
+  private def getCrew(supporterCrew: Seq[(Option[SupporterCrewDB])]):  Future[Seq[(Option[Crew], Option[SupporterCrewDB])]] = {
+    Future.sequence(supporterCrew.map(current => {
+      current.headOption match {
+        case Some(entry) => crewDao.find(entry.crewId).map(crew => ((crew, current)))
+        case _ => Future.successful(((None, current)))
+      }
+    }))
+  }   
+  
+  private def toSupporter(seq: Seq[(SupporterDB, Option[SupporterCrewDB], Option[AddressDB])]): Future[Seq[Supporter]] = {
+    Future.sequence {
+      
+      val supporterDB: SupporterDB = seq.groupBy(_._1).toSeq.map(sortedCurrent => sortedCurrent._1).head
+      val addressDB: Seq[Option[AddressDB]] = seq.groupBy(_._3).toSeq.map(current => current._1)
+      
+    }
+  }
+  /*
+  private def toUserDBSeq(users: Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[AddressDB])]): Future[Seq[User]] = {
+    Future.sequence(
+      //groupBy UserDB Models 
+      users.groupBy(_._1).toSeq.map(userMapped =>
+          //map to Seq[(UserDB, Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])])]
+          (userMapped._1, userMapped._2.map(current =>
+            (current._2, current._3, current._4, current._5, current._6, current._7)          
+            ).groupBy(_._1).toSeq.map(profileMapped =>
+              (profileMapped._1, profileMapped._2.map(current =>
+                (current._2, current._3, current._4, current._5. current._6))
+              ).groupBy(_._1).toSeq.map(supporterMapped => 
+                supporterMapped._1), profileMapped._2.map(current =>
+                  (current._3, current._4, current._5)
+                ))
+              )
+            )
+
+        )
+  }*/
 
   private def toUser(users: Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB])]): Future[Seq[User]] = {
     Future.sequence(users.map(current => {
@@ -119,7 +208,6 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
         joinLeft supporterCrews on (_._1._1._1._2.id === _.supporterId) //profiles.id === supporterCrews.supporterId
         )} yield(user, profile, supporter, loginInfo, passwordInfo, oauth1Info, supporterCrew)
-
     dbConfig.db.run(action.result).flatMap(toUser( _ )).map(_.headOption)
   }
 
@@ -127,9 +215,14 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     findDBModels(userId).flatMap(toUser( _ )).map(_.headOption)
   }
 
+  
   private def find(id : Long):Future[Option[User]] = {
     val action = for{
-      ((((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info), supporterCrew) <- (users.filter(u => u.id === id)
+     /* (user, profile) <- (users.filter( u => u.id === id)
+      join profiles on (_.id === _.userId)
+    )}  yield (user, profile)*/
+  
+        ((((((user, profile), supporter), loginInfo), passwordInfo), oauth1Info), supporterCrew) <- (users.filter(u => u.id === id)
         join profiles on (_.id === _.userId) //user.id === profAile.userId
         join supporters on (_._2.id === _.profileId) //profiles.id === supporters.profileId
         join loginInfos on (_._1._2.id === _.profileId) //profiles.id === loginInfo.profileId
@@ -137,9 +230,10 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         joinLeft oauth1Infos on (_._1._1._1._2.id === _.profileId)
         joinLeft supporterCrews on (_._1._1._1._2.id === _.supporterId) //profiles.id === supporterCrews.supporterId
         )} yield(user, profile, supporter, loginInfo, passwordInfo, oauth1Info, supporterCrew)
-
+    
     dbConfig.db.run(action.result).flatMap(toUser( _ )).map(_.headOption)
   }
+
 
   /**
     * Function to find an user by user id and return the database models

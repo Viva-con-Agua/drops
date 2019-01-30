@@ -38,7 +38,8 @@ object DummyUser {
         indices.foldLeft[Set[Pillar]](Set())(
           (res, i) => res + pillars.toList(i)
         )
-      }
+      },
+      None
     )
     val profile = Profile(
       loginInfo = LoginInfo(CredentialsProvider.ID, (json \ "email").as[String]),

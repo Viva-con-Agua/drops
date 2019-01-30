@@ -4,39 +4,50 @@ import java.util.UUID
 import play.api.libs.json.Json
 
 trait AddressBase {
-  val street: Option[String]
+  val street: String
   val additional: Option[String]
-  val zip: Option[String]
-  val city: Option[String]
-  val country: Option[String]
+  val zip: String
+  val city: String
+  val country: String
 }
 
-case class Address (
-  street: Option[String],
-  additional: Option[String],
-  zip: Option[String],
-  city: Option[String],
-  country: Option[String]
-) extends AddressBase
-
+/**
+ * case class for AddressStub
+ * @param street street path of the addree as String
+ * @param additional additional informations as Option[String]
+ * @param zip zip number as String
+ * @param city city name as String
+ * @param country country name as String
+ * @param toAddress initial the AddressStub model as Address model with a random UUID
+ */
 case class AddressStub (
-  street: Option[String],
+  street: String,
   additional: Option[String],
-  zip: Option[String],
-  city: Option[String],
-  country: Option[String]
+  zip: String,
+  city: String,
+  country: String
 
 ) extends AddressBase {
   def toAddress: Address = Address(UUID.randomUUID(), street, additional, zip, city, country)
 }
 
+/**
+ * case class for AddressDB
+ * @param publicId uuid as identifire for public using as UUID
+ * @param street street path of the addree as String
+ * @param additional additional informations as Option[String]
+ * @param zip zip number as String
+ * @param city city name as String
+ * @param country country name as String
+ * @param toAddressStub convert the Address to AddressStub
+ */
 case class Address (
   publicId: UUID,
-  override street: Option[String],
-  override additional: Option[String],
-  override zip: Option[String],
-  override city: Option[String],
-  override country: Option[String]
+  override val street: String,
+  override val additional: Option[String],
+  override val zip: String,
+  override val city: String,
+  override val country: String
 ) extends AddressBase {
   def toAddressStub(): AddressStub =
     AddressStub(street, additional, zip, city, country)
