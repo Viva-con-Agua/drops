@@ -32,8 +32,8 @@ object ProfileDB extends ((Long, Boolean , String, Long) => ProfileDB ){
   def apply(profile:Profile, userId:Long): ProfileDB =
     ProfileDB(0, profile.confirmed, profile.email.get, userId)
 
-  def read(entries: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]): Seq[Profile] = {
-    val sorted = entries.foldLeft[Map[ProfileDB, Seq[(SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
+  def read(entries: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew], Option[AddressDB])]): Seq[Profile] = {
+   /* val sorted = entries.foldLeft[Map[ProfileDB, Seq[(SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
       (mapped, entry) =>
         mapped.contains(entry._1) match {
         case true => mapped.get(entry._1) match {
@@ -42,13 +42,13 @@ object ProfileDB extends ((Long, Boolean , String, Long) => ProfileDB ){
         }
         case false => mapped + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7)))
       }).toSeq
-
-    sorted.map(pair => {
-      val supporter: Seq[Supporter] = SupporterDB.read(pair._2.map(row => (row._1, row._5.flatMap(sc => row._6.map(crew => (sc, crew))))))
+*/
+    entries.groupBy(_._1).toSeq.map(pair => {
+      val supporter: Seq[Supporter] = SupporterDB.read(pair._2.map(row => (row._2, row._6, row._7, row._8)))
       pair._2.headOption.flatMap(head => {
-        val loginInfo : LoginInfo = head._2.toLoginInfo
-        val passwordInfo : Option[PasswordInfo] = head._3.map(_.toPasswordInfo)
-        val oauth1Info : Option[OAuth1Info] = head._4.map(_.toOAuth1Info)
+        val loginInfo : LoginInfo = head._3.toLoginInfo
+        val passwordInfo : Option[PasswordInfo] = head._4.map(_.toPasswordInfo)
+        val oauth1Info : Option[OAuth1Info] = head._5.map(_.toOAuth1Info)
 
         supporter.headOption.map(supporti => pair._1.toProfile(loginInfo, supporti, passwordInfo, oauth1Info))
       })

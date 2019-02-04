@@ -29,7 +29,7 @@ case class AddressDB(
   country: String,
   supporterId: Long
   ){
-    def toAdress: Address = 
+    def toAddress: Address = 
       Address(
         this.publicId, 
         this.street, 
@@ -48,5 +48,5 @@ case class AddressDB(
   def apply(id: Long, address: Address, supporterId: Long):AddressDB = AddressDB(id, address.publicId, address.street, address.additional, address.zip, address.city, address.country, supporterId)
 
   def apply(address: Address, supporterId: Long):AddressDB = AddressDB(0, address.publicId, address.street, address.additional, address.zip, address.city, address.country, supporterId)
-
+  
 }

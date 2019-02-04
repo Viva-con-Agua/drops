@@ -12,7 +12,7 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
-import daos.{AccessRightDao, CrewDao, TaskDao, UserDao}
+import daos.{AccessRightDao, CrewDao, TaskDao, UserDao, ProfileDao}
 import models._
 import persistence.pool1.PoolService
 import play.api.Logger
@@ -20,6 +20,7 @@ import utils.Nats
 
 class UserService @Inject() (
                               userDao:UserDao,
+                              profileDao:ProfileDao,
                               poolService: PoolService,
                               pool1DBService: Pool1Service,
                               taskDao: TaskDao,
@@ -48,7 +49,7 @@ class UserService @Inject() (
 
   def updateSupporter(id: UUID, profile: Profile) = {
     //nats.publishUpdate("USER", id)
-    userDao.updateSupporter(profile).map(profileOpt => {
+    profileDao.updateSupporter(profile).map(profileOpt => {
       nats.publishUpdate("USER", id)
       if(profileOpt.isDefined) {
         userDao.find(id).map(_.map(user => poolService.update(user))) // Todo: Consider result?!
@@ -135,13 +136,13 @@ class UserService @Inject() (
     })
   }
   
-  def updateProfileEmail(email: String, profile: Profile) = userDao.updateProfileEmail(email, profile)
-  def getProfile(email: String) = userDao.getProfile(email)
-  def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
-  def profileByRole(id: UUID, role: String) = userDao.profileByRole(id, role)
+  def updateProfileEmail(email: String, profile: Profile) = profileDao.updateProfileEmail(email, profile)
+  def getProfile(email: String) = profileDao.getProfile(email)
+  def profileListByRole(id: UUID, role: String) = profileDao.profileListByRole(id, role)
+  def profileByRole(id: UUID, role: String) = profileDao.profileByRole(id, role)
 
   def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
-    case Some(profile) => userDao.setCrew(crewUUID, profile).map(result => {
+    case Some(profile) => profileDao.setCrew(crewUUID, profile).map(result => {
       if(result.isLeft && result.left.get > 0) {
         //nats.publishUpdate("USER", user.id)
         userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
@@ -154,7 +155,7 @@ class UserService @Inject() (
   def assignCrewRole(crew: Crew, role: VolunteerManager, user: User): Future[Either[Int, String]] = {
     crewDao.findDB(crew).flatMap(_ match {
       case Some(crewDB) => user.profiles.headOption match {
-        case Some(profile) => userDao.setCrewRole(crew.id, crewDB.id, role, profile).map(result => {
+        case Some(profile) => profileDao.setCrewRole(crew.id, crewDB.id, role, profile).map(result => {
           if(result.isLeft && result.left.get > 0) {
             nats.publishUpdate("USER", user.id)
             userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
@@ -174,7 +175,7 @@ class UserService @Inject() (
     */
   def deAssign(user: User) = user.profiles.headOption match {
     case Some(profile) => profile.supporter.crew match {
-      case Some(crew) => userDao.removeCrew(crew.id, profile).map(result => {
+      case Some(crew) => profileDao.removeCrew(crew.id, profile).map(result => {
         if(result.isLeft && result.left.get > 0) {
           nats.publishUpdate("USER", user.id)
           userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!

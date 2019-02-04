@@ -45,7 +45,7 @@ object SupporterCrewDB extends ((Long, Long, Long, Option[String], Option[String
   def mapperTo(id: Long, supporterId: Long, crewId: Long, role: Option[String], pillar: Option[String], created: Long, updated: Long) =
     apply(id, supporterId, crewId, role, pillar, created, updated)
 
-  def read(entries: Seq[(Option[(SupporterCrewDB, Crew)])]):  Option[(Crew, Seq[Role])] = {
+  def read(entries: Seq[(Option[(SupporterCrewDB ,Crew)])]):  Option[(Crew, Seq[Role])] = {
     // to Map[SupporterDB -> Seq[Option[(Option[Role], Crew)]]
     Option((
       entries.map(_.map(rc => 

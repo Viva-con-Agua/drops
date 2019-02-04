@@ -97,7 +97,7 @@ class Profile @Inject() (
                 profile.supporter.placeOfResidence,
                 profile.supporter.birthday,
                 profile.supporter.sex,
-                profile.supporter.address
+                Option(profile.supporter.address)
               ) 
               profiles = entry :: profiles
             })
