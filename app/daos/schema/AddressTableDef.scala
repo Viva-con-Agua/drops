@@ -8,7 +8,7 @@ import slick.driver.MySQLDriver.api._
 class AddressTableDef(tag: Tag) extends Table[AddressDB](tag, "Address") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def publicId = column[UUID]("publicId")
+  def publicId = column[UUID]("public_id")
   def street = column[String]("street")
   def additional = column[String]("additional")
   def zip = column[String]("zip")
