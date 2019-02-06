@@ -47,14 +47,22 @@ object SupporterCrewDB extends ((Long, Long, Long, Option[String], Option[String
 
   def read(entries: Seq[(Option[(SupporterCrewDB ,Crew)])]):  Option[(Crew, Seq[Role])] = {
     // to Map[SupporterDB -> Seq[Option[(Option[Role], Crew)]]
-    Option((
-      entries.map(_.map(rc => 
+      entries.map(orc => orc.isDefined match {
+        case true => orc.map(rc => 
             //rc is a Seq entry. And then magic mapping ...
             (rc._1.toRole(rc._2), rc._2))
             .filter(_._1.isDefined)
             .map(rc => (rc._1.get, rc._2))
-            ).filter(_.isDefined).map(rc => rc.get).groupBy(_._2).toSeq.map(result => (result._1, result._2.map(entry => (entry._1)))).head
-          ))
+        case false => None
+      }).filter(_.isDefined)
+        .map(rc => rc.get)
+        .groupBy(_._2)
+        .toSeq
+        .map(result => 
+            (result._1, result._2.map(entry => 
+                (entry._1)))
+            ).headOption
+          
 
   }
 
