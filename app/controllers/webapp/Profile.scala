@@ -252,7 +252,11 @@ class Profile @Inject() (
   def checkNVM = UserAwareAction.async { implicit request =>
     request.identity match {
       //dummy function. Need Validation from requestNVM for check if a user is NVM
-      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "status")).getResult)
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false))).getResult)
+      //case Some(user) => userService.checkNVM(user).map(_ match {
+	//case Some(nvmState) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj(nvmState)).getResult
+	//case None => WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult
+      //})
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }

@@ -207,5 +207,5 @@ class UserService @Inject() (
 
   def requestNVM() = ???
   
-  def checkNVM() = ???
+  def checkNVM(user: User) = ???//Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)).getResult)
 }
