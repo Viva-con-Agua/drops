@@ -51,13 +51,14 @@ class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Suppo
   def pillar = column[Option[String]]("pillar")
   def created = column[Long]("created")
   def updated = column[Long]("updated")
+  def nvmDate = column[Long]("nvm_date")
 
 //  def from(sc : SupporterCrewDB): Option[(Long, Long, Option[String], Option[String], Long, Long)] = Some {
 //    (sc.supporterId, sc.crewId, sc.role, sc.pillar, sc.created, sc.updated)
 //  }
 //
   def * =
-    (id, supporterId, crewId, role, pillar, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
+    (id, supporterId, crewId, role, pillar, created, updated, nvmDate) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
 //a
 //  def * : ProvenShape[SupporterCrewDB] = ProvenShape.proveShapeOf(
 //    (supporterId, crewId, role.?, pillar.?, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
