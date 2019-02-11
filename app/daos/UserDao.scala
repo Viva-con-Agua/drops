@@ -66,7 +66,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   implicit val getLoginInfoResult = GetResult(r => LoginInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
   implicit val getPasswordInfoResult = GetResult(r => Some(PasswordInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
   implicit val getSupporterInfoResult = GetResult(r => SupporterDB(r.nextLong, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextLongOption, r.nextStringOption, r.nextLong))
-  implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong)))
+  implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong, r.nextLongOption)))
   implicit val getOauth1InfoResult = GetResult(r => Some(OAuth1InfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
   implicit val getAddressInfoResult = GetResult(r => Some(AddressDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextStringOption, r.nextString, r.nextString, r.nextString, r.nextLong)))
   
@@ -320,7 +320,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       
       // Assign a Supporter to an Crew via SupporterCrew. Each SupporterCrew Object contains one Role. 
       def supporterCrewAssignment(crewDBiD: Option[Long], s: Long, r: Option[Role]) = crewDBiD match {
-        case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += (SupporterCrewDB(s, crewId, r, None))
+        case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += (SupporterCrewDB(s, crewId, r, None, None))
         case _ => DBIO.successful(false)
       }
       
