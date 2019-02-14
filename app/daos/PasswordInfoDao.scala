@@ -45,7 +45,7 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
   }
 
   def find(id: Long) : Future[PasswordInfo] = {
-     dbConfig.db.run(passwordInfos.filter(_.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
+    dbConfig.db.run(passwordInfos.filter(pw => pw.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
   }
    /* TODO: implement PasswordInfo with Option   
       pwInfoOption match {
@@ -74,8 +74,8 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
     dbConfig.db.run(action.result).flatMap(pInfo =>{
       // update the new PasswordInfo with same id's
       dbConfig.db.run((passwordInfos.filter(_.id === pInfo.head.id).update(PasswordInfoDB(pInfo.head.id, passwordInfo, pInfo.head.profileId))))
-      // get id and find the new PasswordInfo
-    }).flatMap((id) => find(id))
+      find(pInfo.head.id)
+    })
 
   }
 
