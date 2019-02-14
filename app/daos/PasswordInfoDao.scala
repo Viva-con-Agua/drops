@@ -52,7 +52,7 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
       case Some(pInfo) => Some(PasswordInfo(pInfo.hasher, pInfo.password))
       case _ => None
     })*/
-
+  
   override def add(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = {
     remove(loginInfo).flatMap(_ => {
       dbConfig.db.run(loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey).result).flatMap(lInfo => {
@@ -79,7 +79,16 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
 
   }
 
-  override def save(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = add(loginInfo, authInfo)
+  override def save(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = {
+    // find profile id via loginInfo
+    dbConfig.db.run(loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey).result)
+      .flatMap(lInfo => {
+        // save PasswordInfo with new id and profile id
+        dbConfig.db.run((passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, authInfo, lInfo.head.profileId))
+        // find PasswordInfo via returned id
+          .flatMap(id => find(id))
+      })
+  }
 
   override def remove(loginInfo: LoginInfo) : Future[Unit] = {
     val profileId = loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)
