@@ -45,8 +45,13 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
   }
 
   def find(id: Long) : Future[PasswordInfo] = {
-    dbConfig.db.run(passwordInfos.filter(_.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
+     dbConfig.db.run(passwordInfos.filter(_.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
   }
+   /* TODO: implement PasswordInfo with Option   
+      pwInfoOption match {
+      case Some(pInfo) => Some(PasswordInfo(pInfo.hasher, pInfo.password))
+      case _ => None
+    })*/
 
   override def add(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = {
     remove(loginInfo).flatMap(_ => {
@@ -57,7 +62,22 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
     })
   }
 
-  override def update(loginInfo: LoginInfo, authInfo: PasswordInfo):Future[PasswordInfo] = add(loginInfo, authInfo)
+  override def update(loginInfo: LoginInfo, passwordInfo: PasswordInfo):Future[PasswordInfo] = {
+    // action for get the PasswordInfoDB
+    val action = for {
+      // the frontend identifire is LoginInfo l
+      l <- loginInfos.filter(entry => entry.providerId === loginInfo.providerID && entry.providerKey === loginInfo.providerKey)
+      // the passwordInfo profileId is the same as l.profileId. We can't update here with slick because we can't accress the id in .update()
+      pw <- passwordInfos.filter(entry => entry.profileId === l.profileId)
+    } yield pw
+    // run action an get the result. pInfo contains the PasswordInfoDB
+    dbConfig.db.run(action.result).flatMap(pInfo =>{
+      // update the new PasswordInfo with same id's
+      dbConfig.db.run((passwordInfos.filter(_.id === pInfo.head.id).update(PasswordInfoDB(pInfo.head.id, passwordInfo, pInfo.head.profileId))))
+      // get id and find the new PasswordInfo
+    }).flatMap((id) => find(id))
+
+  }
 
   override def save(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = add(loginInfo, authInfo)
 
