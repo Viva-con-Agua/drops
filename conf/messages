@@ -56,6 +56,21 @@ profile.upload.hint=Hover here to change the image
 profile.get=Return current Profile
 profile.notExist=Profile not exist
 profile.emailNotExist=There is no Email for searching Profile
+profile.assign.crew.success=Crew has been successfully assigned to your user.
+profile.removeAssign.crew.success=The user has been removed from the crew.
+profile.assign.error.nothingAssigned=An error occurred and the crew has not been assigned to your user.
+profile.removeAssign.error.nothingAssigned=An error occurred and you has not been removed from the crew.
+service.user.error.notFound.profile=Your user has not been found.
+service.user.error.notFound.crew=Found no crew for this user.
+service.user.error.oldCrewNotDeleted=An error occurred. Thus, you are still assigned to your previous crew.
+dao.user.error.notFound.supporter=Your user has not been found.
+dao.user.error.notFound.crew=The crew is unknown.
+dao.user.error.nothingUpdated=The new role has not been saved for the user.
+dao.user.error.anotherCrewAssigned=The user can not get a role for this crew, since the user is assigned to another crew.
+profile.assignRole.crewNotFoundExecutingUser=Your crew has not been found.
+profile.assignRole.profileNotFoundExecutingUser=Your user has not been found.
+profile.assignRole.givenPillarUnknown=You can not assign the role for the given area, since the area is unknown.
+profile.assignRole.otherUserNotFound=You can not assign a role to an unknown user.
 task.title=Task Overview
 
 signup.title=Sign up
@@ -91,6 +106,7 @@ signin.social=Or use one of the following services to sign in:
 signin.success=You''re successfully logged in!
 
 signout.msg=You has been logged off.
+signout.pool1ServiceError=An error occurred during logout Pool 1. Thus, you have not been logged out.
 
 reset.title=Reset password
 reset.startLegend=Have you forgot your password?
@@ -144,14 +160,16 @@ error.webapp.missing.base=Base URL of arise has not been configured!
 error.webapp.missing.notFound=The path for the ''Not Found'' page of arise has not been configured!
 error.webapp.missing.resetPassword=The path for the ''Reset Password'' page of arise has not been configured!
 error.webapp.missing.tokenidentifier=The token identifier used inside the query string of the reset password page is missing!
-
+error.webapp.missing.signUpToken=The path for the ''Sign Up'' page that takes a token has not been configured!
+error.webapp.missing.tokenSUidentifier=The token identifier used inside the query string of the sign up page is missing!
+error.bogusResetEmailData=There is something wrong with the submitted data.
 success.profile.image.upload=Profile image was successfully uploaded!
 
-mail.welcome.subject=Welcome
+mail.welcome.subject=VcA Pool | Welcome
 mail.welcome.hi=Hello, {0}!
 mail.welcome.instructions=Thanks for signing up. Just go to the following url to activate you account.
 
-mail.reset.subject=Reset password
+mail.reset.subject=VcA Pool | Reset password
 mail.reset.hi=Hello, {0}!
 mail.reset.instructions=We have received a request to reset your password. Just go to the following url to proceed.
 mail.reset.instructionsPool1=We have received your first login with an old Pool Account. Just go to the following url to set a new Password.
@@ -217,10 +235,28 @@ pool1.error.config.noURI=No Pool 1 system configured (missing URL)
 pool1.debug.not.activated=Export not activated in configuration! Set `pool1.export=true` in your applications conf file.
 pool1.debug.export.success=Successful export!\n{0}
 pool1.debug.export.failure=Failure on export!\n{0}
+pool1.debug.export.userNotComplete=Cannot create a valid Pool 1 user representation, since not all required attributes are defined.
+pool1.api.canNotReadResponse=Cannot read the answer that has been received from the Pool 1.
+pool1.debug.export.errorResponseCode=The action was not valid. The Pool 1 answered with HTTP Status Code {0} and the following message: {1}
+profile.getNewsletterSetting.success=Successful import of newsletter setting.  
+profile.getNewsletterSetting.notFound=Failure on import of newsletter setting.
+profile.setNewsletterSetting.success=Successfully updated newsletter settings.
+profile.setNewsletterSetting.bogus=Failure on updating the newsletter settings.
 
 organization.error.exist=Organization already exist
 organization.error.notFound=Organization not found
 organization.error.profileInv=Profile is part of the organization
+
+webapp.crew.found=Crew has been found!
+webapp.crews.count.found=Number of crews has been calculated.
+webapp.crew.notFound=The crew has not been found.
+webapp.forbidden=You have no permissions to see this data.
+webapp.notAuthenticated=Please, log in first.
+webapp.crews.error.queryParser=Given query can not be parsed.
+webapp.crews.error.noValues=The query contains no values that can be used for the search.
+webapp.crews.error.generic=An error occurred during processing the given query.
+webapp.crews.error.sql=The query throws an SQL error.
+
 
 widgets.user.found=User has been found!
 widgets.count.found=Number of users has been calculated.
@@ -239,3 +275,18 @@ socket.success.insert=save {0}
 
 socket.success.update={0} successful updated
 socket.success.delete={0} is deleted
+
+avatar.upload.csrf=CSRF token has been generated.
+avatar.error.noToken=Unfortunately, no CSRF token has been created.
+avatar.getAll.success=All avatars found.
+avatar.upload.success=Your avatar has been saved successfully.
+avatar.upload.internalServerError=An internal error occurred. Your avatar has not been saved.
+avatar.upload.noImageInRequest=Your request does not contain an image. Thus, no new avatar has been saved.
+avatar.upload.thumbnail.failure=It is not possible to create the thumbnails for your avatar.
+avatar.upload.thumbnail.success=Thumbnails for your avatar have been saved.
+avatar.get.notFound=The avatar can not be found in the database.
+avatar.getThumb.notFound=The thumbnail can not be found in the database.
+avatar.remove.success=The avatar has been deleted.
+avatar.remove.notFound=The avatar has not been found. Thus, it could not be deleted.
+avatar.select.success=New avatar has been chosen.
+avatar.select.failure=The avatar has not been selected.

@@ -33,7 +33,7 @@ import utils.Query._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Stack
 import scala.util.parsing.json.JSONArray
-
+import services.{CrewService}
 
 
 //import net.liftweb.json._
@@ -42,6 +42,7 @@ class RestApi @Inject() (
   val userDao : MariadbUserDao,
   val crewDao: MariadbCrewDao,
   val taskDao: TaskDao,
+  val crewService: CrewService,
   val accessRightDao: AccessRightDao,
   val oauthClientDao : OauthClientDao,
   val pool1UserDao : Pool1UserDao,
@@ -89,7 +90,7 @@ class RestApi @Inject() (
       case Left(e) => Future.successful(InternalServerError(Json.obj("error" -> e.getMessage)))
       case Right(converter) => try {
         userDao.list_with_statement(converter.toStatement).map((users) =>
-          Ok(Json.toJson(users))
+          Ok(Json.toJson(users.map(PublicUser( _ ))))
         )
       } catch {
         case e: java.sql.SQLException => {
@@ -129,8 +130,7 @@ class RestApi @Inject() (
      placeOfResidence: String,
      birthday: Long,
      sex: String,
-     password: Option[String], //Password is optional, perhaps its necessary to set the pw on the first login
-     profileImageUrl: Option[String]
+     password: Option[String] //Password is optional, perhaps its necessary to set the pw on the first login
   )
   object CreateUserBody{
     implicit val createUserBodyJsonFormat = Json.format[CreateUserBody]
@@ -139,26 +139,18 @@ class RestApi @Inject() (
   def createUser() = ApiAction.async(validateJson[CreateUserBody]) { implicit request => {
     val signUpData = request.request.body
 
-    val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email)
+    val loginInfo = LoginInfo(CredentialsProvider.ID, signUpData.email.toLowerCase)
     userService.retrieve(loginInfo).flatMap{
-      case Some(_) =>
-        Future.successful(responseError(play.api.mvc.Results.BadRequest, "UserExists", Messages("error.userExists", signUpData.email)))
+      case Some(user) =>
+        Future.successful(Created(Json.toJson(PublicUser(user))))
       case None =>{
         var passwordInfo : Option[PasswordInfo] = None
         if(signUpData.password.isDefined)
           passwordInfo = Option(passwordHasher.hash(signUpData.password.get))
-        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo, List(new DefaultProfileImage))
-
-        avatarService.retrieveURL(signUpData.email).flatMap(avatarUrl  => {
-          userService.save(User(id = UUID.randomUUID(), profiles =
-            (signUpData.profileImageUrl, avatarUrl) match {
-              case (Some(url), Some(gravatarUrl))  => List(profile.copy(avatar = List(UrlProfileImage(url),GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
-              case (None, Some(gravatarUrl))=> List(profile.copy(avatar = List(GravatarProfileImage(gravatarUrl),new DefaultProfileImage)))
-              case (Some(url), None) => List(profile.copy(avatar = List(UrlProfileImage(url), new DefaultProfileImage)))
-              case _ => List(profile.copy(avatar = List(new DefaultProfileImage)))
-            }, updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
-        })
-      }
+        val profile = Profile(loginInfo, false, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.sex, passwordInfo)
+        userService.save(User(id = UUID.randomUUID(), List(profile),
+          updated = System.currentTimeMillis(), created = System.currentTimeMillis())).map((user) => Ok(Json.toJson(user)))
+        }
     }
   }}
 
@@ -177,7 +169,7 @@ class RestApi @Inject() (
 
   def updateUser(id : UUID) = ApiAction.async(validateJson[UpdateUserBody]){ implicit request =>{
     val userData = request.request.body
-    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email.toLowerCase)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match{
@@ -210,13 +202,13 @@ class RestApi @Inject() (
                                          url : String
                                        )
 
-  object UpdateUserProfileImageBody {
+  /*object UpdateUserProfileImageBody {
     implicit val updateUserProfileImageBody = Json.format[UpdateUserProfileImageBody]
   }
 
   def updateUserProfileImage(id : UUID) = ApiAction.async(validateJson[UpdateUserProfileImageBody]){implicit request =>{
     val userData = request.request.body
-    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email)
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, userData.email.toLowerCase)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match {
@@ -229,7 +221,7 @@ class RestApi @Inject() (
         case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
-  }}
+  }}*/
 
   case class DeleteUserBody(email : String)
   object DeleteUserBody {
@@ -237,7 +229,7 @@ class RestApi @Inject() (
   }
 
   def deleteUser(id: UUID) = ApiAction.async(validateJson[DeleteUserBody]){ implicit request =>{
-    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email)
+    val loginInfo : LoginInfo = LoginInfo(CredentialsProvider.ID, request.request.body.email.toLowerCase)
     userDao.find(loginInfo).flatMap(userObj => {
       userObj match {
         case Some(user) => user.id == id match {
@@ -247,6 +239,17 @@ class RestApi @Inject() (
         case None => Future.successful(responseError(play.api.mvc.Results.NotFound, "UserNotFound", Messages("error.noUser")))
       }
     })
+  }}
+  
+  def createCrews = ApiAction.async(validateJson[CrewStub]) { implicit request => {
+    val crewData = request.request.body
+    crewService.get(crewData.name).flatMap{
+      case Some(crew) => Future.successful(Created(Json.toJson(crew)))
+      case _ => crewService.save(crewData).flatMap{
+        case (crew) => Future.successful(Ok(Json.toJson(crew)))
+       // case _ => Future.successful(BadRequest("ERROR"))
+      }
+    }
   }}
 
   def getCrews = ApiAction.async(validateJson[rest.QueryBody]){ implicit request => {
@@ -270,53 +273,83 @@ class RestApi @Inject() (
     }
   }}
 
+  def assignUserToCrew(uuidUser: UUID, uuidCrew: UUID, pillar: Option[String]) = ApiAction.async { implicit request =>
+    def assignRole(user: User, onlyAssignmentInsert : Boolean = false) : Future[Result] = {
+      pillar match {
+        case Some(p) => Pillar(p) match {
+          case Unknown => Future.successful(NotFound(Messages("rest.assignUserToCrew.assignRole.unknownPillar")))
+          case pillarInstance : Pillar => crewService.get(uuidCrew).flatMap(_ match {
+            case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, pillarInstance), user).map(_ match {
+              case Left(i) if i > 0 => Ok(Messages("profile.assign.crew.success"))
+              case Left(i) => NotModified
+              case Right(msg) => NotFound(msg)
+            })
+            case None => Future.successful(NotFound(Messages("rest.assignUserToCrew.assignRole.unknownCrew")))
+          })
+        }
+       case None => Future.successful(onlyAssignmentInsert match {
+          case true => Ok(Messages("profile.assign.crew.success"))
+          case false => BadRequest(Messages("rest.assignUserToCrew.assignRole.pillarNotGiven"))
+        })
+      }
+    }
+    userService.find(uuidUser).flatMap{
+      case Some(user) => userService.assignOnlyOne(uuidCrew, user).flatMap(_ match {
+        case Left(i) if i > 0 => assignRole(user, true)
+        case Left(i) => assignRole(user, false)
+        case Right(msg) => Future.successful(NotFound(msg))
+      })
+      case _ => Future.successful(NotFound(Messages("rest.api.canNotFindGivenUser", uuidUser)))
+    }
+  }
+
   //ToDo: ApiAction instead of Action
-  def getTasks = Action.async{ implicit  request => {
+  def getTasks = ApiAction.async{ implicit  request => {
     taskDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
-  def getTasksForUser(userId : UUID) = Action.async{ implicit request => {
+  def getTasksForUser(userId : UUID) = ApiAction.async{ implicit request => {
     taskDao.forUser(userId).map(tasks => Ok(Json.toJson(tasks)))
   }}
 
-  def getAccessRightsForUser(userId : UUID) = Action.async{ implicit  request => {
+  def getAccessRightsForUser(userId : UUID) = ApiAction.async{ implicit  request => {
     userService.accessRights(userId).map(accessRights => Ok(Json.toJson(accessRights)))
   }}
 
-  def getTasksWithAccessRights(id: Long) = Action.async{ implicit request => {
+  def getTasksWithAccessRights(id: Long) = ApiAction.async{ implicit request => {
     taskService.getWithAccessRights(id).map(r => Ok(r))
   }}
 
-  def findTask(id: Long) = Action.async{ implicit  request => {
+  def findTask(id: Long) = ApiAction.async{ implicit  request => {
     taskDao.find(id).map(task => Ok(Json.toJson(task)))
   }}
 
-  def createTask() = Action.async(validateJson[Task]) { implicit request => {
+  def createTask() = ApiAction.async(validateJson[Task]) { implicit request => {
     taskDao.create(request.body).map{task => Ok(Json.toJson(task))}
   }}
 
-  def deleteTask(id: Long) = Action.async{ implicit request => {
+  def deleteTask(id: Long) = ApiAction.async{ implicit request => {
     taskDao.delete(id).map(count => if (count == 0) NotFound else Ok)
   }}
 
   //ToDo: Query parameter optional?
-  def getAccessRights() = Action.async{ implicit  request => {
+  def getAccessRights() = ApiAction.async{ implicit  request => {
     accessRightDao.all().map(tasks => Ok(Json.toJson(tasks)))
   }}
 
-  def findAccessRight(id: Long) = Action.async{ implicit  request => {
+  def findAccessRight(id: Long) = ApiAction.async{ implicit  request => {
     accessRightDao.find(id).map(accessRights => Ok(Json.toJson(accessRights)))
   }}
 
-  def createAccessRight() = Action.async(validateJson[AccessRight]) {implicit request => {
+  def createAccessRight() = ApiAction.async(validateJson[AccessRight]) {implicit request => {
     accessRightDao.create(request.body).map{ac => Ok(Json.toJson(ac))}
   }}
 
-  def deleteAccessRight(id: Long) = Action.async{ implicit request => {
+  def deleteAccessRight(id: Long) = ApiAction.async{ implicit request => {
     accessRightDao.delete(id).map(count => if (count == 0) NotFound else Ok)
   }}
 
-  def createPool1User() = Action.async(validateJson[Pool1User]) { request => 
+  def createPool1User() = ApiAction.async(validateJson[Pool1User]) { request =>
     pool1UserDao.save(request.body).map{user => Ok(Json.toJson(user))}
   }
 }

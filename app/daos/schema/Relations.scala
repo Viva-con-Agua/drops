@@ -1,8 +1,10 @@
 package daos.schema
 
 import java.util.UUID
+
 import slick.driver.MySQLDriver.api._
-import models.database.ProfileOrganizationDB
+import models.database.{ProfileOrganizationDB, SupporterCrewDB}
+import slick.lifted.{MappedProjection, ProvenShape}
 
 class TaskAccessRightTableDef(tag: Tag) extends Table[(Long, Long)](tag, "Task_AccessRight") {
   def taskId = column[Long]("task_id")
@@ -39,4 +41,31 @@ class ProfileOrganizationTableDef(tag: Tag) extends Table[(Long, Long)](tag, "Pr
   def pk = primaryKey("primaryKey", (profileId, organizationId))
   def rK = foreignKey("profileId", profileId, TableQuery[ProfileTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
   def oK = foreignKey("organizationId", organizationId, TableQuery[OrganizationTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
-} 
+}
+
+class SupporterCrewTableDef(tag: Tag) extends Table[SupporterCrewDB](tag, "Supporter_Crew"){
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def supporterId = column[Long]("supporter_id")
+  def crewId = column[Long]("crew_id")
+  def role = column[Option[String]]("role")
+  def pillar = column[Option[String]]("pillar")
+  def created = column[Long]("created")
+  def updated = column[Long]("updated")
+
+//  def from(sc : SupporterCrewDB): Option[(Long, Long, Option[String], Option[String], Long, Long)] = Some {
+//    (sc.supporterId, sc.crewId, sc.role, sc.pillar, sc.created, sc.updated)
+//  }
+//
+  def * =
+    (id, supporterId, crewId, role, pillar, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
+//a
+//  def * : ProvenShape[SupporterCrewDB] = ProvenShape.proveShapeOf(
+//    (supporterId, crewId, role.?, pillar.?, created, updated) <> (SupporterCrewDB.tupled, SupporterCrewDB.unapply)
+//  )(MappedProjection.mappedProjectionShape)
+
+//  def * = (supporterId, crewId)
+
+  def pk = primaryKey("primaryKey", id)
+  def sK = foreignKey("supporterId", supporterId, TableQuery[SupporterTableDef])(_.id)
+  def cK = foreignKey("crewId", crewId, TableQuery[CrewTableDef])(_.id)
+}

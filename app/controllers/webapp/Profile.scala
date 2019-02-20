@@ -31,7 +31,7 @@ import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import models.dispenser._
-import services.{DispenserService, Pool1Service, UserService, UserTokenService}
+import services.{ Pool1Service, UserService, UserTokenService}
 import utils.{Mailer, Nats}
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import org.joda.time.DateTime
@@ -56,12 +56,12 @@ class Profile @Inject() (
   ws: WSClient,
   passwordHasher: PasswordHasher,
   configuration: Configuration,
-  dispenserService: DispenserService,
   socialProviderRegistry: SocialProviderRegistry,
   val messagesApi: MessagesApi,
   val env: Environment[User, CookieAuthenticator]
 ) extends Silhouette[User, CookieAuthenticator]  {
  implicit val mApi = messagesApi
+  override val logger = Logger(Action.getClass)
 
 
   /*def get = SecuredAction.async { implicit request =>
@@ -69,6 +69,18 @@ class Profile @Inject() (
   }*/
   
   def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e))))
+
+  def getUser(uuid: String) = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some( u ) => userService.find(UUID.fromString(uuid)).map(_ match {
+        case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(user)).getResult
+        case None => WebAppResult.NotFound(request, "profile.notFound.user", Nil, "Profile.NotFound.User", Map[String, String]("uuid" -> uuid) ).getResult
+      })
+      case None => Future.successful(
+        WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult
+      )
+    }
+  }
 
   def get = UserAwareAction.async { implicit request =>
     request.identity match {
@@ -127,6 +139,7 @@ class Profile @Inject() (
                   request.body.birthday,
                   request.body.sex,
                   profile.supporter.crew,
+                  profile.supporter.roles,
                   profile.supporter.pillars
                 )
                 val newProfile = profile.copy(supporter = supporter)
@@ -143,6 +156,84 @@ class Profile @Inject() (
        }
       }
     case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def assignCrew(uuidCrew: String) = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.assignOnlyOne(UUID.fromString(uuidCrew), user).map(_ match {
+        case Left(i) if i > 0 => WebAppResult.Ok(request, "profile.assign.crew.success", Nil, "Profile.Assign.Crew.Success", Json.obj()).getResult
+        case Left(i) => WebAppResult.Bogus(request, "profile.assign.error.nothingAssigned", Nil, "Profile.Assign.Error.NothingAssigned", Json.obj(
+          "crewID" -> uuidCrew,
+          "userID" -> user.id
+        )).getResult
+        case Right(msg) => WebAppResult.NotFound(request, msg, Nil, msg, Map(
+          "crewID" -> uuidCrew.toString,
+          "userID" -> user.id.toString
+        )).getResult
+      })
+      case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def removeCrew = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.deAssign(user).map(_ match {
+        case Left(i) if i > 0 => WebAppResult.Ok(request, "profile.removeAssign.crew.success", Nil, "Profile.RemoveAssign.Crew.Success", Json.obj()).getResult
+        case Left(i) => WebAppResult.Bogus(request, "profile.removeAssign.error.nothingAssigned", Nil, "Profile.RemoveAssign.Error.NothingAssigned", Json.obj(
+          "userID" -> user.id
+        )).getResult
+        case Right(msg) => WebAppResult.NotFound(request, msg, Nil, msg, Map(
+          "userID" -> user.id.toString
+        )).getResult
+      })
+      case _ => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def assignRole(userUUID: String, pillar: String) = UserAwareAction.async { implicit request =>
+    val otherUserID = UUID.fromString(userUUID)
+    request.identity match {
+      case Some(user) => userService.find(otherUserID).flatMap(_ match {
+        case Some(otherUser) => {
+          val p = Pillar(pillar)
+          p.isKnown match {
+            case true => user.profiles.headOption match {
+              case Some(profile) => profile.supporter.crew match {
+                case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, p), otherUser).map(_ match {
+                  case Left(i) => WebAppResult.Ok(request, "profile.assignRole.success", Nil, "Profile.AssignRole.Success", Json.obj()).getResult
+                  case Right(error) => WebAppResult.NotFound(request, error, Nil, error, Map[String, String]()).getResult
+                })
+                case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.crewNotFoundExecutingUser", Nil, "Profile.AssignRole.CrewNotFoundExecutingUser", Map[String, String]()).getResult)
+              }
+              case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.profileNotFoundExecutingUser", Nil, "Profile.AssignRole.ProfileNotFoundExecutingUser", Map[String, String]()).getResult)
+            }
+            case false => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.givenPillarUnknown", Nil, "Profile.AssignRole.GivePillarUnknown", Map[String, String]()).getResult)
+          }
+        }
+        case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.otherUserNotFound", Nil, "Profile.AssignRole.OtherUserNotFound", Map[String, String]()).getResult)
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def getNewsletterSettingsPool1 = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.getNewsletterPool1Settings(user.id).map(_ match {
+        case Some(setting) => WebAppResult.Ok(request, "profile.getNewsletterSetting.success", Nil, "Profile.GetNewsletterSetting.Success", Json.obj("setting" -> setting)).getResult
+        case None => WebAppResult.NotFound(request, "profile.getNewsletterSetting.notFound", Nil, "Profile.GetNewsletterSetting.NotFound", Map[String, String]()).getResult
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def setNewsletterSettingsPool1(setting: String) = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => userService.setNewsletterPool1Settings(user, setting).map(_ match {
+        case true => WebAppResult.Ok(request, "profile.setNewsletterSetting.success", Nil, "Profile.SetNewsletterSetting.Success", Json.obj("setting" -> setting)).getResult
+        case false => WebAppResult.Bogus(request, "profile.setNewsletterSetting.bogus", Nil, "Profile.SetNewsletterSetting.Bogus", Json.obj("setting" -> setting)).getResult
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
 }

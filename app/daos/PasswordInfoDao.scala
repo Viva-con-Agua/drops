@@ -7,9 +7,6 @@ import com.mohiva.play.silhouette.impl.daos.DelegableAuthInfoDAO
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json._
-import play.modules.reactivemongo.ReactiveMongoApi
-import play.modules.reactivemongo.json._
-import play.modules.reactivemongo.json.collection.JSONCollection
 import models.{Profile, User}
 import User._
 import daos.schema.{LoginInfoTableDef, PasswordInfoTableDef, ProfileTableDef}
@@ -27,39 +24,6 @@ trait PasswordInfoDao extends DelegableAuthInfoDAO[PasswordInfo] {
   def update(loginInfo:LoginInfo, authInfo:PasswordInfo):Future[PasswordInfo]
   def save(loginInfo:LoginInfo, authInfo:PasswordInfo):Future[PasswordInfo]
   def remove(loginInfo:LoginInfo):Future[Unit]
-}
-
-class MongoPasswordInfoDao extends PasswordInfoDao {
-  lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
-  val users = reactiveMongoApi.db.collection[JSONCollection]("users")
-
-  def find(loginInfo:LoginInfo):Future[Option[PasswordInfo]] = for {
-    user <- users.find(Json.obj(
-      "profiles.loginInfo" -> loginInfo
-    )).one[User]
-  } yield user.flatMap(_.profiles.find(_.loginInfo == loginInfo)).flatMap(_.passwordInfo)
-
-  def add(loginInfo:LoginInfo, authInfo:PasswordInfo):Future[PasswordInfo] = 
-    users.update(Json.obj(
-      "profiles.loginInfo" -> loginInfo
-    ), Json.obj(
-      "$set" -> Json.obj("profiles.$.passwordInfo" -> authInfo)
-    )).map(_ => authInfo)
-
-  def update(loginInfo:LoginInfo, authInfo:PasswordInfo):Future[PasswordInfo] = 
-    add(loginInfo, authInfo)
-
-  def save(loginInfo:LoginInfo, authInfo:PasswordInfo):Future[PasswordInfo] = 
-    add(loginInfo, authInfo)
-
-  def remove(loginInfo:LoginInfo):Future[Unit] = 
-    users.update(Json.obj(
-      "profiles.loginInfo" -> loginInfo
-    ), Json.obj(
-      "$pull" -> Json.obj(
-        "profiles" -> Json.obj("loginInfo" -> loginInfo)
-      )
-    )).map(_ => ())
 }
 
 
@@ -81,21 +45,50 @@ class MariadbPasswordInfoDao extends PasswordInfoDao{
   }
 
   def find(id: Long) : Future[PasswordInfo] = {
-    dbConfig.db.run(passwordInfos.filter(_.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
+    dbConfig.db.run(passwordInfos.filter(pw => pw.id === id).result).map(pInfo => PasswordInfo(pInfo.head.hasher, pInfo.head.password))
   }
-
+   /* TODO: implement PasswordInfo with Option   
+      pwInfoOption match {
+      case Some(pInfo) => Some(PasswordInfo(pInfo.hasher, pInfo.password))
+      case _ => None
+    })*/
+  
   override def add(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = {
     remove(loginInfo).flatMap(_ => {
       dbConfig.db.run(loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey).result).flatMap(lInfo => {
         val profileId = lInfo.head.profileId
-        dbConfig.db.run(passwordInfos += PasswordInfoDB(0, authInfo, profileId)).flatMap(id => find(id))
+        dbConfig.db.run((passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, authInfo, profileId)).flatMap(id => find(id))
       })
     })
   }
 
-  override def update(loginInfo: LoginInfo, authInfo: PasswordInfo):Future[PasswordInfo] = add(loginInfo, authInfo)
+  override def update(loginInfo: LoginInfo, passwordInfo: PasswordInfo):Future[PasswordInfo] = {
+    // action for get the PasswordInfoDB
+    val action = for {
+      // the frontend identifire is LoginInfo l
+      l <- loginInfos.filter(entry => entry.providerId === loginInfo.providerID && entry.providerKey === loginInfo.providerKey)
+      // the passwordInfo profileId is the same as l.profileId. We can't update here with slick because we can't accress the id in .update()
+      pw <- passwordInfos.filter(entry => entry.profileId === l.profileId)
+    } yield pw
+    // run action an get the result. pInfo contains the PasswordInfoDB
+    dbConfig.db.run(action.result).flatMap(pInfo =>{
+      // update the new PasswordInfo with same id's
+      dbConfig.db.run((passwordInfos.filter(_.id === pInfo.head.id).update(PasswordInfoDB(pInfo.head.id, passwordInfo, pInfo.head.profileId))))
+      find(pInfo.head.id)
+    })
 
-  override def save(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = add(loginInfo, authInfo)
+  }
+
+  override def save(loginInfo: LoginInfo, authInfo: PasswordInfo) :Future[PasswordInfo] = {
+    // find profile id via loginInfo
+    dbConfig.db.run(loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey).result)
+      .flatMap(lInfo => {
+        // save PasswordInfo with new id and profile id
+        dbConfig.db.run((passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, authInfo, lInfo.head.profileId))
+        // find PasswordInfo via returned id
+          .flatMap(id => find(id))
+      })
+  }
 
   override def remove(loginInfo: LoginInfo) : Future[Unit] = {
     val profileId = loginInfos.filter(lI => lI.providerId === loginInfo.providerID && lI.providerKey === loginInfo.providerKey)

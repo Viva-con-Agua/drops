@@ -63,8 +63,8 @@ class CrewController @Inject() (
       }
     }
     //def list(event: WebSocketEvent): WebSocketEvent = ???
-    def list = SecuredAction.async(validateJson[QueryBody]) { implicit request =>
-      QueryBody.asCrewsQuery(request.body) match {
+    def list = SecuredAction.async(validateJson[QueryBodyCrews]) { implicit request =>
+      QueryBodyCrews.asCrewsQuery(request.body) match {
       case Left(e : QueryParserError) => Future.successful(
         WebAppResult.Bogus(
           request, 
@@ -73,7 +73,7 @@ class CrewController @Inject() (
           "", 
           Json.obj("error" -> Messages("rest.api.missingFilter.Value"))
         ).getResult)
-      case Left(e : QueryBody.NoValuesGiven) => Future.successful(
+      case Left(e : QueryBodyCrews.NoValuesGiven) => Future.successful(
          WebAppResult.Bogus(
           request, 
           "error.webapp.crew.queryParser", 
@@ -101,8 +101,38 @@ class CrewController @Inject() (
             )
           }
         }
-      }  
-    }
+      }
 
+    }
+    def count = SecuredAction.async(validateJson[QueryBodyCrews]) { implicit request =>
+      implicit val cd = crewDao
+      QueryBodyCrews.asCrewsCountQuery(request.body) match {
+        case Left(e : QueryParserError) => Future.successful(
+          WebAppResult.Bogus(request, "widgets.crews.error.queryParser", Nil, "Widgets.GetCountCrews.QueryParsingError", Json.obj("error" -> e.getMessage)).getResult
+        )
+        case Left(e : QueryBody.NoValuesGiven) => Future.successful(
+          WebAppResult.Bogus(request, "widgets.crews.error.noValues", Nil, "Widgets.GetCountCrews.NoValues", Json.obj("error" -> e.getMessage)).getResult
+        )
+        case Left(e) => Future.successful(
+          WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.crews.error.generic", Nil, "Widgets.GetCountUsers.Generic", Json.obj("error" -> e.getMessage)).getResult
+        )
+        case Right(converter) => try {
+          crewDao.count_with_statement(converter.toCountStatement).map((count) =>
+            WebAppResult.Ok(request, "widgets.crews.count.found", Nil, "Widgets.GetCountCrews.Success", Json.obj("count" -> count)).getResult
+          ) //.map(users => Ok(Json.toJson(users)))
+        } catch {
+          case e: java.sql.SQLException => {
+            Future.successful(
+              WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.crews.error.sql", Nil, "Widgets.GetUsers.SQLException", Json.obj("error" -> e.getMessage)).getResult
+            )
+          }
+          case e: Exception => {
+            Future.successful(
+              WebAppResult.Generic(request, play.api.mvc.Results.InternalServerError, "widgets.crews.error.generic", Nil, "Widgets.GetCrews.Generic", Json.obj("error" -> e.getMessage)).getResult
+            )
+          }
+        }
+      }
+    }
   }
   

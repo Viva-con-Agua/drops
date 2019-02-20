@@ -20,6 +20,7 @@ case class SupporterStub(
                       birthday: Option[Long],
                       sex: Option[String],
                       crew: Option[CrewStub],
+                      roles: Set[Role],
                       pillars: Set[Pillar]
                     ) {
   def birthString(implicit messages: Messages): Option[String] = this.birthday match {
@@ -33,18 +34,18 @@ case class SupporterStub(
   }
 
   def toSupporter(c: Option[Crew]) : Supporter =
-    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, c, pillars)
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, c, roles, pillars)
 }
 
 object SupporterStub {
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : SupporterStub =
-    SupporterStub(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set())
+    SupporterStub(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set(), Set())
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : SupporterStub =
-    SupporterStub(firstName, lastName, fullName, None, None, None, None, None, Set())
+    SupporterStub(firstName, lastName, fullName, None, None, None, None, None, Set(), Set())
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Pillar])) : SupporterStub =
-    SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9)
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Role], Set[Pillar])) : SupporterStub =
+    SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10)
 
   implicit val supporterWrites : OWrites[SupporterStub] = (
     (JsPath \ "firstName").writeNullable[String] and
@@ -55,6 +56,7 @@ object SupporterStub {
       (JsPath \ "birthday").writeNullable[Long] and
       (JsPath \ "sex").writeNullable[String] and
       (JsPath \ "crew").writeNullable[CrewStub] and
+      (JsPath \ "roles").write[Set[Role]] and
       (JsPath \ "pillars").write[Set[Pillar]]
     )(unlift(SupporterStub.unapply))
   implicit val supporterReads : Reads[SupporterStub] = (
@@ -66,6 +68,7 @@ object SupporterStub {
       (JsPath \ "birthday").readNullable[Long] and
       (JsPath \ "sex").readNullable[String] and
       (JsPath \ "crew").readNullable[CrewStub] and
+      (JsPath \ "roles").read[Set[Role]] and
       (JsPath \ "pillars").read[Set[Pillar]]
     ).tupled.map(SupporterStub( _ ))
 }
@@ -76,23 +79,22 @@ case class ProfileStub(
                     email:Option[String],
                     supporter: SupporterStub,
                     passwordInfo:Option[PasswordInfo],
-                    oauth1Info: Option[OAuth1Info],
-                    avatarUrl: Option[String]) {
+                    oauth1Info: Option[OAuth1Info]) {
   def toProfile(c: Option[Crew]) : Profile =
-    Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info, avatarUrl.map((url) => List(GravatarProfileImage( url ), new DefaultProfileImage)).getOrElse(List(new DefaultProfileImage)))
+    Profile(loginInfo, confirmed, email, supporter.toSupporter(c), passwordInfo, oauth1Info)
 }
 
 object ProfileStub {
 
   def apply(loginInfo : LoginInfo, email: String, firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : ProfileStub =
   // confirmation is false by default, because this apply function is designed for using it during the default sign up process
-    ProfileStub(loginInfo, false, Some(email), SupporterStub(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None, None)
+    ProfileStub(loginInfo, false, Some(email), SupporterStub(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None)
 
-  def apply(tuple: (LoginInfo, Boolean, Option[String], SupporterStub, Option[PasswordInfo], Option[OAuth1Info], Option[String])) : ProfileStub =
-    ProfileStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
+  def apply(tuple: (LoginInfo, Boolean, Option[String], SupporterStub, Option[PasswordInfo], Option[OAuth1Info])) : ProfileStub =
+    ProfileStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
   def apply(p: CommonSocialProfile) : ProfileStub =
-    ProfileStub(p.loginInfo, true, p.email, SupporterStub(p.firstName, p.lastName, p.fullName), None, None, p.avatarURL)
+    ProfileStub(p.loginInfo, true, p.email, SupporterStub(p.firstName, p.lastName, p.fullName), None, None)
 
   implicit val passwordInfoJsonFormat = Json.format[PasswordInfo]
   implicit val oauth1InfoJsonFormat = Json.format[OAuth1Info]
@@ -102,8 +104,7 @@ object ProfileStub {
       (JsPath \ "email").writeNullable[String] and
       (JsPath \ "supporter").write[SupporterStub] and
       (JsPath \ "passwordInfo").writeNullable[PasswordInfo] and
-      (JsPath \ "oauth1Info").writeNullable[OAuth1Info] and
-      (JsPath \ "avatarUrl").writeNullable[String]
+      (JsPath \ "oauth1Info").writeNullable[OAuth1Info] 
     )(unlift(ProfileStub.unapply))
   implicit val profileReads : Reads[ProfileStub] = (
     (JsPath \ "loginInfo").read[LoginInfo] and
@@ -111,8 +112,7 @@ object ProfileStub {
       (JsPath \ "email").readNullable[String] and
       (JsPath \ "supporter").read[SupporterStub] and
       (JsPath \ "passwordInfo").readNullable[PasswordInfo] and
-      (JsPath \ "oauth1Info").readNullable[OAuth1Info] and
-      (JsPath \ "avatarUrl").readNullable[String]
+      (JsPath \ "oauth1Info").readNullable[OAuth1Info]
     ).tupled.map(ProfileStub( _ ))
 }
 

@@ -1,6 +1,0 @@
-@()(implicit request:RequestHeader, messages:Messages)
-
-@views.html.templates.mainError(request, Messages("error.serverError")) {
-  <h1>@Messages("error.onlyHttpsAllowed")</h1>
-  <div class="alert alert-danger" role="alert">@Messages("error.onlyHttpsAllowedMsg", routes.Application.index().absoluteURL(true))</div>
-}

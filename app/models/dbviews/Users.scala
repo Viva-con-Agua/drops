@@ -9,7 +9,8 @@ case class Users (
                  user: Option[UserView],
                  profile: Option[ProfileView],
                  loginInfo: Option[LoginInfoView],
-                 supporterView: Option[SupporterView]
+                 supporterView: Option[SupporterView],
+                 supporterCrewView: Option[SupporterCrewView]
                  )extends ViewObject{
   def getValue(viewname: String): ViewBase = {
     viewname match {
@@ -17,6 +18,7 @@ case class Users (
       case "profile" => profile.get
       case "loginInfo" => loginInfo.get
       case "supporter" => supporterView.get
+      case "supporterCrew" => supporterCrewView.get
     }
   }
 
@@ -26,26 +28,29 @@ case class Users (
       case "profile" => profile.isDefined
       case "loginInfo" => loginInfo.isDefined
       case "supporter" => supporterView.isDefined
+      case "supporterCrew" => supporterCrewView.isDefined
     }
   }
 }
 
 object Users{
-  def apply(tuple: (Option[UserView], Option[ProfileView], Option[LoginInfoView], Option[SupporterView])) : Users =
-    Users(tuple._1, tuple._2, tuple._3, tuple._4)
+  def apply(tuple: (Option[UserView], Option[ProfileView], Option[LoginInfoView], Option[SupporterView], Option[SupporterCrewView])) : Users =
+    Users(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
 
   implicit val usersWrites : OWrites[Users] = (
     (JsPath \ "user").writeNullable[UserView] and
       (JsPath \ "profile").writeNullable[ProfileView] and
       (JsPath \ "loginInfo").writeNullable[LoginInfoView] and
-      (JsPath \ "supporter").writeNullable[SupporterView]
+      (JsPath \ "supporter").writeNullable[SupporterView] and
+      (JsPath \ "supporterCrew").writeNullable[SupporterCrewView]
   )(unlift(Users.unapply))
 
   implicit val usersReads: Reads[Users] = (
     (JsPath \ "user").readNullable[UserView] and
       (JsPath \ "profile").readNullable[ProfileView] and
       (JsPath \ "loginInfo").readNullable[LoginInfoView] and
-      (JsPath \ "supporter").readNullable[SupporterView]
+      (JsPath \ "supporter").readNullable[SupporterView] and
+      (JsPath \ "supporterCrew").readNullable[SupporterCrewView]
   ).tupled.map(Users( _ ))
 }
 
@@ -323,6 +328,73 @@ object SupporterView{
     ).tupled.map(SupporterView( _ ))
 }
 
+case class SupporterCrewView(
+                              role : Option[Map[String, String]],
+                              pillar : Option[Map[String, String]],
+                              publicId : Option[Map[String, UUID]],
+                              name : Option[Map[String, String]]
+                            ) extends ViewBase {
+  def getValue(fieldname: String, index: Int): Any = {
+    fieldname match {
+      case "role" => role.get.get(index.toString).get
+      case "pillar" => pillar.get.get(index.toString).get
+      case "publicId" => publicId.get.get(index.toString).get
+      case "name" => name.get.get(index.toString).get
+    }
+  }
 
+  def isFieldDefined(fieldname: String, index: Int): Boolean = {
+    fieldname match {
+      case "role" => {
+        role.isDefined match {
+          case true => role.get.keySet.contains(index.toString)
+          case false => false
+        }
+      }
 
+      case "pillar" => {
+        pillar.isDefined match {
+          case true => pillar.get.keySet.contains(index.toString)
+          case false => false
+        }
+      }
 
+      case "publicId" => {
+        publicId.isDefined match {
+          case true => publicId.get.keySet.contains(index.toString)
+          case false => false
+        }
+      }
+      case "name" => {
+        name.isDefined match {
+          case true => name.get.keySet.contains(index.toString)
+          case false => false
+        }
+      }
+    }
+  }
+}
+
+object SupporterCrewView {
+  def apply(t: (Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, UUID]], Option[Map[String, String]])): SupporterCrewView =
+    SupporterCrewView(t._1, t._2, t._3, t._4)
+
+  implicit val supporterCrewViewWrites : OWrites[SupporterCrewView] = (
+    (JsPath \ "role").writeNullable[Map[String, String]] and
+      (JsPath \ "pillar").writeNullable[Map[String, String]] and
+      (JsPath \ "publicId").writeNullable[Map[String, UUID]] and
+      (JsPath \ "name").writeNullable[Map[String, String]]
+    )(unlift(SupporterCrewView.unapply))
+
+  implicit val supporterCrewViewReads : Reads[SupporterCrewView] = (
+    (JsPath \ "role").readNullable[Map[String, String]].orElse(
+      (JsPath \ "role").readNullable[String].map(_.map(p => Map("0" -> p)))) and
+      (JsPath \ "pillar").readNullable[Map[String, String]].orElse(
+        (JsPath \ "pillar").readNullable[String].map(_.map(n => Map("0" -> n)))) and
+      (JsPath \ "publicId").readNullable[Map[String, UUID]].orElse(
+        (JsPath \ "publicId").readNullable[UUID].map(_.map(p => Map("0" -> p)))) and
+      (JsPath \ "name").readNullable[Map[String, String]].orElse(
+        (JsPath \ "name").readNullable[String].map(_.map(n => Map("0" -> n))))
+
+    ).tupled.map(SupporterCrewView( _ ))
+}

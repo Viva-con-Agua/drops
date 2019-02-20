@@ -1,4 +1,0 @@
-@(request:RequestHeader, header: Option[String] = None)(implicit messages:Messages)
-
-  <h1>@header.getOrElse(Messages("error.badRequest"))</h1>
-  <div class="alert alert-danger" role="alert">@Messages("error.notFound.details", request.path)</div>

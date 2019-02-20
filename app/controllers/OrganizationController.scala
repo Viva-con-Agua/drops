@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject.Inject
-
 import play.api._
 import play.api.mvc._
 import play.api.Play.current
@@ -9,7 +8,6 @@ import play.api.libs.iteratee
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
 import com.mohiva.play.silhouette.api.Authenticator.Implicits._
 import com.mohiva.play.silhouette.api.{Environment, LoginInfo, Silhouette}
@@ -22,12 +20,13 @@ import models.forms.OrganizationForms
 import models.dispenser._
 import services._
 import java.util.UUID
+
 import play.api.libs.json.{JsPath, Json, OWrites, Reads}
+import utils.authorization.WithRole
 
 class OrganizationController @Inject() (
       //forms: OrganizationForms,
       organizationService: OrganizationService,
-      dispenserService: DispenserService,
       val messagesApi: MessagesApi,
       val env:Environment[User,CookieAuthenticator]
   )extends Silhouette[User,CookieAuthenticator] {
@@ -42,7 +41,9 @@ class OrganizationController @Inject() (
     
     def validateJson[A: Reads] = BodyParsers.parse.json.validate(_.validate[A].asEither.left.map(e => BadRequest(JsError.toJson(e)))) 
 
-    def insert = Action.async(validateJson[OrganizationStub]) { implicit request => 
+    def insert = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[OrganizationStub]) { implicit request =>
       organizationService.find(request.body.name).flatMap { 
         case Some(orga) => Future.successful(BadRequest(Messages("organization.error.exist")))
         case _ => {
@@ -54,7 +55,9 @@ class OrganizationController @Inject() (
       }
     }
 
-    def addProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
+    def addProfile = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[ProfileOrganization]) { implicit request =>
       organizationService.checkProfileOrganization(request.body.email, request.body.publicId).flatMap {
         case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
         case false => {
@@ -66,7 +69,9 @@ class OrganizationController @Inject() (
       }
     }
 
-    def addProfileName = Action.async(validateJson[ProfileOrganizationName]) { implicit request =>
+    def addProfileName = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[ProfileOrganizationName]) { implicit request =>
       organizationService.checkProfileOrganization(request.body.email, request.body.name).flatMap {
         case true => Future.successful(BadRequest(Messages("organization.error.profileInv")))
         case false => {
@@ -92,14 +97,18 @@ class OrganizationController @Inject() (
       }
     }
 
-    def updateOrganization = Action.async(validateJson[Organization]) { implicit request => 
+    def updateOrganization = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[Organization]) { implicit request =>
       organizationService.update(request.body).flatMap {
         case Some(org) => Future.successful(Ok(Json.toJson(org)))
         case _ => Future.successful(BadRequest("error"))
       }
     }
 
-    def delete = Action.async(validateJson[OrganizationUUID]) { implicit request =>
+    def delete = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[OrganizationUUID]) { implicit request =>
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
           organizationService.delete(request.body.publicId)
@@ -109,7 +118,9 @@ class OrganizationController @Inject() (
       }
     }
 
-    def deleteProfile = Action.async(validateJson[ProfileOrganization]) { implicit request =>
+    def deleteProfile = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[ProfileOrganization]) { implicit request =>
       organizationService.checkProfileOrganization(request.body.email, request.body.publicId).flatMap {
         case false => Future.successful(BadRequest(Messages("organization.error.profileInv")))
         case true => {
@@ -119,7 +130,9 @@ class OrganizationController @Inject() (
       }
     }
 
-    def addBankAccount = Action.async(validateJson[BankAccountOrganization]) { implicit request =>
+    def addBankAccount = SecuredAction(
+      WithRole(RoleAdmin) || WithRole(RoleEmployee)
+    ).async(validateJson[BankAccountOrganization]) { implicit request =>
       organizationService.find(request.body.publicId).flatMap {
         case Some (orga) => {
           organizationService.addBankAccount(request.body.bankaccount, request.body.publicId)
@@ -128,7 +141,9 @@ class OrganizationController @Inject() (
         case _ => Future.successful(BadRequest(Messages("error")))
       }
     }
-   def addBankAccountName = Action.async(validateJson[BankAccountOrganizationName]) { implicit request =>
+   def addBankAccountName = SecuredAction(
+     WithRole(RoleAdmin) || WithRole(RoleEmployee)
+   ).async(validateJson[BankAccountOrganizationName]) { implicit request =>
       organizationService.find(request.body.name).flatMap {
         case Some (orga) => {
           organizationService.addBankAccount(request.body.bankaccount, request.body.name)

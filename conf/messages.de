@@ -55,7 +55,21 @@ profile.upload.msg=Für Upload klicken
 profile.upload.hint=Bewege die Maus hier rüber, um das Bild zu ändern.
 profile.notExist=Profile konnte nicht gefunden werden.
 profile.emailNotExist=Die Email ist nicht angegeben.
-
+profile.assign.crew.success=Du bist jetzt Teil der Crew!
+profile.removeAssign.crew.success=Du bist jetzt kein Teil der Crew mehr.
+profile.assign.error.nothingAssigned=Ein Fehler ist aufgetreten und du konntest leider nicht der Crew zugeordnet werden.
+profile.removeAssign.error.nothingAssigned=Ein Fehler ist aufgetreten und du bist noch Teil der Crew.
+service.user.error.notFound.profile=Dein Nutzer konnte nicht gefunden werden.
+service.user.error.notFound.crew=Es konnte keine Crew gefunden werden, zu der der Nutzer gehört.
+service.user.error.oldCrewNotDeleted=Ein Fehler ist aufgetreten. Daher bist du immer noch Teil deiner bisherigen Crew.
+dao.user.error.notFound.supporter=Dein Nutzer konnte nicht gefunden werden.
+dao.user.error.notFound.crew=Die angegebene Crew konnte nicht gefunden werden.
+dao.user.error.nothingUpdated=Die neue Rolle konnte dem Nutzer nicht zugewiesen werden.
+dao.user.error.anotherCrewAssigned=Dem Nutzer kann die Rolle nicht zugewiesen werden, da dieser einer anderen Crew angehört.
+profile.assignRole.crewNotFoundExecutingUser=Deine Crew konnte nicht gefunden werden.
+profile.assignRole.profileNotFoundExecutingUser=Dein Nutzer konnte nicht gefunden werden.
+profile.assignRole.givenPillarUnknown=Du kannst keine Rolle für den angegebenen Bereich veregeben. Dieser Bereich istr dem Pool unbekannt.
+profile.assignRole.otherUserNotFound=Du kannst Rollen nur an Nutzer zuweisen, die das System kennt. Der angegebene Nutzer existiert nicht.
 
 task.title=Todo Übersicht
 
@@ -92,6 +106,7 @@ signin.social=Oder du nutzt einen dieser Services, um dich anzumelden:
 signin.success=Du bist ringeloggt!
 
 signout.msg=Du bist rausgeloggt!
+signout.pool1ServiceError=Da ist ein Fehler beim Pool 1 aufgetreten. Leider konntest du nicht ausgeloggt werden.
 
 reset.title=Passwort zurücksetzen
 reset.startLegend=Hast du dein Passwort vergessen??
@@ -138,19 +153,19 @@ error.oauth2.not.authenticated=Kein Tropfen zu finden! Hier ist keiner angemelde
 error.reset.toToken=Kein Token für das aufgerufene gefunden: {0}
 error.expiredToken=Das Token {0} ist nicht mehr gültig oder nicht für die Registrierung von Nutzern erstellt worden.
 error.noToken=Das Token {0} kann nicht in der Datenbank gefunden werden.
-
+error.bogusResetEmailData=Die übergebenen Daten können nicht interpretiert werden.
 
 success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!
 
-mail.welcome.subject=Willkommen im Boot
+mail.welcome.subject=VcA Pool | Willkommen im Boot
 mail.welcome.hi=Moin, {0}!
 mail.welcome.instructions=Danke, dass du dabei bist. Rufe nur noch den folgenden Link auf, um deinen Account zu aktivieren.
 
 
-mail.reset.subject=Passwort neu setzen
+mail.reset.subject=VcA Pool | Passwort neu setzen
 mail.reset.hi=Moin, {0}!
 mail.reset.instructions=Du willst dein Passwort neu setzen? Klicke auf den folgenden Link!
-mail.reset.instructions=Wir haben mitbekommen, dass du dich mit deinem alten Pool Account angemeldet hast. Es ist wichtig das du dein Passwort neu setzt. Klick einfach auf den unteren Link.
+mail.reset.instructionsPool1=Wir haben mitbekommen, dass du dich mit deinem alten Pool Account angemeldet hast. Es ist wichtig das du dein Passwort neu setzt. Klick einfach auf den unteren Link.
 
 crew.legend=Crew
 crew.name=Crew Name
@@ -207,7 +222,6 @@ rest.api.securityMethodNotImplemented=Konfigurierte Methode zur Absicherung der 
 rest.api.converter.no.view=Es gibt keine SQL View mit dem Namen ''{1}''
 rest.api.noValuesGiven=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
 rest.api.noQueryGiven=Es wurde keine Query angegeben.
-
 widgets.user.found=Supporter gefunden!
 widgets.count.found=Anzahl der Nutzer konnte berechnet werden.
 widgets.user.notFound=Der Supporter konnte nicht gefunden werden.
@@ -217,3 +231,40 @@ widgets.users.error.queryParser=Die gegebene Query kann nicht geparsed werden.
 widgets.users.error.noValues=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
 widgets.users.error.generic=Die Query enthält einen Fehler.
 widgets.users.error.sql=Die Query verursacht einen SQL Fehler.
+
+webapp.crew.found=Crew gefunden!
+webapp.crews.count.found=Anzahl der Crews konnte berechnet werden.
+webapp.crew.notFound=Die Crew konnte nicht gefunden werden.
+webapp.forbidden=Du darfst dies nicht sehen.
+webapp.notAuthenticated=Log dich erst ein.
+webapp.crews.error.queryParser=Die gegebene Query kann nicht geparsed werden.
+webapp.crews.error.noValues=Es wurden keine Werte zur Query angegeben, nach denen die entsprechenden Felder geprüft werden können.
+webapp.crews.error.generic=Die Query enthält einen Fehler.
+webapp.crews.error.sql=Die Query verursacht einen SQL Fehler.
+
+avatar.upload.csrf=CSRF Token erfolgreich generiert!
+avatar.error.noToken=Es konnte kein CSRF Token generiert werden.
+avatar.getAll.success=Alle Avatare konnten erfolgreich abgerufen werden.
+avatar.upload.success=Dein Avatar wurde gespeichert.
+avatar.upload.internalServerError=Es ist ein interner Fehler aufgetreten. Dein Avatar konnte nicht gespeichert werden.
+avatar.upload.noImageInRequest=Deine Anfrage enthält leider kein Bild. Daher kann auch kein neuer Avatar gespeichert werden.
+avatar.upload.thumbnail.failure=Es konnten keine Thumbnails deines Avatars angelegt werden.
+avatar.upload.thumbnail.success=Die Thumbnails zu deinem Avatar wurden gespeichert.
+avatar.get.notFound=Der Avatar konnte nicht gefunden werden.
+avatar.getThumb.notFound=Das Thumbnail konnte nicht gefunden werden.
+avatar.remove.success=Der Avatar wurde gelöscht.
+avatar.remove.notFound=Der Avatar wurde nicht gefunden und daher kann er nicht gelöscht werden.
+avatar.select.success=Neuer Avatar gewählt.
+avatar.select.failure=Leider konnte der neue Avatar nicht ausgewählt werden.
+
+pool1.error.config.noURI=Der Pool 1 ist nicht konfiguriert.
+pool1.debug.not.activated=Der Export zum Pool 1 ist nicht aktiviert. Ändere die Konfiguration `pool1.export=true`.
+pool1.debug.export.success=Erfolgreich exportiert!\n{0}
+pool1.debug.export.failure=Ein Fehler ist beim Export aufgetreten!\n{0}
+pool1.debug.export.userNotComplete=Leider fehlen einige Attribute des Nutzers, so dass dieser nicht im Pool 1 erzeugt werden kann.
+pool1.api.canNotReadResponse=Die Antwort des Pool 1 kann nicht interpretiert werden.
+pool1.debug.export.errorResponseCode=Die Aktion konnte nicht erfolgreich ausgeführt werden. Der Pool 1 antwortet mit HTTP Status Code {0} und der Nachricht: {1}
+profile.getNewsletterSetting.success=Erfolgreiche Abfrage der Newsletter-Einstellungen.  
+profile.getNewsletterSetting.notFound=Fehler bei der Abfrage der Newsletter-Einstellungen.
+profile.setNewsletterSetting.success=Erfolgreich aktualisierte Newsletter-Einstellungen.
+profile.setNewsletterSetting.bogus=Fehler bei der Aktualisierung der Newsletter-Einstellungen.

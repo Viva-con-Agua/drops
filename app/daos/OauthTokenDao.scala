@@ -15,9 +15,6 @@ import play.api.libs.json.Json
 import play.api.Play.current
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.modules.reactivemongo.ReactiveMongoApi
-import play.modules.reactivemongo.json._
-import play.modules.reactivemongo.json.collection.JSONCollection
 import slick.driver.JdbcProfile
 import slick.lifted.TableQuery
 import slick.driver.MySQLDriver.api._
@@ -36,57 +33,6 @@ trait OauthTokenDao {
   def save(token: OauthToken) : Future[OauthToken]
   def update(token: OauthToken) : Future[OauthToken]
   def createOrUpdate(token: OauthToken) : Future[OauthToken]
-}
-
-class MongoOauthTokenDao extends OauthTokenDao {
-  lazy val reactiveMongoApi = current.injector.instanceOf[ReactiveMongoApi]
-  val tokens = reactiveMongoApi.db.collection[JSONCollection]("oauthTokens")
-
-  def find(uuid: UUID) =
-    tokens.find(Json.obj(
-      "userId" -> uuid
-    )).one[OauthToken]
-
-
-  def find(uuid: UUID, oauthClient: OauthClient) =
-    tokens.find(Json.obj(
-      "userId" -> uuid,
-      "client" -> oauthClient
-    )).one[OauthToken]
-
-  def find(accessToken: AccessToken) =
-    tokens.find(Json.obj(
-      "accessToken" -> accessToken
-    )).one[OauthToken]
-
-  def find(accessToken: String) =
-    tokens.find(Json.obj(
-      "accessToken.token" -> accessToken
-    )).one[OauthToken]
-
-  def findByRefresh(refreshToken: String) =
-    tokens.find(Json.obj(
-      "accessToken.refreshToken" -> refreshToken
-    )).one[OauthToken]
-
-  def save(token:OauthToken):Future[OauthToken] =
-    tokens.insert(token).map(_ => token)
-
-  def update(token:OauthToken): Future[OauthToken] = for {
-    _ <- tokens.update(Json.obj(
-      "userId" -> token.userId,
-      "client" -> token.client
-    ), Json.obj(
-      "$set" -> Json.obj("accessToken" -> token.accessToken)
-    ))
-    updatedToken <- find(token.userId, token.client)
-  } yield updatedToken.get
-
-  def createOrUpdate(token: OauthToken): Future[OauthToken] =
-    find(token.userId, token.client).flatMap(_ match {
-      case Some(t) => update(token)
-      case None => save(token)
-    })
 }
 
 class MariadbOauthTokenDao extends OauthTokenDao {
@@ -163,7 +109,7 @@ class MariadbOauthTokenDao extends OauthTokenDao {
   override def save(token: OauthToken) : Future[OauthToken] = createOrUpdate(token)
 
   override def update(token: OauthToken) : Future[OauthToken] = createOrUpdate(token)
-
+  
   override def createOrUpdate(token: OauthToken) : Future[OauthToken] = {
     findDBModel(token.accessToken).flatMap(t => t.isDefined match {
       case true => dbConfig.db.run(oauthTokens.filter(_.id === t.get.id).update(OauthTokenDB(token, t.get.id))).flatMap(_ => find(t.get.id))

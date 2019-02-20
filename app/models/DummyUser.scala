@@ -31,6 +31,7 @@ object DummyUser {
       },
       sex = Some((json \ "gender").as[String]),
       crew = None,
+      roles = Set(),
       pillars = {
         val pillars = Pillar.getAll
         val indices = DummyUser.randomSubset(pillars.size)
@@ -45,8 +46,7 @@ object DummyUser {
       email = Some((json \ "email").as[String]),
       supporter = supporter,
       passwordInfo = Some(passwordHasher.hash((json \ "login" \ "password").as[String])),
-      oauth1Info = None,
-      avatar = List(GravatarProfileImage((json \ "picture" \ "large").as[String]), new DefaultProfileImage)
+      oauth1Info = None
     )
 
     val user = User(
@@ -81,7 +81,6 @@ object DummyUser {
   def setRandomCrew(user: DummyUser, crews : Set[Crew]) : DummyUser = {
     val rand = new Random(System.currentTimeMillis())
     val index = rand.nextInt(crews.size)
-    val active = math.random < 0.4 // yields true with a probability of 0.40
 
     val newSupporter = user.supporter.copy(crew = Some(crews.toList(index)))
     val newProfile = user.profile.copy(supporter = newSupporter)
