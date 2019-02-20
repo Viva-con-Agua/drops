@@ -141,7 +141,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
         s <- supporters.filter(_.profileId === p.id)
       } yield s
       dbConfig.db.run(action.result).flatMap(_.headOption match {
-        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles, None, None)).map( sc =>
+        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles, None, None, None)).map( sc =>
           dbConfig.db.run(supporterCrews += ( sc ))
         )).map(_.foldLeft(0)((sum, i) => sum + i )).map(Left( _ ))
         case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
@@ -212,7 +212,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
               })
             }
             def insert = {
-              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None, None)
+              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None, None, None)
               dbConfig.db.run(supporterCrews += sc).map(_ match {
                 case i if i > 0 => Left(i)
                 case _ => Right("dao.user.error.nothingUpdated")
