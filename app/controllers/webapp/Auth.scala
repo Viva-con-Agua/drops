@@ -386,7 +386,7 @@ class Auth @Inject() (
           case Some(token) if !token.isSignUp && !token.isExpired =>
             val loginInfo = LoginInfo(CredentialsProvider.ID, token.email.toLowerCase)
             for {
-              _ <- authInfoRepository.save(loginInfo, passwordHasher.hash(passwords.password1))
+              _ <- authInfoRepository.update(loginInfo, passwordHasher.hash(passwords.password1))
               authenticator <- env.authenticatorService.create(loginInfo)
               value <- env.authenticatorService.init(authenticator)
               _ <- userTokenService.remove(id)
