@@ -141,7 +141,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
         s <- supporters.filter(_.profileId === p.id)
       } yield s
       dbConfig.db.run(action.result).flatMap(_.headOption match {
-        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles, None)).map( sc =>
+        case Some(supporter) => Future.sequence((SupporterCrewDB * (supporter.id, crewDB.id, profile.supporter.roles, None, None, None)).map( sc =>
           dbConfig.db.run(supporterCrews += ( sc ))
         )).map(_.foldLeft(0)((sum, i) => sum + i )).map(Left( _ ))
         case _ => Future.successful(Right("dao.user.error.notFound.supporter"))
@@ -212,7 +212,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
               })
             }
             def insert = {
-              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None )
+              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None, None, None)
               dbConfig.db.run(supporterCrews += sc).map(_ match {
                 case i if i > 0 => Left(i)
                 case _ => Right("dao.user.error.nothingUpdated")
@@ -232,6 +232,30 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
       case None => Future.successful(Right("dao.user.error.notFound.crew"))
     }
   }
+
+  def setNVM(profile: Profile, crewUUID: UUID): Future[Boolean] = {
+    crewDao.findDBCrewModel(crewUUID).flatMap(_ match { 
+      case Some(crewDB) => {
+        profile.supporter.crew match {
+          case Some(crew) if crew.id == crewDB.publicId => {
+            val action = for {
+              p  <- profiles.filter(prof => prof.email === profile.email)
+              s  <- supporters.filter(supporter => supporter.profileId === p.id)
+              sc <- supporterCrews.filter( suppCrew => suppCrew.crewId === crewDB.id && suppCrew.supporterId === s.id)
+            } yield sc.nvmDate
+            val updateAction = action.update(Some(System.currentTimeMillis()))
+            dbConfig.db.run(updateAction).map(_ match {
+              case 1 => true
+              case _ => false
+            })
+          }
+          case _ => Future.successful(false)
+        }
+      }
+      case _ => Future.successful(false)
+    })
+  }
+
   private def toUserProfiles(profiles: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[AddressDB])]): Future[Seq[Profile]] = {
     Future.sequence(profiles.map(current => {
       getCrew(Seq((current._6)))  //get Crew for every SupporterCrewDB
