@@ -39,7 +39,9 @@ object DummyUser {
           (res, i) => res + pillars.toList(i)
         )
       },
-      Set()
+      Set(),
+      Some("active"),
+      None
     )
     val profile = Profile(
       loginInfo = LoginInfo(CredentialsProvider.ID, (json \ "email").as[String]),

@@ -233,6 +233,29 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     }
   }
 
+  def setActiveFlag(profile: Profile, crewUUID: UUID, activeFlag: Option[String]): Future[Boolean] = {
+    crewDao.findDBCrewModel(crewUUID).flatMap(_ match {
+      case Some (crewDB) => {
+        profile.supporter.crew match {
+          case Some(crew) if crew.id == crewDB.publicId => {
+            val action = for {
+              p  <- profiles.filter(prof => prof.email === profile.email)
+              s  <- supporters.filter(supporter => supporter.profileId === p.id)
+              sc <- supporterCrews.filter( suppCrew => suppCrew.crewId === crewDB.id && suppCrew.supporterId === s.id)
+            } yield sc.active
+            val updateAction = action.update(activeFlag)
+            dbConfig.db.run(updateAction).map(_ match {
+              case 1 => true
+              case _ => false
+            })
+          }
+          case _ => Future.successful(false)
+        }
+      }
+      case _ => Future.successful(false)
+    })
+  }
+
   def setNVM(profile: Profile, crewUUID: UUID): Future[Boolean] = {
     crewDao.findDBCrewModel(crewUUID).flatMap(_ match { 
       case Some(crewDB) => {

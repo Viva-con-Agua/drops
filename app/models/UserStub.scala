@@ -22,7 +22,9 @@ case class SupporterStub(
                       crew: Option[CrewStub],
                       roles: Set[Role],
                       pillars: Set[Pillar],
-                      address: Set[AddressStub]
+                      address: Set[AddressStub],
+                      active: Option[String],
+                      nvmDate: Option[Long]
                     ) {
   def birthString(implicit messages: Messages): Option[String] = this.birthday match {
     case Some(l) => {
@@ -35,18 +37,18 @@ case class SupporterStub(
   }
 
   def toSupporter(c: Option[Crew], address: Set[Address]) : Supporter =
-    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, c, roles, pillars, address)
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, c, roles, pillars, address, active, nvmDate)
 }
 
 object SupporterStub {
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : SupporterStub =
-    SupporterStub(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set(), Set(), Set())
+    SupporterStub(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set(), Set(), Set(), None, None)
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : SupporterStub =
-    SupporterStub(firstName, lastName, fullName, None, None, None, None, None, Set(), Set(), Set())
+    SupporterStub(firstName, lastName, fullName, None, None, None, None, None, Set(), Set(), Set(), None, None)
 
-  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Role], Set[Pillar], Set[AddressStub])) : SupporterStub =
-    SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10, tuple._11)
+  def apply(tuple: (Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[CrewStub], Set[Role], Set[Pillar], Set[AddressStub], Option[String], Option[Long])) : SupporterStub =
+    SupporterStub(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10, tuple._11, tuple._12, tuple._13)
 
   implicit val supporterWrites : OWrites[SupporterStub] = (
     (JsPath \ "firstName").writeNullable[String] and
@@ -59,7 +61,9 @@ object SupporterStub {
       (JsPath \ "crew").writeNullable[CrewStub] and
       (JsPath \ "roles").write[Set[Role]] and
       (JsPath \ "pillars").write[Set[Pillar]] and
-      (JsPath \ "address").write[Set[AddressStub]]
+      (JsPath \ "address").write[Set[AddressStub]] and
+      (JsPath \ "active").writeNullable[String] and
+      (JsPath \ "nvmDate").writeNullable[Long]
     )(unlift(SupporterStub.unapply))
   implicit val supporterReads : Reads[SupporterStub] = (
     (JsPath \ "firstName").readNullable[String] and
@@ -72,7 +76,9 @@ object SupporterStub {
       (JsPath \ "crew").readNullable[CrewStub] and
       (JsPath \ "roles").read[Set[Role]] and
       (JsPath \ "pillars").read[Set[Pillar]] and
-      (JsPath \ "address").read[Set[AddressStub]]
+      (JsPath \ "address").read[Set[AddressStub]] and
+      (JsPath \ "active").readNullable[String] and
+      (JsPath \ "nvmDate").readNullable[Long]
     ).tupled.map(SupporterStub( _ ))
 }
 
