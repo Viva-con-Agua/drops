@@ -233,11 +233,11 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     }
   }
 
-  def setActiveFlag(profile: Profile, crewUUID: UUID, activeFlag: Option[String]): Future[Boolean] = {
-    crewDao.findDBCrewModel(crewUUID).flatMap(_ match {
-      case Some (crewDB) => {
-        profile.supporter.crew match {
-          case Some(crew) if crew.id == crewDB.publicId => {
+  def setActiveFlag(profile: Profile, activeFlag: Option[String]): Future[Boolean] = {
+    profile.supporter.crew match {
+      case Some(crew) => {
+        crewDao.findDBCrewModel(crew.id).flatMap(_ match {
+          case Some (crewDB) => {
             val action = for {
               p  <- profiles.filter(prof => prof.email === profile.email)
               s  <- supporters.filter(supporter => supporter.profileId === p.id)
@@ -250,17 +250,39 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
             })
           }
           case _ => Future.successful(false)
-        }
+        })
       }
       case _ => Future.successful(false)
-    })
+    }
+  }
+
+  def getActiveFlag(profile: Profile): Future[Option[String]] = {
+    profile.supporter.crew match {
+      case Some(crew) => {
+        crewDao.findDBCrewModel(crew.id).flatMap(_ match {
+          case Some(crewDB) => {
+            val action = for {
+              p <- profiles.filter(current => current.email === profile.email) 
+              s <- supporters.filter(current => current.profileId === p.id)
+              sc <- supporterCrews.filter(current => current.crewId === crewDB.id && current.supporterId === s.id)
+            } yield sc.active
+            dbConfig.db.run(action.result).map(_.headOption match {
+              case Some(activeFlag) => activeFlag
+              case _ => None
+            })
+          }
+          case _ => Future.successful(None)
+        })
+      }
+      case _ => Future.successful(None)
+    } 
   }
 
   def setNVM(profile: Profile, crewUUID: UUID): Future[Boolean] = {
-    crewDao.findDBCrewModel(crewUUID).flatMap(_ match { 
-      case Some(crewDB) => {
-        profile.supporter.crew match {
-          case Some(crew) if crew.id == crewDB.publicId => {
+    profile.supporter.crew match {
+      case Some(crew) => {
+        crewDao.findDBCrewModel(crewUUID).flatMap(_ match { 
+          case Some(crewDB) => {
             val action = for {
               p  <- profiles.filter(prof => prof.email === profile.email)
               s  <- supporters.filter(supporter => supporter.profileId === p.id)
@@ -273,10 +295,32 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
             })
           }
           case _ => Future.successful(false)
-        }
+        })
       }
       case _ => Future.successful(false)
-    })
+    }
+  }
+
+  def getNVM(profile: Profile) : Future[Option[Long]] ={
+    profile.supporter.crew match {
+      case Some(crew) => {
+        crewDao.findDBCrewModel(crew.id).flatMap(_ match {
+          case Some(crewDB) => {
+            val action = for {
+              p <- profiles.filter(current => current.email === profile.email) 
+              s <- supporters.filter(current => current.profileId === p.id)
+              sc <- supporterCrews.filter(current => current.crewId === crewDB.id && current.supporterId === s.id)
+            } yield sc.nvmDate
+            dbConfig.db.run(action.result).map(_.headOption match {
+              case Some(nvmDate) => nvmDate
+              case _ => None
+            })
+          }
+          case _ => Future.successful(None)
+        })
+      }
+      case _ => Future.successful(None)
+    }
   }
 
   private def toUserProfiles(profiles: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[AddressDB])]): Future[Seq[Profile]] = {
