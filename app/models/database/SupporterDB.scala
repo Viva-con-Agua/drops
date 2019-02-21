@@ -1,6 +1,6 @@
 package models.database
 
-import models.{Crew, Role, Supporter}
+import models.{Crew, Role, Supporter, Address}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
 
@@ -27,8 +27,8 @@ case class SupporterDB(
                 sex: Option[String],
                 profileId: Long
                 ) {
-  def toSupporter(crew: Option[(Crew, Seq[Role])] = None): Supporter =
-    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew.map(_._1), crew.map(_._2.toSet).getOrElse(Set()))
+  def toSupporter(crew: Option[(Crew, Seq[Role])] = None, address: Set[Address] = Set()): Supporter =
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew.map(_._1), crew.map(_._2.toSet).getOrElse(Set()), address)
 }
 
 object SupporterDB extends ((Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long) => SupporterDB ){
@@ -39,25 +39,16 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
     SupporterDB(id, supporter.firstName, supporter.lastName, supporter.fullName, supporter.mobilePhone, supporter.placeOfResidence, supporter.birthday, supporter.sex, profileId)
   
 
-  def read(entries: Seq[(SupporterDB, Option[(SupporterCrewDB, Crew)])]): Seq[Supporter] = {
-    entries.foldLeft[Map[SupporterDB, Seq[Option[(SupporterCrewDB, Crew)]]]](Map())((mapped, entry) => mapped.contains(entry._1) match {
-      case true => mapped.get(entry._1) match {
-        case Some(seq) => (mapped - entry._1) + (entry._1 -> (seq ++ Seq(entry._2)))
-        case None => (mapped - entry._1) + (entry._1 -> Seq(entry._2))
-      }
-      case false => mapped + (entry._1 -> Seq(entry._2))
-    }).toSeq.map(entry => {
-      // to Map[SupporterDB -> Seq[Option[(Option[Role], Crew)]]]
-      val crewRoles : Seq[Option[(Option[Role], Crew)]] = entry._2.map(_.map(rc => (rc._1.toRole(rc._2), rc._2)))
-      (entry._1, crewRoles)
-    }).map(entry => {
-      // to Map[SupporterDB -> Option[(Crew, Seq[Roale])]
-      val crewRoles: Option[(Crew, Seq[Role])] =
-        entry._2.headOption.map(_.map(head =>
-          (head._2, entry._2.flatMap(_.map(_._1)).filter(_.isDefined).map(_.get))
-        )).headOption.getOrElse(None)
-      (entry._1, crewRoles)
-    }).map(entry => entry._1.toSupporter(entry._2))
+  def read(entries: Seq[(SupporterDB, Option[SupporterCrewDB], Option[Crew], Option[AddressDB])]): Seq[Supporter] = {
+    // for the reason that each Profile has only one supporter, we use the head of the sorted Seq
+    val supporterDB: SupporterDB = entries.groupBy(_._1).toSeq.map(sortedCurrent => sortedCurrent._1).head
+    // group all addresses and build a Set[Address] 
+    val address: Set[Address] = entries.groupBy(_._4).toSeq.filter(_._1.isDefined).map(current => current._1.head.toAddress).toSet
+    //build input for SupporterCrewDB.read
+    val supporterCrews = entries.map(current => current._2.flatMap(sc => current._3.map(crew => (sc, crew))))
+    //return Seq[Supporter]
+    Seq(supporterDB.toSupporter(SupporterCrewDB.read(supporterCrews), address))
+
   }
 
   implicit val supporterWrites : OWrites[SupporterDB] = (

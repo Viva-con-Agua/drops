@@ -31,24 +31,18 @@ object ProfileDB extends ((Long, Boolean , String, Long) => ProfileDB ){
     ProfileDB(tuple._1, tuple._2, tuple._3, tuple._4)
   def apply(profile:Profile, userId:Long): ProfileDB =
     ProfileDB(0, profile.confirmed, profile.email.get, userId)
-
-  def read(entries: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]): Seq[Profile] = {
-    val sorted = entries.foldLeft[Map[ProfileDB, Seq[(SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
-      (mapped, entry) =>
-        mapped.contains(entry._1) match {
-        case true => mapped.get(entry._1) match {
-          case Some(seq) => (mapped - entry._1) + (entry._1 -> (seq ++ Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7))))
-          case None => (mapped - entry._1) + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7)))
-        }
-        case false => mapped + (entry._1 -> Seq((entry._2, entry._3, entry._4, entry._5, entry._6, entry._7)))
-      }).toSeq
-
-    sorted.map(pair => {
-      val supporter: Seq[Supporter] = SupporterDB.read(pair._2.map(row => (row._1, row._5.flatMap(sc => row._6.map(crew => (sc, crew))))))
+  
+  // read a Database sequence and return Seq[Profile]
+  def read(entries: Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew], Option[AddressDB])]): Seq[Profile] = {
+   //group all entries in a sequence and map it to pair. pair._1 is the Profile and pair._2 all entries they can group by profile 
+    entries.groupBy(_._1).toSeq.map(pair => {
+      // build Supporter by the SupporterDB.read function with (SupporterDB = row._2, SupporterCrewDB = row._6, Option[Crew] = row._7, Option[AddressDB] = row._8)
+      val supporter: Seq[Supporter] = SupporterDB.read(pair._2.map(row => (row._2, row._6, row._7, row._8)))
+      //create loginInfo passwordInfo and oauthInfo from pair._2
       pair._2.headOption.flatMap(head => {
-        val loginInfo : LoginInfo = head._2.toLoginInfo
-        val passwordInfo : Option[PasswordInfo] = head._3.map(_.toPasswordInfo)
-        val oauth1Info : Option[OAuth1Info] = head._4.map(_.toOAuth1Info)
+        val loginInfo : LoginInfo = head._3.toLoginInfo
+        val passwordInfo : Option[PasswordInfo] = head._4.map(_.toPasswordInfo)
+        val oauth1Info : Option[OAuth1Info] = head._5.map(_.toOAuth1Info)
 
         supporter.headOption.map(supporti => pair._1.toProfile(loginInfo, supporti, passwordInfo, oauth1Info))
       })

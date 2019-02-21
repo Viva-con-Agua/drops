@@ -35,8 +35,8 @@ object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
     UserDB(0, user.id, roles.mkString(","), user.updated, user.created)
   }
 
-  def read(entries : Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]) : Seq[User] = {
-    val sorted = entries.foldLeft[Map[UserDB, Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
+  def read(entries : Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew], Option[AddressDB])]) : Seq[User] = {
+    /*val sorted = entries.foldLeft[Map[UserDB, Seq[(ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]]](Map())(
       (mapped, entry) =>
         mapped.contains(entry._1) match {
           case true => mapped.get(entry._1) match {
@@ -48,7 +48,10 @@ object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
 
     sorted.map(pair => {
       pair._1.toUser(ProfileDB.read(pair._2))
-    })
+    })*/
+    entries.groupBy(_._1).toSeq.map( user => //group the sequence by UserDB models.
+        user._1.toUser(ProfileDB.read(user._2.map(profileSeq => (profileSeq._2, profileSeq._3, profileSeq._4, profileSeq._5, profileSeq._6, profileSeq._7, profileSeq._8, profileSeq._9))))
+    )
   }
 
   implicit val userWrites : OWrites[UserDB] = (

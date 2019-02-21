@@ -42,7 +42,7 @@ import play.api.libs.ws._
 import play.api.libs.json.{JsError, JsObject, JsValue, Json, Reads}
 
 // UserData for Profile Page
-case class ProfileData(email: Option[String], firstName : Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday:Option[Long], sex:Option[String])
+case class ProfileData(email: Option[String], firstName : Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday:Option[Long], sex:Option[String], address:Option[Set[Address]], active: Option[String], nvmDate:Option[Long])
 object ProfileData {
   implicit val userDataJsonFormat = Json.format[ProfileData]    
 }
@@ -96,7 +96,10 @@ class Profile @Inject() (
                 profile.supporter.mobilePhone,
                 profile.supporter.placeOfResidence,
                 profile.supporter.birthday,
-                profile.supporter.sex
+                profile.supporter.sex,
+                Some(profile.supporter.address),
+                profile.supporter.active,
+                profile.supporter.nvmDate
               ) 
               profiles = entry :: profiles
             })
@@ -140,7 +143,10 @@ class Profile @Inject() (
                   request.body.sex,
                   profile.supporter.crew,
                   profile.supporter.roles,
-                  profile.supporter.pillars
+                  profile.supporter.pillars,
+                  profile.supporter.address,
+                  profile.supporter.active,
+                  profile.supporter.nvmDate
                 )
                 val newProfile = profile.copy(supporter = supporter)
                 //val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
