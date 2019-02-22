@@ -205,8 +205,37 @@ class UserService @Inject() (
     case Some(profile) => this.assign(crewUUID, user)
     case None => Future.successful(Right("service.user.error.notFound.profile"))
   }
+  
+  def activeActiveFlag(profile: Profile) = {
+    profileDao.setActiveFlag(profile, Some("active")).map(_ match {
+      case true => "active"
+      case false => None
+    })
+  }
 
-  def requestNVM() = ???
+  def requestActiveFlag(profile: Profile) = {
+    profileDao.getActiveFlag(profile).map(_ match {
+      case Some(activeFlag) => activeFlag match {
+        case "active" => activeFlag
+        case "requested" => activeFlag
+        case "inactive" => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
+          case true => "requested"
+          case false => None
+        })
+      }
+      case _ => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
+        case true => "requested"
+        case false => None
+      })
+    })
+  }
+
+  def inactiveActiveFlag(profile: Profile) = {
+    profileDao.setActiveFlag(profile, Some("inactive")).map(_ match{
+      case true => "inactive"
+      case false => None
+    })
+  }
   
   def checkNVM(user: User) = ???//Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)).getResult)
 }

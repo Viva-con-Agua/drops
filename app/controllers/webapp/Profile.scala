@@ -247,6 +247,12 @@ class Profile @Inject() (
    * The controller will check if a user is in the posebility to be active member. 
    * Store the user in a list for Network-ASP to check if the request is valid
    */
+
+  /*def requestActiveFlag = SecuredAction.async { implicit request =>
+    userService.requestActiveFlag(request.identity).map(_ match {
+      Some()
+    })
+  }*/
   def requestNVM = UserAwareAction.async { implicit request =>
     request.identity match {
       //dummy function. Validation test not implemented

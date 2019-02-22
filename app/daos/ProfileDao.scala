@@ -34,6 +34,10 @@ trait ProfileDao {
   def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]]
   def updateProfileEmail(email: String, profile: Profile): Future[Boolean]
   def setCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]]
+  def setActiveFlag(profile: Profile, activeFlag: Option[String]): Future[Boolean]
+  def getActiveFlag(profile: Profile): Future[Option[String]]
+  def setNVM(profile: Profile, crewUUID: UUID): Future[Boolean]
+  def getNVM(profile: Profile) : Future[Option[Long]]
 }
 
 class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDao {
