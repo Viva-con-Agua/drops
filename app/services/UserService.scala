@@ -17,6 +17,7 @@ import models._
 import persistence.pool1.PoolService
 import play.api.Logger
 import utils.Nats
+import play.api.libs.json._
 
 class UserService @Inject() (
                               userDao:UserDao,
@@ -237,5 +238,53 @@ class UserService @Inject() (
     })
   }
   
-  def checkNVM(user: User) = ???//Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)).getResult)
+  
+  /** checkNVM
+   * check if the profile is ready for non-voting-membership 
+   */
+  def checkNVM(profile: Profile) = {
+    //the conditions. Actually we support only one Crew
+    profileDao.getProfile(profile.email.head).flatMap({
+      case Some(p) => {
+        val address = hasAddress(p)
+        val primaryCrew = hasPrimaryCrew(p)
+        val active = isActive(p)
+        val status = p.supporter.nvmDate match {
+          case Some(nvmDate) => "expired"
+          case _ => if (address && primaryCrew && active) {"active"} else {"denied"}
+        }
+        Future.successful(Json.obj("status" -> status, "conditions" -> 
+          Json.obj(
+            "hasAddress" -> address, 
+            "hasPrimaryCrew" -> primaryCrew , 
+            "isActive" -> active)
+          ))
+      }
+      case _ => Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)))
+    })
+  }
+ 
+  private def hasPrimaryCrew(profile: Profile) = {
+    profile.supporter.crew match {
+      case Some(crew) => true
+      case _ => false
+    }
+  }
+
+  private def hasAddress(profile: Profile) = {
+    profile.supporter.address.headOption match {
+      case Some(address) => true
+      case _ => false
+    }
+  }
+  
+  //the function is for checkNVM function. 
+  private def isActive(profile: Profile) = {
+    profile.supporter.active match {
+      case Some(active) => if(active == "active") { true } else { false }
+      case _ => false
+    }
+  }
+
+    //Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)).getResult)
 }
