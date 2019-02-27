@@ -16,7 +16,8 @@ case class UserDB(
   publicId: UUID,
   roles: String,
   updated: Long,
-  created: Long
+  created: Long,
+  termsOfService: Boolean
                 ) {
   def toUser(profiles: Seq[Profile]) : User =
     User(publicId, profiles.toList, updated, created, roles.split(",").map(Role( _ )).toSet)

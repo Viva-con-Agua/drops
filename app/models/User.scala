@@ -163,28 +163,37 @@ case class PublicProfile(
   primary: Boolean,
   confirmed: Boolean,
   email:Option[String],
-  supporter: Supporter)
+  supporter: Supporter,
+  rulesAccepted: Boolean)
 
 object PublicProfile {
   def apply(profile: Profile, primary: Boolean = false) : PublicProfile =
       PublicProfile(profile.loginInfo, primary, profile.confirmed, profile.email, profile.supporter)
 
+  def apply(profile: Profile, primary: Boolean = false) : PublicProfile =
+      PublicProfile(profile.loginInfo, primary, profile.confirmed, profile.email, profile.supporter, profile.rulesAccepted)
+
   def apply(tuple : (LoginInfo, Boolean, Boolean, Option[String], Supporter)) : PublicProfile =
     PublicProfile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
+
+  def apply(tuple : (LoginInfo, Boolean, Boolean, Option[String], Supporter, Boolean)) : PublicProfile =
+    PublicProfile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
   implicit val publicProfileWrites : OWrites[PublicProfile] = (
     (JsPath \ "loginInfo").write[LoginInfo] and
       (JsPath \ "primary").write[Boolean] and
       (JsPath \ "confirmed").write[Boolean] and
       (JsPath \ "email").writeNullable[String] and
-      (JsPath \ "supporter").write[Supporter] 
+      (JsPath \ "supporter").write[Supporter] and
+      (JsPath \ "rulesAccepted").write[Boolean]
     )(unlift(PublicProfile.unapply))
   implicit val publicProfileReads : Reads[PublicProfile] = (
     (JsPath \ "loginInfo").read[LoginInfo] and
       (JsPath \ "primary").read[Boolean] and
       (JsPath \ "confirmed").read[Boolean] and
       (JsPath \ "email").readNullable[String] and
-      (JsPath \ "supporter").read[Supporter] 
+      (JsPath \ "supporter").read[Supporter] and
+      (JsPath \ "rulesAccepted").write[Boolean]
     ).tupled.map(PublicProfile( _ ))
 }
 
@@ -214,7 +223,7 @@ object User {
   implicit val userJsonFormat = Json.format[User]
 }
 
-case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role], updated: Long, created: Long)
+case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role], updated: Long, created: Long, termsOfService: Boolean)
 
 object PublicUser {
   def apply(user : User) : PublicUser = PublicUser(
@@ -223,10 +232,14 @@ object PublicUser {
     user.profiles.headOption.map(PublicProfile(_, true)).toList ++ user.profiles.tail.map(PublicProfile(_)),
     user.roles,
     user.updated,
-    user.created
+    user.created,
+    user.termsOfService
   )
   def apply(tuple : (UUID, List[PublicProfile], Set[Role], Long, Long)) : PublicUser = PublicUser(
     tuple._1, tuple._2, tuple._3, tuple._4, tuple._5
+  )
+  def apply(tuple : (UUID, List[PublicProfile], Set[Role], Long, Long, Boolean)) : PublicUser = PublicUser(
+    tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6
   )
 
   implicit val publicUserWrites : OWrites[PublicUser] = (
@@ -234,13 +247,15 @@ object PublicUser {
       (JsPath \ "profiles").write[List[PublicProfile]] and
       (JsPath \ "roles").write[Set[Role]] and
       (JsPath \ "updated").write[Long] and
-      (JsPath \ "created").write[Long]
+      (JsPath \ "created").write[Long] and
+      (JsPath \ "termsOfService").write[Boolean]
     )(unlift(PublicUser.unapply))
   implicit val publicUserReads : Reads[PublicUser] = (
     (JsPath \ "id").read[UUID] and
       (JsPath \ "profiles").read[List[PublicProfile]] and
       (JsPath \ "roles").read[Set[Role]] and
       (JsPath \ "updated").read[Long] and
-      (JsPath \ "created").read[Long]
+      (JsPath \ "created").read[Long] and
+      (JsPath \ "termsOfService").read[Boolean]
     ).tupled.map(PublicUser( _ ))
 }
