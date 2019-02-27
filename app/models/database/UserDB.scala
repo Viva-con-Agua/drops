@@ -17,23 +17,24 @@ case class UserDB(
   roles: String,
   updated: Long,
   created: Long,
-  termsOfService: Boolean
+  termsOfService: Boolean,
+  rulesAccepted: Boolean
                 ) {
   def toUser(profiles: Seq[Profile]) : User =
-    User(publicId, profiles.toList, updated, created, roles.split(",").map(Role( _ )).toSet)
+    User(publicId, profiles.toList, updated, created, roles.split(",").map(Role( _ )).toSet, termsOfService, rulesAccepted)
 }
 
 
-object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
-  def apply(tuple: (Long, UUID, String, Long, Long)): UserDB =
-    UserDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5)
+object UserDB extends ((Long, UUID, String, Long, Long, Boolean, Boolean) => UserDB ){
+  def apply(tuple: (Long, UUID, String, Long, Long, Boolean, Boolean)): UserDB =
+    UserDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7)
 
   def apply(user: User): UserDB={
     var roles = Set[String]()
     user.roles.foreach(role =>
       roles += role.name
     )
-    UserDB(0, user.id, roles.mkString(","), user.updated, user.created)
+    UserDB(0, user.id, roles.mkString(","), user.updated, user.created, user.termsOfService, user.rulesAccepted)
   }
 
   def read(entries : Seq[(UserDB, ProfileDB, SupporterDB, LoginInfoDB, Option[PasswordInfoDB], Option[OAuth1InfoDB], Option[SupporterCrewDB], Option[Crew])]) : Seq[User] = {
@@ -57,7 +58,9 @@ object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
       (JsPath \ "publicId").write[UUID] and
       (JsPath \ "roles").write[String] and
       (JsPath \ "updated").write[Long] and
-      (JsPath \ "created").write[Long]
+      (JsPath \ "created").write[Long] and
+      (JsPath \ "termsOfService").write[Boolean] and
+      (JsPath \ "rulesAccepted").write[Boolean]
     )(unlift(UserDB.unapply))
 
   implicit val userReads : Reads[UserDB] = (
@@ -65,8 +68,10 @@ object UserDB extends ((Long, UUID, String, Long, Long) => UserDB ){
       (JsPath \ "publicId").read[UUID] and
       (JsPath \ "roles").read[String] and
       (JsPath \ "updated").readNullable[Long] and
-      (JsPath \ "created").readNullable[Long]
+      (JsPath \ "created").readNullable[Long] and
+      (JsPath \ "termsOfService").read[Boolean] and
+      (JsPath \ "rulesAccepted").read[Boolean]
     ).tupled.map((user) => if(user._1.isEmpty)
-    UserDB(0, user._2, user._3, user._4.getOrElse(System.currentTimeMillis), user._5.getOrElse(System.currentTimeMillis))
-  else UserDB(user._1.get, user._2, user._3, user._4.getOrElse(System.currentTimeMillis), user._5.getOrElse(System.currentTimeMillis)))
+    UserDB(0, user._2, user._3, user._4.getOrElse(System.currentTimeMillis), user._5.getOrElse(System.currentTimeMillis), user._6, user._7)
+  else UserDB(user._1.get, user._2, user._3, user._4.getOrElse(System.currentTimeMillis), user._5.getOrElse(System.currentTimeMillis), user._6, user._7))
 }

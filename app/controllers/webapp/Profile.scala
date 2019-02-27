@@ -143,6 +143,7 @@ class Profile @Inject() (
                   profile.supporter.pillars
                 )
                 val newProfile = profile.copy(supporter = supporter)
+		//userService.update(rulesAccepted)
                 //val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
                 userService.updateSupporter(currentUser.id, newProfile).map({
                   case Some(profile) => WebAppResult.Ok(request, "profile.update", Nil, "AuthProvider.Identity.Success", Json.toJson(profile)).getResult
