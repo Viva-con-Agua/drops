@@ -11,8 +11,10 @@ class UserTableDef(tag: Tag) extends Table[UserDB](tag, "User") {
   def roles = column[String]("roles")
   def updated = column[Long]("updated")
   def created = column[Long]("created")
+  def termsOfService = column[Boolean]("termsOfService")
+  def rulesAccepted = column[Boolean]("rulesAccepted")
 
-  def * = (id, publicId, roles, updated, created) <>(UserDB.tupled, UserDB.unapply)
+  def * = (id, publicId, roles, updated, created, termsOfService, rulesAccepted) <>(UserDB.tupled, UserDB.unapply)
 
   def pk = primaryKey("primaryKey", id)
 }
