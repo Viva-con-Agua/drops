@@ -28,7 +28,7 @@ case class AddressStub (
   country: String
 
 ) extends AddressBase {
-  def toAddress: Address = Address(UUID.randomUUID(), street, additional, zip, city, country)
+  def toAddress: Address = Address(Some(UUID.randomUUID()), street, additional, zip, city, country)
 }
 
 /**
@@ -42,7 +42,7 @@ case class AddressStub (
  * @param toAddressStub convert the Address to AddressStub
  */
 case class Address (
-  publicId: UUID,
+  publicId: Option[UUID],
   override val street: String,
   override val additional: Option[String],
   override val zip: String,
