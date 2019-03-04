@@ -404,13 +404,14 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     findDBUserModel(id).map(_.rulesAccepted)
   }
 
-  def setRulesAccepted(userId: UUID, setting: Boolean):Future[Boolean] = {
+  def setRulesAccepted(id: UUID, setting: Boolean):Future[Boolean] = {
     val action = for {
-      u <- users.filter(_.publicId === userId).map(u =>
-        (u.rulesAccepted)
-      ).update(setting)
-    } yield (u)
-    dbConfig.db.run(action.result).map(_.rulesAccepted)
+      u <- users.filter(_.publicId === id)
+    } yield u.rulesAccepted
+    dbConfig.db.run(action.update(setting)).map(_ match {
+      case 1 => true
+      case 0 => false
+    })
   }
   
  def profileListByRole(id: UUID, role: String):Future[List[Profile]] = {
