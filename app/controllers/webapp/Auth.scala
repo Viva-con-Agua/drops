@@ -43,7 +43,7 @@ object AuthForms {
 
   // Sign up
   case class SignUpData(email:String, password:String, firstName: Option[String], lastName: Option[String],
-                        mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String)
+                        mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String, terms: Boolean, rulesAccepted: Boolean)
 
   object SignUpData {
     implicit val signUpDataJsonFormat = Json.format[SignUpData]
@@ -142,7 +142,7 @@ class Auth @Inject() (
             val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender)
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
-              user <- userService.save(User(id = UUID.randomUUID(), List(profile), updated = System.currentTimeMillis(), created = System.currentTimeMillis(), signUpData.terms, signUpData.rulesAccepted))
+              user <- userService.save(User(id = UUID.randomUUID(), List(profile), updated = System.currentTimeMillis(), created = System.currentTimeMillis(), termsOfService = signUpData.terms, rulesAccepted = signUpData.rulesAccepted))
               pw <- authInfoRepository.add(loginInfo, passwordHasher.hash(signUpData.password))
               token <- userTokenService.save(UserToken.create(user.id, signUpData.email, true))
             } yield {

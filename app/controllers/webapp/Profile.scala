@@ -143,7 +143,6 @@ class Profile @Inject() (
                   profile.supporter.pillars
                 )
                 val newProfile = profile.copy(supporter = supporter)
-		//userService.update(rulesAccepted)
                 //val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
                 userService.updateSupporter(currentUser.id, newProfile).map({
                   case Some(profile) => WebAppResult.Ok(request, "profile.update", Nil, "AuthProvider.Identity.Success", Json.toJson(profile)).getResult
@@ -234,6 +233,20 @@ class Profile @Inject() (
         case true => WebAppResult.Ok(request, "profile.setNewsletterSetting.success", Nil, "Profile.SetNewsletterSetting.Success", Json.obj("setting" -> setting)).getResult
         case false => WebAppResult.Bogus(request, "profile.setNewsletterSetting.bogus", Nil, "Profile.SetNewsletterSetting.Bogus", Json.obj("setting" -> setting)).getResult
       })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def getRulesAccepted = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.getRulesAccepted.success", Nil, "Profile.GetRulesAccepted.Success", Json.obj("rulesAccepted" -> user.rulesAccepted)).getResult)
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def setRulesAccepted(setting: Boolean) = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.setRulesAccepted.success", Nil, "Profile.SetRulesAccepted.Success", Json.obj("rulesAccepted" -> setting)).getResult)
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }

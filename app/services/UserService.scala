@@ -134,11 +134,13 @@ class UserService @Inject() (
       case false => false
     })
   }
-  
+
   def updateProfileEmail(email: String, profile: Profile) = userDao.updateProfileEmail(email, profile)
   def getProfile(email: String) = userDao.getProfile(email)
   def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
   def profileByRole(id: UUID, role: String) = userDao.profileByRole(id, role)
+  def setRulesAccepted(id: UUID, setting: Boolean) = userDao.setRulesAccepted(id, setting)
+  def getRulesAccepted(id: UUID) = userDao.getRulesAccepted(id)
 
   def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
     case Some(profile) => userDao.setCrew(crewUUID, profile).map(result => {

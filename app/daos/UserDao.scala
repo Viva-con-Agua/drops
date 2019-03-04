@@ -31,6 +31,8 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def replace(user:User):Future[User]
   def confirm(loginInfo:LoginInfo):Future[User]
   def link(user:User, profile:Profile):Future[User]
+  def setRulesAccepted (id: UUID, setting: Boolean): Future[Boolean]
+  def getRulesAccepted (id: UUID): Future[Boolean]
   def update(profile:Profile):Future[User]
   def list : Future[List[User]]
   def listOfStubs : Future[List[UserStub]]
@@ -70,7 +72,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val pool1users = TableQuery[Pool1UserTableDef]
   val oauthTokens = TableQuery[OauthTokenTableDef]
 
-  implicit val getUserResult = GetResult(r => UserDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextLong, r.nextLong))
+  implicit val getUserResult = GetResult(r => UserDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextLong, r.nextLong, r.nextBoolean, r.nextBoolean))
   implicit val getProfileResult = GetResult(r => ProfileDB(r.nextLong, r.nextBoolean, r.nextString, r.nextLong))
   implicit val getLoginInfoResult = GetResult(r => LoginInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong))
   implicit val getPasswordInfoResult = GetResult(r => Some(PasswordInfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
@@ -384,7 +386,6 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   }
 
   override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))
-  
 
   def getProfile(email: String): Future[Option[Profile]] = {
     val action = for{
@@ -397,6 +398,19 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       )
     } yield(profile, supporter, loginInfo, passwordInfo, oauth1Info, supporterCrew)
     dbConfig.db.run(action.result).flatMap(toUserProfiles( _ )).map(_.headOption)
+  }
+
+  def getRulesAccepted(id: UUID):Future[Boolean] = {
+    findDBUserModel(id).map(_.rulesAccepted)
+  }
+
+  def setRulesAccepted(userId: UUID, setting: Boolean):Future[Boolean] = {
+    val action = for {
+      u <- users.filter(_.publicId === userId).map(u =>
+        (u.rulesAccepted)
+      ).update(setting)
+    } yield (u)
+    dbConfig.db.run(action.result).map(_.rulesAccepted)
   }
   
  def profileListByRole(id: UUID, role: String):Future[List[Profile]] = {

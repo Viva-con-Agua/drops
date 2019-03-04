@@ -189,7 +189,7 @@ object PublicProfile {
     ).tupled.map(PublicProfile( _ ))
 }
 
-case class User(id: UUID, profiles: List[Profile], updated: Long, created: Long, roles: Set[Role] = Set(RoleSupporter), termsOfService: Boolean, rulesAccepted: Boolean) extends Identity {
+case class User(id: UUID, profiles: List[Profile], updated: Long, created: Long, roles: Set[Role] = Set(RoleSupporter), termsOfService: Boolean = false, rulesAccepted: Boolean = false) extends Identity {
   def updateProfile(updatedProfile: Profile) = User(this.id, profiles.map(p => p.loginInfo match {
     case updatedProfile.loginInfo => updatedProfile
     case _ => p
@@ -215,7 +215,7 @@ object User {
   implicit val userJsonFormat = Json.format[User]
 }
 
-case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role], updated: Long, created: Long, termsOfService: Boolean, rulesAccepted: Boolean)
+case class PublicUser(id: UUID, profiles : List[PublicProfile], roles: Set[Role], updated: Long, created: Long, rulesAccepted: Boolean)
 
 object PublicUser {
   def apply(user : User) : PublicUser = PublicUser(
@@ -225,11 +225,7 @@ object PublicUser {
     user.roles,
     user.updated,
     user.created,
-    user.termsOfService,
     user.rulesAccepted
-  )
-  def apply(tuple : (UUID, List[PublicProfile], Set[Role], Long, Long)) : PublicUser = PublicUser(
-    tuple._1, tuple._2, tuple._3, tuple._4, tuple._5
   )
   def apply(tuple : (UUID, List[PublicProfile], Set[Role], Long, Long, Boolean)) : PublicUser = PublicUser(
     tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6
@@ -241,7 +237,6 @@ object PublicUser {
       (JsPath \ "roles").write[Set[Role]] and
       (JsPath \ "updated").write[Long] and
       (JsPath \ "created").write[Long] and
-      (JsPath \ "termsOfService").write[Boolean] and
       (JsPath \ "rulesAccepted").write[Boolean]
     )(unlift(PublicUser.unapply))
   implicit val publicUserReads : Reads[PublicUser] = (
@@ -250,7 +245,6 @@ object PublicUser {
       (JsPath \ "roles").read[Set[Role]] and
       (JsPath \ "updated").read[Long] and
       (JsPath \ "created").read[Long] and
-      (JsPath \ "termsOfService").read[Boolean] and
       (JsPath \ "rulesAccepted").read[Boolean]
     ).tupled.map(PublicUser( _ ))
 }
