@@ -42,8 +42,6 @@ CREATE VIEW Users AS
          sc.updated AS SupporterCrew_updated,
          sc.active AS SupporterCrew_active,
          sc.nvm_date AS SupporterCrew_nvmDate,
-         uuid_of(c.publicId) AS SupporterCrew_publicId,
-         c.name AS SupporterCrew_name,
          a.id AS Address_id,
          uuid_of(a.public_id) AS Address_publicId,
          a.street AS Address_street,
@@ -51,7 +49,9 @@ CREATE VIEW Users AS
          a.zip AS Address_zip,
          a.city AS Address_city,
          a.country AS Address_country,
-         a.supporter_id As Address_supporterId
+         a.supporter_id As Address_supporterId,
+         uuid_of(c.publicId) AS SupporterCrew_publicId,
+         c.name AS SupporterCrew_name
   FROM User AS u
     INNER JOIN Profile AS p ON p.user_id = u.id
     INNER JOIN Supporter AS s ON p.id = s.profile_id

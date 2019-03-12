@@ -10,8 +10,8 @@ case class Users (
                  profile: Option[ProfileView],
                  loginInfo: Option[LoginInfoView],
                  supporterView: Option[SupporterView],
-                 supporterCrewView: Option[SupporterCrewView],
-                 addressView: Option[AddressView]
+                 addressView: Option[AddressView],
+                 supporterCrewView: Option[SupporterCrewView]
                  )extends ViewObject{
   def getValue(viewname: String): ViewBase = {
     viewname match {
@@ -37,7 +37,7 @@ case class Users (
 }
 
 object Users{
-  def apply(tuple: (Option[UserView], Option[ProfileView], Option[LoginInfoView], Option[SupporterView], Option[SupporterCrewView], Option[AddressView])) : Users =
+  def apply(tuple: (Option[UserView], Option[ProfileView], Option[LoginInfoView], Option[SupporterView], Option[AddressView], Option[SupporterCrewView])) : Users =
     Users(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)
 
   implicit val usersWrites : OWrites[Users] = (
@@ -45,8 +45,8 @@ object Users{
       (JsPath \ "profile").writeNullable[ProfileView] and
       (JsPath \ "loginInfo").writeNullable[LoginInfoView] and
       (JsPath \ "supporter").writeNullable[SupporterView] and
-      (JsPath \ "supporterCrew").writeNullable[SupporterCrewView] and
-      (JsPath \ "address").writeNullable[AddressView]
+      (JsPath \ "address").writeNullable[AddressView] and
+      (JsPath \ "supporterCrew").writeNullable[SupporterCrewView] 
   )(unlift(Users.unapply))
 
   implicit val usersReads: Reads[Users] = (
@@ -54,8 +54,8 @@ object Users{
       (JsPath \ "profile").readNullable[ProfileView] and
       (JsPath \ "loginInfo").readNullable[LoginInfoView] and
       (JsPath \ "supporter").readNullable[SupporterView] and
-      (JsPath \ "supporterCrew").readNullable[SupporterCrewView] and
-      (JsPath \ "address").readNullable[AddressView]
+      (JsPath \ "address").readNullable[AddressView] and
+      (JsPath \ "supporterCrew").readNullable[SupporterCrewView]
   ).tupled.map(Users( _ ))
 }
 

@@ -74,8 +74,8 @@ object Supporter {
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
     Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set(), Set(), Set(), None, None)
 
-  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Date], sex : String) : Supporter =
-    Supporter(firstName, lastName, firstName.flatMap(fn => lastName.map(ln => s"${fn} ${ln}")), mobilePhone, placeOfResidence, birthday.map(_.getTime()), Some(sex), None, Set(), Set(), Set(), None, None)
+  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Date], sex : String, address: Option[AddressStub]) : Supporter = 
+    Supporter(firstName, lastName, firstName.flatMap(fn => lastName.map(ln => s"${fn} ${ln}")), mobilePhone, placeOfResidence, birthday.map(_.getTime()), Some(sex), None, Set(), Set(), if(address != None) Set(address.head.toAddress) else Set(), None, None)
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
     Supporter(firstName, lastName, fullName, None, None, None, None, None, Set(), Set(), Set(), None, None)
@@ -141,8 +141,9 @@ object Profile {
     // confirmation is false by default, because this apply function is designed for using it during the default sign up process
     Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, sex), None, None)
 
-  def apply(loginInfo: LoginInfo, email: String, firstName: Option[String], lastName: Option[String], mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String): Profile =
-    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, gender), None, None)
+  def apply(loginInfo: LoginInfo, email: String, firstName: Option[String], lastName: Option[String], mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String, address: Option[AddressStub]): Profile =
+
+    Profile(loginInfo, false, Some(email), Supporter(firstName, lastName, mobilePhone, placeOfResidence, birthday, gender, address), None, None)
 
   def apply(tuple: (LoginInfo, Boolean, Option[String], Supporter, Option[PasswordInfo], Option[OAuth1Info])) : Profile =
     Profile(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6)

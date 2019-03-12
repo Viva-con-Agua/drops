@@ -60,11 +60,10 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val oauthTokens = TableQuery[OauthTokenTableDef]
   val addresses = TableQuery[AddressTableDef]
   
-  def uuidFromString(uuid: Any) = {
-    if (uuid != None) {
-      Some(UUID.fromString(uuid.toString))
-    } else {
-      None
+  def uuidFromString(uuid: Option[String]) = {
+    uuid match {
+      case Some(id) => Some(UUID.fromString(id))
+      case _ => None
     }
   }
 
