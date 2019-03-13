@@ -42,7 +42,7 @@ import play.api.libs.ws._
 import play.api.libs.json.{JsError, JsObject, JsValue, Json, Reads}
 
 // UserData for Profile Page
-case class ProfileData(email: Option[String], firstName : Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday:Option[Long], sex:Option[String])
+case class ProfileData(email: Option[String], firstName : Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday:Option[Long], sex:Option[String], address:Option[Set[Address]], active: Option[String], nvmDate:Option[Long])
 object ProfileData {
   implicit val userDataJsonFormat = Json.format[ProfileData]    
 }
@@ -96,7 +96,10 @@ class Profile @Inject() (
                 profile.supporter.mobilePhone,
                 profile.supporter.placeOfResidence,
                 profile.supporter.birthday,
-                profile.supporter.sex
+                profile.supporter.sex,
+                Some(profile.supporter.address),
+                profile.supporter.active,
+                profile.supporter.nvmDate
               ) 
               profiles = entry :: profiles
             })
@@ -129,7 +132,7 @@ class Profile @Inject() (
                       case None => ""
                     }
                   }
-                }
+                } 
                 val supporter = Supporter(
                   request.body.firstName,
                   request.body.lastName,
@@ -140,7 +143,13 @@ class Profile @Inject() (
                   request.body.sex,
                   profile.supporter.crew,
                   profile.supporter.roles,
-                  profile.supporter.pillars
+                  profile.supporter.pillars,
+                  request.body.address match {
+                    case Some(address) => address
+                    case _ => profile.supporter.address
+                  },
+                  profile.supporter.active,
+                  profile.supporter.nvmDate
                 )
                 val newProfile = profile.copy(supporter = supporter)
                 //val newProfile = Profile(profile.loginInfo, profile.confirmed, profile.email, supporter, profile.passwordInfo, profile.oauth1Info, profile.avatar)
@@ -236,4 +245,35 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
+  /**
+   * NVM = non voting membership
+   * The controller will check if a user is in the posebility to be active member. 
+   * Store the user in a list for Network-ASP to check if the request is valid
+   */
+
+  /*def requestActiveFlag = SecuredAction.async { implicit request =>
+    userService.requestActiveFlag(request.identity).map(_ match {
+      Some()
+    })
+  }*/
+  def requestNVM = UserAwareAction.async { implicit request =>
+    request.identity match {
+      //dummy function. Validation test not implemented
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "in progress")).getResult)
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+  
+  def checkNVM = UserAwareAction.async { implicit request =>
+    request.identity match {
+      //dummy function. Need Validation from requestNVM for check if a user is NVM
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false))).getResult)
+      //case Some(user) => userService.checkNVM(user).map(_ match {
+	//case Some(nvmState) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj(nvmState)).getResult
+	//case None => WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult
+      //})
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
 }

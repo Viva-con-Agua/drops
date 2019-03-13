@@ -12,14 +12,16 @@ import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.current
 import play.api.i18n.Messages.Implicits._
-import daos.{AccessRightDao, CrewDao, TaskDao, UserDao}
+import daos.{AccessRightDao, CrewDao, TaskDao, UserDao, ProfileDao}
 import models._
 import persistence.pool1.PoolService
 import play.api.Logger
 import utils.Nats
+import play.api.libs.json._
 
 class UserService @Inject() (
                               userDao:UserDao,
+                              profileDao:ProfileDao,
                               poolService: PoolService,
                               pool1DBService: Pool1Service,
                               taskDao: TaskDao,
@@ -48,7 +50,7 @@ class UserService @Inject() (
 
   def updateSupporter(id: UUID, profile: Profile) = {
     //nats.publishUpdate("USER", id)
-    userDao.updateSupporter(profile).map(profileOpt => {
+    profileDao.updateSupporter(profile).map(profileOpt => {
       nats.publishUpdate("USER", id)
       if(profileOpt.isDefined) {
         userDao.find(id).map(_.map(user => poolService.update(user))) // Todo: Consider result?!
@@ -135,13 +137,13 @@ class UserService @Inject() (
     })
   }
   
-  def updateProfileEmail(email: String, profile: Profile) = userDao.updateProfileEmail(email, profile)
-  def getProfile(email: String) = userDao.getProfile(email)
-  def profileListByRole(id: UUID, role: String) = userDao.profileListByRole(id, role)
-  def profileByRole(id: UUID, role: String) = userDao.profileByRole(id, role)
+  def updateProfileEmail(email: String, profile: Profile) = profileDao.updateProfileEmail(email, profile)
+  def getProfile(email: String) = profileDao.getProfile(email)
+  def profileListByRole(id: UUID, role: String) = profileDao.profileListByRole(id, role)
+  def profileByRole(id: UUID, role: String) = profileDao.profileByRole(id, role)
 
   def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
-    case Some(profile) => userDao.setCrew(crewUUID, profile).map(result => {
+    case Some(profile) => profileDao.setCrew(crewUUID, profile).map(result => {
       if(result.isLeft && result.left.get > 0) {
         //nats.publishUpdate("USER", user.id)
         userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
@@ -154,7 +156,7 @@ class UserService @Inject() (
   def assignCrewRole(crew: Crew, role: VolunteerManager, user: User): Future[Either[Int, String]] = {
     crewDao.findDB(crew).flatMap(_ match {
       case Some(crewDB) => user.profiles.headOption match {
-        case Some(profile) => userDao.setCrewRole(crew.id, crewDB.id, role, profile).map(result => {
+        case Some(profile) => profileDao.setCrewRole(crew.id, crewDB.id, role, profile).map(result => {
           if(result.isLeft && result.left.get > 0) {
             nats.publishUpdate("USER", user.id)
             userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
@@ -174,7 +176,7 @@ class UserService @Inject() (
     */
   def deAssign(user: User) = user.profiles.headOption match {
     case Some(profile) => profile.supporter.crew match {
-      case Some(crew) => userDao.removeCrew(crew.id, profile).map(result => {
+      case Some(crew) => profileDao.removeCrew(crew.id, profile).map(result => {
         if(result.isLeft && result.left.get > 0) {
           nats.publishUpdate("USER", user.id)
           userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
@@ -204,4 +206,85 @@ class UserService @Inject() (
     case Some(profile) => this.assign(crewUUID, user)
     case None => Future.successful(Right("service.user.error.notFound.profile"))
   }
+  
+  def activeActiveFlag(profile: Profile) = {
+    profileDao.setActiveFlag(profile, Some("active")).map(_ match {
+      case true => "active"
+      case false => None
+    })
+  }
+
+  def requestActiveFlag(profile: Profile) = {
+    profileDao.getActiveFlag(profile).map(_ match {
+      case Some(activeFlag) => activeFlag match {
+        case "active" => activeFlag
+        case "requested" => activeFlag
+        case "inactive" => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
+          case true => "requested"
+          case false => None
+        })
+      }
+      case _ => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
+        case true => "requested"
+        case false => None
+      })
+    })
+  }
+
+  def inactiveActiveFlag(profile: Profile) = {
+    profileDao.setActiveFlag(profile, Some("inactive")).map(_ match{
+      case true => "inactive"
+      case false => None
+    })
+  }
+  
+  
+  /** checkNVM
+   * check if the profile is ready for non-voting-membership 
+   */
+  def checkNVM(profile: Profile) = {
+    //the conditions. Actually we support only one Crew
+    profileDao.getProfile(profile.email.head).flatMap({
+      case Some(p) => {
+        val address = hasAddress(p)
+        val primaryCrew = hasPrimaryCrew(p)
+        val active = isActive(p)
+        val status = p.supporter.nvmDate match {
+          case Some(nvmDate) => "expired"
+          case _ => if (address && primaryCrew && active) {"active"} else {"denied"}
+        }
+        Future.successful(Json.obj("status" -> status, "conditions" -> 
+          Json.obj(
+            "hasAddress" -> address, 
+            "hasPrimaryCrew" -> primaryCrew , 
+            "isActive" -> active)
+          ))
+      }
+      case _ => Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)))
+    })
+  }
+ 
+  private def hasPrimaryCrew(profile: Profile) = {
+    profile.supporter.crew match {
+      case Some(crew) => true
+      case _ => false
+    }
+  }
+
+  private def hasAddress(profile: Profile) = {
+    profile.supporter.address.headOption match {
+      case Some(address) => true
+      case _ => false
+    }
+  }
+  
+  //the function is for checkNVM function. 
+  private def isActive(profile: Profile) = {
+    profile.supporter.active match {
+      case Some(active) => if(active == "active") { true } else { false }
+      case _ => false
+    }
+  }
+
+    //Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)).getResult)
 }

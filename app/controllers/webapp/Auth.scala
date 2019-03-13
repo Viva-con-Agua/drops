@@ -40,10 +40,11 @@ import java.util.Base64
 
 import play.api.libs.json.{JsError, JsObject, JsValue, Json}
 object AuthForms {
+  
 
   // Sign up
   case class SignUpData(email:String, password:String, firstName: Option[String], lastName: Option[String],
-                        mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String)
+                        mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String, street: Option[String], additional: Option[String], city: Option[String], zip: Option[String], country: Option[String], address: Option[AddressStub] )
 
   object SignUpData {
     implicit val signUpDataJsonFormat = Json.format[SignUpData]
@@ -139,7 +140,7 @@ class Auth @Inject() (
           case Some(_) =>
             Future.successful(WebAppResult.Bogus(request, "error.userExists", List(signUpData.email), "AuthProvider.SignUp.UserExists", Json.toJson(Map[String, String]())).getResult)
           case None =>
-            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender)
+            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender, signUpData.address)
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
               user <- userService.save(User(id = UUID.randomUUID(), List(profile), updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
