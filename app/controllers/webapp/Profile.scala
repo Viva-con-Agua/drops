@@ -132,7 +132,7 @@ class Profile @Inject() (
                       case None => ""
                     }
                   }
-                }
+                } 
                 val supporter = Supporter(
                   request.body.firstName,
                   request.body.lastName,
@@ -144,7 +144,10 @@ class Profile @Inject() (
                   profile.supporter.crew,
                   profile.supporter.roles,
                   profile.supporter.pillars,
-                  profile.supporter.address,
+                  request.body.address match {
+                    case Some(address) => address
+                    case _ => profile.supporter.address
+                  },
                   profile.supporter.active,
                   profile.supporter.nvmDate
                 )
