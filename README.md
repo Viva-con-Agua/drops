@@ -365,9 +365,10 @@ and your service.
 ChangeLog
 =========
 
-## Version 0.36.58 (2019-2-13)
 
+## Version 0.36.59 (2019-2-13)
 * [[I] #322 - Users address](https://github.com/Viva-con-Agua/drops/issues/322)
+* [[B] #339 - Bug: PasswordInfoDao](https://github.com/Viva-con-Agua/drops/issues/339)
 * [[I] #329 - Remove MongoDB](https://github.com/Viva-con-Agua/drops/issues/329)
 * [[I] #330 - Remove unused views](https://github.com/Viva-con-Agua/drops/issues/330)
 * [[B] #333 - Delete failed](https://github.com/Viva-con-Agua/drops/issues/333)
