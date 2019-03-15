@@ -47,6 +47,8 @@ case class AddressDB(
 
   def apply(id: Long, address: Address, supporterId: Long):AddressDB = AddressDB(id, address.publicId, address.street, address.additional, address.zip, address.city, address.country, supporterId)
 
+  def apply(id: Long, uuid: UUID, address: Address, supporterId: Long):AddressDB = AddressDB(id, Some(uuid), address.street, address.additional, address.zip, address.city, address.country, supporterId)
+
   def apply(address: Address, supporterId: Long):AddressDB = AddressDB(0, address.publicId, address.street, address.additional, address.zip, address.city, address.country, supporterId)
   
 }
