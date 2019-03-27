@@ -12,10 +12,10 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import daos.{AccessRightDao, CrewDao, UserDao}
 import models._
 import controllers.rest.QueryBody
-import utils.Nats
+import utils.NatsController
 import slick.jdbc.SQLActionBuilder
 
-class CrewService @Inject() (crewDao: CrewDao, nats: Nats) {
+class CrewService @Inject() (crewDao: CrewDao, nats: NatsController) {
   def save(crewStub: CrewStub):Future[Crew] = crewDao.save(crewStub.toCrew)
   def update(crew: Crew) = crewDao.update(crew)
   def delete(crew: Crew):Future[Boolean] = crewDao.delete(crew)
