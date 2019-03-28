@@ -3,7 +3,7 @@ package utils
 import java.util.{Properties, UUID}
 import org.nats._
 import play.api.mvc._
-import javax.inject.Inject
+import javax.inject._
 import play.api.{Configuration, Logger}
 import akka.actor._
 import java.util._
@@ -14,27 +14,24 @@ import utils.nats.NatsPublishActor
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
+@Singleton
 class NatsController @Inject() (
   configuration : Configuration,
   system: ActorSystem
   )
 {
   
-import scala.concurrent.duration._
-implicit val timeout: Timeout = 5000.millis
-
-
+  implicit val timeout: Timeout = 5000.millis
   val server = configuration.getString("nats.ip").get
- // val opts: Properties = new Properties
- // opts.put("servers", server)
   
   val natsPublishActor = system.actorOf(NatsPublishActor.props, "publish-actor")
 
 
   def publishLogout(publicId : UUID): Future[String] = {
       import utils.nats._
-      natsPublishActor.ask(NatsPublishActor.Publish(server, "LOGOUT", publicId.toString)).mapTo[String].map( message => message)
+      natsPublishActor.ask(NatsPublishActor.Publish(server, "user.logout", publicId.toString)).mapTo[String].map( message => message)
   }
 //
 //  def publishCreate(model: String, publicId: UUID) {
