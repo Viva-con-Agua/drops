@@ -33,36 +33,19 @@ class NatsController @Inject() (
       import utils.nats._
       natsPublishActor.ask(NatsPublishActor.Publish(server, "user.logout", publicId.toString)).mapTo[String].map( message => message)
   }
-//
-//  def publishCreate(model: String, publicId: UUID) {
-//    val conn = Conn.connect(opts)
-//    val key = model + ".CREATE"
-//    conn.publish(key, publicId.toString)
-//    conn.close
-//      natsPublishActor.ask(NatsPublishActor.mapTo[String].map { message =>
-//        Logger.debug(message)
-//      }
-//  }
-//
-//  def publishUpdate(model: String, publicId: UUID) {
-//    (natsClient ? c).mapTo[String].map { message =>
-//        Logger.debug(message)
-//      }
-//    val conn = Conn.connect(opts)
-//    val key = model + ".UPDATE"
-//    conn.publish(key, publicId.toString)
-//    conn.close
-//  }
-//
-//  def publishDelete(model: String, publicId: UUID) {
-//    val conn = Conn.connect(opts)
-//    val key = model + ".DELETE"
-//    conn.publish(key, publicId.toString)
-//    conn.close
-//    (natsClient ? c).mapTo[String].map { message =>
-//        Logger.debug(message)
-//      }
-//  }
 
- 
+  def publishCreate(model: String, publicId: UUID): Future[String] = {
+    import utils.nats._
+    natsPublishActor.ask(NatsPublishActor.Publish(server, "user.create", publicId.toString)).mapTo[String].map( message => message)
+  }
+
+  def publishUpdate(model: String, publicId: UUID): Future[String] = {
+    import utils.nats._
+    natsPublishActor.ask(NatsPublishActor.Publish(server, "user.updated", publicId.toString)).mapTo[String].map( message => message)
+  }
+
+  def publishDelete(model: String, publicId: UUID): Future[String] = {
+    import utils.nats._
+    natsPublishActor.ask(NatsPublishActor.Publish(server, "user.delete", publicId.toString)).mapTo[String].map( message => message)
+  }
 }

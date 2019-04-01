@@ -34,7 +34,7 @@ class UserService @Inject() (
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = {
     userDao.save(user).map(user => {
-      //nats.publishCreate("USER", user.id)
+      nats.publishCreate("USER", user.id)
       user
     })
   }
@@ -42,7 +42,7 @@ class UserService @Inject() (
 
   def update(updatedUser: User) = {
     userDao.replace(updatedUser).map(user => {
-//      nats.publishUpdate("USER", updatedUser.id)
+      nats.publishUpdate("USER", updatedUser.id)
       poolService.update(user) // Todo: Consider result?!
       user
     })
@@ -51,7 +51,7 @@ class UserService @Inject() (
   def updateSupporter(id: UUID, profile: Profile) = {
     //nats.publishUpdate("USER", id)
     profileDao.updateSupporter(profile).map(profileOpt => {
-//      nats.publishUpdate("USER", id)
+      nats.publishUpdate("USER", id)
       if(profileOpt.isDefined) {
         userDao.find(id).map(_.map(user => poolService.update(user))) // Todo: Consider result?!
       }
@@ -102,10 +102,10 @@ class UserService @Inject() (
   def save(socialProfile:CommonSocialProfile) = {
     def onSuccess(user: User, create: Boolean) = {
       if(create) {
-//        nats.publishCreate("USER", user.id)
+        nats.publishCreate("USER", user.id)
         poolService.save(user) // Todo: Consider result?!
       } else {
-//        nats.publishUpdate("USER", user.id)
+        nats.publishUpdate("USER", user.id)
         poolService.update(user) // Todo: Consider result?!
       }
       user
@@ -129,7 +129,7 @@ class UserService @Inject() (
   def delete(userId: UUID): Future[Boolean] = {
     userDao.delete(userId).map(_ match {
       case true => {
-//        nats.publishDelete("USER", userId) 
+        nats.publishDelete("USER", userId) 
         poolService.delete(userId)
         true
       }
@@ -145,7 +145,7 @@ class UserService @Inject() (
   def assign(crewUUID: UUID, user: User) = user.profiles.headOption match {
     case Some(profile) => profileDao.setCrew(crewUUID, profile).map(result => {
       if(result.isLeft && result.left.get > 0) {
-        //nats.publishUpdate("USER", user.id)
+        nats.publishUpdate("USER", user.id)
         userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
       }
       result
@@ -158,7 +158,7 @@ class UserService @Inject() (
       case Some(crewDB) => user.profiles.headOption match {
         case Some(profile) => profileDao.setCrewRole(crew.id, crewDB.id, role, profile).map(result => {
           if(result.isLeft && result.left.get > 0) {
-            //nats.publishUpdate("USER", user.id)
+            nats.publishUpdate("USER", user.id)
             userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
           }
           result
@@ -178,7 +178,7 @@ class UserService @Inject() (
     case Some(profile) => profile.supporter.crew match {
       case Some(crew) => profileDao.removeCrew(crew.id, profile).map(result => {
         if(result.isLeft && result.left.get > 0) {
-          //nats.publishUpdate("USER", user.id)
+          nats.publishUpdate("USER", user.id)
           userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
         }
         result
@@ -193,7 +193,7 @@ class UserService @Inject() (
       case Left(i) if i > 0 => userDao.find(user.id).flatMap(_ match {
         case Some(updatedUser) => this.assign(crewUUID, updatedUser).map(result => {
           if(result.isLeft && result.left.get > 0) {
-           // nats.publishUpdate("USER", user.id)
+            nats.publishUpdate("USER", user.id)
             userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
           }
           result
