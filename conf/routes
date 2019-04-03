@@ -29,6 +29,8 @@ GET     /webapp/profile/assign/:crewUUID                    controllers.webapp.P
 DELETE  /webapp/profile/remove/crew                         controllers.webapp.Profile.removeCrew
 GET     /webapp/profile/newsletter                          controllers.webapp.Profile.getNewsletterSettingsPool1
 POST    /webapp/profile/newsletter/:setting                 controllers.webapp.Profile.setNewsletterSettingsPool1(setting: String)
+GET     /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
+GET     /webapp/profile/nvm/check                           controllers.webapp.Profile.checkNVM
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
