@@ -366,7 +366,8 @@ ChangeLog
 =========
 
 
-## Version 0.36.59 (2019-2-13)
+## Version 0.36.60 (2019-4-04)
+* [[B] #340 - Bug: Nats heap space error](https://github.com/Viva-con-Agua/drops/issues/340)
 * [[I] #322 - Users address](https://github.com/Viva-con-Agua/drops/issues/322)
 * [[B] #339 - Bug: PasswordInfoDao](https://github.com/Viva-con-Agua/drops/issues/339)
 * [[I] #329 - Remove MongoDB](https://github.com/Viva-con-Agua/drops/issues/329)
