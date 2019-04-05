@@ -252,19 +252,6 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
 
   override def getObjectId(name: String): Future[Option[ObjectIdWrapper]] = getObjectId(UUID.fromString(name))
 
-  def getProfile(email: String): Future[Option[Profile]] = {
-    val action = for{
-      (((((profile, supporter), loginInfo), passwordInfo), oauth1Info), supporterCrew) <- ( profiles.filter(p => p.email === email)
-        join supporters on (_.id === _.profileId)
-        join loginInfos on (_._1.id === _.profileId)
-        joinLeft passwordInfos on(_._1._1.id === _.profileId)
-        joinLeft oauth1Infos on (_._1._1._1.id === _.profileId)
-        joinLeft supporterCrews on (_._1._1._1._2.id === _.supporterId)
-      )
-    } yield(profile, supporter, loginInfo, passwordInfo, oauth1Info, supporterCrew)
-    dbConfig.db.run(action.result).flatMap(toUserProfiles( _ )).map(_.headOption)
-  }
-
   def getRulesAccepted(id: UUID):Future[Boolean] = {
     findDBUserModel(id).map(_.rulesAccepted)
   }

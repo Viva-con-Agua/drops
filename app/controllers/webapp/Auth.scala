@@ -44,7 +44,7 @@ object AuthForms {
 
   // Sign up
   case class SignUpData(email:String, password:String, firstName: Option[String], lastName: Option[String],
-    mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String, street: Option[String], additional: Option[String], city: Option[String], zip: Option[String], country: Option[String], address: Option[AddressStub, terms: Boolean, rulesAccepted: Boolean] )
+    mobilePhone:Option[String], placeOfResidence: Option[String], birthday:Option[Date], gender: String, street: Option[String], additional: Option[String], city: Option[String], zip: Option[String], country: Option[String], address: Option[AddressStub], terms: Boolean, rulesAccepted: Boolean)
 
   object SignUpData {
     implicit val signUpDataJsonFormat = Json.format[SignUpData]
