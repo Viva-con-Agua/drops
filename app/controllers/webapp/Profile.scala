@@ -295,10 +295,26 @@ class Profile @Inject() (
     }
   }
 
-  def requestActive = UserAwareAction.async { implicit request =>
+  def inActive = UserAwareAction.async { implicit request =>
     request.identity match {
       //dummy function. Validation test not implemented
-      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "requested")).getResult)
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> "inactive")).getResult)
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def requestActive = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => {
+        user.profiles.headOption match {
+          case Some(profile) => userService.requestActiveFlag(profile).map(status =>
+            WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "requested")).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.requestActiveFlag.notFound", Nil, "Profile.requestActiveFlag.notFound", Map[String, String]()).getResult)
+        }
+      }
+      //dummy function. Validation test not implemented
+      //case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "requested")).getResult)
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }

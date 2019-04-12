@@ -32,6 +32,8 @@ POST    /webapp/profile/newsletter/:setting                 controllers.webapp.P
 GET     /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
 GET     /webapp/profile/nvm/check                           controllers.webapp.Profile.checkNVM
 GET     /webapp/profile/active/check                        controllers.webapp.Profile.checkActiveFlag
+POST    /webapp/profile/active/request                      controllers.webapp.Profile.requestActive
+POST    /webapp/profile/active/inactive                     controllers.webapp.Profile.inActive
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)

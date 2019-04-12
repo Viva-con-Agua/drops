@@ -246,13 +246,17 @@ class UserService @Inject() (
     profileDao.getProfile(profile.email.head).flatMap({
       case Some(p) => {
         val primaryCrew = hasPrimaryCrew(p)
+        /*val status = profileDao.getActiveFlag(profile).map(_ match {
+          case Some(status) => status
+          case _ => "inactive"
+        })*/
         val status = p.supporter.active match {
           case Some(status) => status
           case _ => "inactive"
         }
         Future.successful(Json.obj("status" -> status, "conditions" ->
           Json.obj(
-            "hasCrew" -> true
+            "hasCrew" -> primaryCrew
           )
         ))
       }
