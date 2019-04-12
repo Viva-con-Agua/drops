@@ -247,15 +247,9 @@ class Profile @Inject() (
   }
   /**
    * NVM = non voting membership
-   * The controller will check if a user is in the posebility to be active member. 
-   * Store the user in a list for Network-ASP to check if the request is valid
+   * The controller will check if a user is in the possibility to be non voting member.
    */
 
-  /*def requestActiveFlag = SecuredAction.async { implicit request =>
-    userService.requestActiveFlag(request.identity).map(_ match {
-      Some()
-    })
-  }*/
   def requestNVM = UserAwareAction.async { implicit request =>
     request.identity match {
       //dummy function. Validation test not implemented
@@ -263,15 +257,48 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
-  
+
   def checkNVM = UserAwareAction.async { implicit request =>
     request.identity match {
       //dummy function. Need Validation from requestNVM for check if a user is NVM
-      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false))).getResult)
-      //case Some(user) => userService.checkNVM(user).map(_ match {
-	//case Some(nvmState) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj(nvmState)).getResult
-	//case None => WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult
-      //})
+      //case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false))).getResult)
+      case Some(user) => {
+        user.profiles.headOption match {
+          case Some(profile) => userService.checkNVM(profile).map(nvmState =>
+            WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", nvmState).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.checkNVM.notFound", Nil, "Profile.checkNVM.notFound", Map[String, String]()).getResult)
+        }
+      }
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * Active flag
+    * The controller will check if a user is an active supporter of his main crew.
+    * Store the user in a list for Network-ASP to check if the request is valid
+    */
+  def checkActiveFlag = UserAwareAction.async { implicit request =>
+    request.identity match {
+      //dummy function. Need Validation from requestNVM for check if a user is NVM
+      //case Some(user) => userService.checkActiveFlag()
+      case Some(user) => {
+        user.profiles.headOption match {
+          case Some(profile) => userService.checkActiveFlag(profile).map(activeState =>
+            WebAppResult.Ok(request, "profile.checkActiveFlag.success", Nil, "Profile.checkActiveFlag.success", activeState).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.checkActiveFlag.notFound", Nil, "Profile.checkActiveFlag.notFound", Map[String, String]()).getResult)
+        }
+      }
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  def requestActive = UserAwareAction.async { implicit request =>
+    request.identity match {
+      //dummy function. Validation test not implemented
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "requested")).getResult)
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }

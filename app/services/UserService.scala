@@ -237,7 +237,29 @@ class UserService @Inject() (
       case false => None
     })
   }
-  
+
+  /** checkActiveFlag
+    * check if the active flag is set, not set or requested
+    */
+  def checkActiveFlag(profile: Profile) = {
+    //the conditions. Actually we support only one Crew
+    profileDao.getProfile(profile.email.head).flatMap({
+      case Some(p) => {
+        val primaryCrew = hasPrimaryCrew(p)
+        val status = p.supporter.active match {
+          case Some(status) => status
+          case _ => "inactive"
+        }
+        Future.successful(Json.obj("status" -> status, "conditions" ->
+          Json.obj(
+            "hasCrew" -> true
+          )
+        ))
+      }
+      case _ => Future.successful(Json.obj("status" -> "inactive", "conditions" -> Json.obj("hasCrew" -> false)))
+    })
+  }
+
   
   /** checkNVM
    * check if the profile is ready for non-voting-membership 
@@ -286,5 +308,4 @@ class UserService @Inject() (
     }
   }
 
-    //Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)).getResult)
 }

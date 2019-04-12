@@ -31,6 +31,7 @@ GET     /webapp/profile/newsletter                          controllers.webapp.P
 POST    /webapp/profile/newsletter/:setting                 controllers.webapp.Profile.setNewsletterSettingsPool1(setting: String)
 GET     /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
 GET     /webapp/profile/nvm/check                           controllers.webapp.Profile.checkNVM
+GET     /webapp/profile/active/check                        controllers.webapp.Profile.checkActiveFlag
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
