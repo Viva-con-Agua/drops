@@ -306,14 +306,14 @@ class UserService @Inject() (
   
   //the function is for checkNVM function.
   private def isActive(profile: Profile) = {
-    /*profile.supporter.active match {
+    profile.supporter.active match {
       case Some(active) => if(active == "active") { true } else { false }
       case _ => false
-    }*/
-    profileDao.getActiveFlag(profile).map(_ match {
+    }
+    /*profileDao.getActiveFlag(profile).map(_ match {
       case Some(status) => status.map(active => { if(active == "active") { true } else { false } })
       case _ => false
-    })
+    })*/
   }
 
 }
