@@ -1,5 +1,6 @@
 package models.database
 
+import play.api.{Logger, Play}
 import models.{Crew, Role, Supporter, Address}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, _}
@@ -27,8 +28,8 @@ case class SupporterDB(
                 sex: Option[String],
                 profileId: Long
                 ) {
-  def toSupporter(crew: Option[(Crew, Seq[Role])] = None, address: Set[Address] = Set()): Supporter =
-    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew.map(_._1), crew.map(_._2.toSet).getOrElse(Set()), address)
+  def toSupporter( crew: Option[Crew], crewRole: Option[(Crew, Seq[Role])] = None, address: Set[Address] = Set()): Supporter =
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew, crewRole.map(_._2.toSet).getOrElse(Set()), address)
 }
 
 object SupporterDB extends ((Long, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Long) => SupporterDB ){
@@ -46,8 +47,9 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
     val address: Set[Address] = entries.groupBy(_._4).toSeq.filter(_._1.isDefined).map(current => current._1.head.toAddress).toSet
     //build input for SupporterCrewDB.read
     val supporterCrews = entries.map(current => current._2.flatMap(sc => current._3.map(crew => (sc, crew))))
+    val crew = entries.groupBy(_._3).toSeq.map(current => current._1)
     //return Seq[Supporter]
-    Seq(supporterDB.toSupporter(SupporterCrewDB.read(supporterCrews), address))
+    Seq(supporterDB.toSupporter(crew.head, SupporterCrewDB.read(supporterCrews), address))
 
   }
 
