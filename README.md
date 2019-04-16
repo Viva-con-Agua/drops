@@ -366,7 +366,8 @@ ChangeLog
 =========
 
 
-## Version 0.36.60 (2019-4-04)
+## Version 0.36.61 (2019-4-16)
+
 * [[B] #340 - Bug: Nats heap space error](https://github.com/Viva-con-Agua/drops/issues/340)
 * [[I] #322 - Users address](https://github.com/Viva-con-Agua/drops/issues/322)
 * [[B] #339 - Bug: PasswordInfoDao](https://github.com/Viva-con-Agua/drops/issues/339)
