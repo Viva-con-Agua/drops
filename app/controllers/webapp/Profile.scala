@@ -32,7 +32,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import models.dispenser._
 import services.{ Pool1Service, UserService, UserTokenService}
-import utils.{Mailer, Nats}
+import utils.Mailer
 import daos.{CrewDao, OauthClientDao, TaskDao}
 import org.joda.time.DateTime
 import persistence.pool1.PoolService

@@ -13,9 +13,9 @@ import daos.{AccessRightDao, TaskDao, OrganizationDAO}
 import models.AccessRight
 import models.{Organization, BankAccount}
 import models.database.OrganizationDB
-import utils.Nats
+import utils.NatsController
 
-class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: Nats) {
+class OrganizationService @Inject() (organizationDAO:OrganizationDAO, nats: NatsController) {
   def retrieve():Future[Option[Organization]] = ???
   def save(organization: Organization) = organizationDAO.create(OrganizationDB(organization))
   def find(publicId: UUID) = organizationDAO.find(publicId)
