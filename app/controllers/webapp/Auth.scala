@@ -32,7 +32,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import models.dispenser._
 import services.{ Pool1Service, UserService, UserTokenService}
-import utils.{Mailer, Nats}
+import utils.Mailer
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -122,8 +122,7 @@ class Auth @Inject() (
   passwordHasher: PasswordHasher,
   configuration: Configuration,
   pool: PoolService,
-  mailer: Mailer,
-  nats: Nats) extends Silhouette[User,CookieAuthenticator] {
+  mailer: Mailer) extends Silhouette[User,CookieAuthenticator] {
 
   import AuthForms._
 
