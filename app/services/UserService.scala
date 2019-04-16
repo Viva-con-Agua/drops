@@ -232,7 +232,7 @@ class UserService @Inject() (
   }
 
   def inactiveActiveFlag(profile: Profile) = {
-    profileDao.setActiveFlag(profile, Some("inactive")).map(_ match{
+    profileDao.setActiveFlag(profile, Some("inactive")).map(_ match {
       case true => "inactive"
       case false => None
     })
@@ -246,10 +246,6 @@ class UserService @Inject() (
     profileDao.getProfile(profile.email.head).flatMap({
       case Some(p) => {
         val primaryCrew = hasPrimaryCrew(p)
-        /*val status = profileDao.getActiveFlag(profile).map(_ match {
-          case Some(status) => status.map(nonFuture => {nonFuture})
-          case _ => "inactive"
-        })*/
         val status = p.supporter.active match {
           case Some(status) => status
           case _ => "inactive"
@@ -264,6 +260,19 @@ class UserService @Inject() (
     })
   }
 
+  def activeNVM(profile: Profile) = {
+    profileDao.setNVM(profile, Some(System.currentTimeMillis() + 1000*60*60*365)).map(_ match {
+      case true => "active"
+      case false => None
+    })
+  }
+
+  def inActiveNVM(profile: Profile) = {
+    profileDao.setNVM(profile, None).map(_ match {
+      case true => "inactive"
+      case false => None
+    })
+  }
   
   /** checkNVM
    * check if the profile is ready for non-voting-membership 
@@ -276,8 +285,8 @@ class UserService @Inject() (
         val primaryCrew = hasPrimaryCrew(p)
         val active = isActive(p)
         val status = p.supporter.nvmDate match {
-          case Some(nvmDate) => "expired"
-          case _ => if (address && primaryCrew && active) {"active"} else {"denied"}
+          case Some(nvmDate) => if (nvmDate < System.currentTimeMillis()) { "expired" } else { "active" }
+          case _ => if (address && primaryCrew && active) {"inactive"} else {"denied"}
         }
         Future.successful(Json.obj("status" -> status, "conditions" -> 
           Json.obj(
@@ -310,10 +319,6 @@ class UserService @Inject() (
       case Some(active) => if(active == "active") { true } else { false }
       case _ => false
     }
-    /*profileDao.getActiveFlag(profile).map(_ match {
-      case Some(status) => status.map(active => { if(active == "active") { true } else { false } })
-      case _ => false
-    })*/
   }
 
 }

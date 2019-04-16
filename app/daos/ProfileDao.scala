@@ -36,7 +36,7 @@ trait ProfileDao {
   def setCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]]
   def setActiveFlag(profile: Profile, activeFlag: Option[String]): Future[Boolean]
   def getActiveFlag(profile: Profile): Future[Option[String]]
-  def setNVM(profile: Profile, crewUUID: UUID): Future[Boolean]
+  def setNVM(profile: Profile, nvmStatus: Option[Long]): Future[Boolean]
   def getNVM(profile: Profile) : Future[Option[Long]]
 }
 
@@ -270,15 +270,20 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
       case Some(crew) => {
         crewDao.findDBCrewModel(crew.id).flatMap(_ match {
           case Some (crewDB) => {
-            val action = for {
-              p  <- profiles.filter(prof => prof.email === profile.email)
-              s  <- supporters.filter(supporter => supporter.profileId === p.id)
-              sc <- supporterCrews.filter( suppCrew => suppCrew.crewId === crewDB.id && suppCrew.supporterId === s.id)
-            } yield sc.active
-            val updateAction = action.update(activeFlag)
-            dbConfig.db.run(updateAction).map(_ match {
-              case 1 => true
-              case _ => false
+            val supporterQuery = (for {
+              p <- profiles.filter(_.email === profile.email)
+              s <- supporters.filter(_.profileId === p.id)
+            } yield s)
+
+            dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
+              case Some(supporterDB) => {
+                val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDB.id } yield (sc.active)
+                dbConfig.db.run(updateQ.update(activeFlag)).map(_ match {
+                  case 1 => true
+                  case _ => false
+                })
+              }
+              case None => Future.successful(false)
             })
           }
           case _ => Future.successful(false)
@@ -310,20 +315,25 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     } 
   }
 
-  def setNVM(profile: Profile, crewUUID: UUID): Future[Boolean] = {
+  def setNVM(profile: Profile, nvmDate: Option[Long]): Future[Boolean] = {
     profile.supporter.crew match {
       case Some(crew) => {
-        crewDao.findDBCrewModel(crewUUID).flatMap(_ match { 
-          case Some(crewDB) => {
-            val action = for {
-              p  <- profiles.filter(prof => prof.email === profile.email)
-              s  <- supporters.filter(supporter => supporter.profileId === p.id)
-              sc <- supporterCrews.filter( suppCrew => suppCrew.crewId === crewDB.id && suppCrew.supporterId === s.id)
-            } yield sc.nvmDate
-            val updateAction = action.update(Some(System.currentTimeMillis()))
-            dbConfig.db.run(updateAction).map(_ match {
-              case 1 => true
-              case _ => false
+        crewDao.findDBCrewModel(crew.id).flatMap(_ match {
+          case Some (crewDB) => {
+            val supporterQuery = (for {
+              p <- profiles.filter(_.email === profile.email)
+              s <- supporters.filter(_.profileId === p.id)
+            } yield s)
+
+            dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
+              case Some(supporterDB) => {
+                val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDB.id } yield (sc.nvmDate)
+                dbConfig.db.run(updateQ.update(nvmDate)).map(_ match {
+                  case 1 => true
+                  case _ => false
+                })
+              }
+              case None => Future.successful(false)
             })
           }
           case _ => Future.successful(false)

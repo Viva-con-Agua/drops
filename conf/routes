@@ -29,8 +29,9 @@ GET     /webapp/profile/assign/:crewUUID                    controllers.webapp.P
 DELETE  /webapp/profile/remove/crew                         controllers.webapp.Profile.removeCrew
 GET     /webapp/profile/newsletter                          controllers.webapp.Profile.getNewsletterSettingsPool1
 POST    /webapp/profile/newsletter/:setting                 controllers.webapp.Profile.setNewsletterSettingsPool1(setting: String)
-GET     /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
 GET     /webapp/profile/nvm/check                           controllers.webapp.Profile.checkNVM
+POST    /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
+POST    /webapp/profile/nvm/inactive                        controllers.webapp.Profile.inActiveNVM
 GET     /webapp/profile/active/check                        controllers.webapp.Profile.checkActiveFlag
 POST    /webapp/profile/active/request                      controllers.webapp.Profile.requestActive
 POST    /webapp/profile/active/inactive                     controllers.webapp.Profile.inActive

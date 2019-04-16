@@ -74,11 +74,15 @@ object Supporter {
   def apply(firstName: String, lastName: String, mobilePhone: String, placeOfResidence: String, birthday: Date, sex : String) : Supporter =
     Supporter(Some(firstName), Some(lastName), Some(s"${firstName} ${lastName}"), Some(mobilePhone), Some(placeOfResidence), Some(birthday.getTime()), Some(sex), None, Set(), Set(), Set(), None, None)
 
-  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Date], sex : String, address: Option[AddressStub]) : Supporter = 
+  def apply(firstName: Option[String], lastName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Date], sex : String, address: Option[AddressStub]) : Supporter =
     Supporter(firstName, lastName, firstName.flatMap(fn => lastName.map(ln => s"${fn} ${ln}")), mobilePhone, placeOfResidence, birthday.map(_.getTime()), Some(sex), None, Set(), Set(), if(address != None) Set(address.head.toAddress) else Set(), None, None)
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
     Supporter(firstName, lastName, fullName, None, None, None, None, None, Set(), Set(), Set(), None, None)
+
+
+  def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday : Option[Long], sex : Option[String], crew: Option[Crew], roles: Set[Role], address : Set[Address], active : Option[String], nvmDate : Option[Long]) : Supporter =
+    Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew, roles, Set(), address, active, nvmDate)
 
   def apply(tuple: (Option[String],  Option[String], Option[String], Option[String], Option[String], Option[Long], Option[String], Option[Crew], Set[Role], Set[Pillar], Set[Address], Option[String], Option[Long])) : Supporter =
     Supporter(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8, tuple._9, tuple._10, tuple._11, tuple._12, tuple._13)

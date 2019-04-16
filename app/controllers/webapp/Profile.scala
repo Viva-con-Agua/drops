@@ -250,10 +250,34 @@ class Profile @Inject() (
    * The controller will check if a user is in the possibility to be non voting member.
    */
 
+  def inActiveNVM = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => {
+        user.profiles.headOption match {
+          case Some(profile) => userService.inActiveNVM(profile).map(status =>
+            WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> "inactive")).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
+        }
+      }
+      //dummy function. Validation test not implemented
+      //case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "in progress")).getResult)
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
   def requestNVM = UserAwareAction.async { implicit request =>
     request.identity match {
+      case Some(user) => {
+        user.profiles.headOption match {
+          case Some(profile) => userService.activeNVM(profile).map(status =>
+            WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "active")).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
+        }
+      }
       //dummy function. Validation test not implemented
-      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "in progress")).getResult)
+      //case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "in progress")).getResult)
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
@@ -299,7 +323,9 @@ class Profile @Inject() (
     request.identity match {
       case Some(user) => {
         user.profiles.headOption match {
-          case Some(profile) => userService.inactiveActiveFlag(profile).map(status =>
+          case Some(profile) =>
+            userService.inActiveNVM(profile)
+            userService.inactiveActiveFlag(profile).map(status =>
             WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> "inactive")).getResult
           )
           case None => Future.successful(WebAppResult.NotFound(request, "profile.inactive.notFound", Nil, "Profile.inactive.notFound", Map[String, String]()).getResult)
@@ -316,7 +342,7 @@ class Profile @Inject() (
       case Some(user) => {
         user.profiles.headOption match {
           case Some(profile) => userService.requestActiveFlag(profile).map(status =>
-            WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> status.toString)).getResult
+            WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "requested")).getResult
           )
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestActiveFlag.notFound", Nil, "Profile.requestActiveFlag.notFound", Map[String, String]()).getResult)
         }
