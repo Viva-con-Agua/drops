@@ -361,6 +361,20 @@ user as shown before.
 Using this information your service is able to initiate a session for the user 
 and your service.
 
+Nats
+====
+
+We publish a `create` `update` `delete` and `logout` event for the `User` model to the pool² nats server. 
+You can subscribe it with your service via:
+  * drops.user.create
+  * drops.user.update
+  * drops.user.delete
+  * drops.user.logout
+
+the message only contains the `publicId` of an `User` as string. 
+
+
+
 
 ChangeLog
 =========
