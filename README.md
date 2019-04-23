@@ -364,14 +364,14 @@ and your service.
 Nats
 ====
 
-We publish a `create` `update` `delete` and `logout` event for the `User` model to the pool² nats server. 
-You can subscribe it with your service via:
-  * drops.user.create
-  * drops.user.update
-  * drops.user.delete
-  * drops.user.logout
+We are publishing a message for the `User` model to the `Pool²-Nats-Server` at each of the following events:`create` `update` `delete` and `logout`, 
+Your service can subscribe to it via:
+  * `sub drops.user.create`
+  * `sub drops.user.update`
+  * `sub drops.user.delete`
+  * `sub drops.user.logout`
 
-the message only contains the `publicId` of an `User` as string. 
+The message only contains the `publicId` of the `User` as string. 
 
 
 
