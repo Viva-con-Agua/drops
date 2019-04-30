@@ -15,7 +15,7 @@ import models.{Crew, CrewStub, ObjectId, ObjectIdWrapper}
 import models.Crew._
 import models.converter.CrewConverter
 import models.database.{CityDB, CrewDB}
-import play.Logger
+import play.api.Logger
 import play.api.Play
 import play.api.db.slick.DatabaseConfigProvider
 import slick.driver.JdbcProfile
@@ -102,6 +102,7 @@ class MongoCrewDao extends CrewDao {
 
 class MariadbCrewDao extends CrewDao {
 
+  val logger = Logger(this.getClass())
 
   val dbConfig = DatabaseConfigProvider.get[JdbcProfile](Play.current)
   val crews = TableQuery[CrewTableDef]
@@ -120,7 +121,9 @@ class MariadbCrewDao extends CrewDao {
         join cities on (_.id === _.crewId)
         )} yield (crew, city)
     
-    dbConfig.db.run(action.result).map(CrewConverter.buildCrewObjectFromResult(_))
+    dbConfig.db.run(action.result).map(result => {
+      CrewConverter.buildCrewObjectFromResult( result )
+    })
   }
 
   override def find(crewName: String): Future[Option[Crew]] = {

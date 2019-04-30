@@ -48,8 +48,8 @@ GET     /webapp/profile/newsletter                          controllers.webapp.P
 POST    /webapp/profile/newsletter/:setting                 controllers.webapp.Profile.setNewsletterSettingsPool1(setting: String)
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
-GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
-GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.get(name: String)
+GET     /webapp/crew/:id                                    controllers.webapp.CrewController.get(id: String)
+GET     /webapp/crew/get/:name                              controllers.webapp.CrewController.getByName(name: String)
 POST    /webapp/crew/list                                   controllers.webapp.CrewController.list
 POST    /webapp/crew/count                                  controllers.webapp.CrewController.count
 GET     /webapp/oauthclient/ws                              controllers.webapp.OauthClientSocketController.socket
