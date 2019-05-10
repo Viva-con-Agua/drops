@@ -209,7 +209,7 @@ class UserService @Inject() (
   
   def activeActiveFlag(profile: Profile) = {
     profileDao.setActiveFlag(profile, Some("active")).map(_ match {
-      case true => "active"
+      case true => Some("active")
       case false => None
     })
   }
@@ -220,12 +220,12 @@ class UserService @Inject() (
         case "active" => activeFlag
         case "requested" => activeFlag
         case "inactive" => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
-          case true => "requested"
+          case true => Some("requested")
           case false => None
         })
       }
       case _ => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
-        case true => "requested"
+        case true => Some("requested")
         case false => None
       })
     })
@@ -233,7 +233,7 @@ class UserService @Inject() (
 
   def inactiveActiveFlag(profile: Profile) = {
     profileDao.setActiveFlag(profile, Some("inactive")).map(_ match {
-      case true => "inactive"
+      case true => Some("inactive")
       case false => None
     })
   }
@@ -262,14 +262,14 @@ class UserService @Inject() (
 
   def activeNVM(profile: Profile) = {
     profileDao.setNVM(profile, Some(System.currentTimeMillis() + 1000*60*60*365)).map(_ match {
-      case true => "active"
+      case true => Some("active")
       case false => None
     })
   }
 
-  def inActiveNVM(profile: Profile) = {
+  def inActiveNVM(profile: Profile)  = {
     profileDao.setNVM(profile, None).map(_ match {
-      case true => "inactive"
+      case true => Some("inactive")
       case false => None
     })
   }
@@ -285,8 +285,14 @@ class UserService @Inject() (
         val primaryCrew = hasPrimaryCrew(p)
         val active = isActive(p)
         val status = p.supporter.nvmDate match {
-          case Some(nvmDate) => if (nvmDate < System.currentTimeMillis()) { "expired" } else { "active" }
-          case _ => if (address && primaryCrew && active) {"inactive"} else {"denied"}
+          case Some(nvmDate) => nvmDate < System.currentTimeMillis() match {
+            case true => "expired"
+            case false => "active"
+          }
+          case _ => address && primaryCrew && active match {
+            case true => "inactive"
+            case false => "denied"
+          }
         }
         Future.successful(Json.obj("status" -> status, "conditions" -> 
           Json.obj(

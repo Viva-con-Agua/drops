@@ -254,9 +254,10 @@ class Profile @Inject() (
     request.identity match {
       case Some(user) => {
         user.profiles.headOption match {
-          case Some(profile) => userService.inActiveNVM(profile).map(status =>
-            WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> "inactive")).getResult
-          )
+          case Some(profile) => userService.inActiveNVM(profile).map(_ match {
+            case Some(status) => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> status)).getResult
+            case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active")).getResult
+          })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
         }
       }
@@ -270,9 +271,10 @@ class Profile @Inject() (
     request.identity match {
       case Some(user) => {
         user.profiles.headOption match {
-          case Some(profile) => userService.activeNVM(profile).map(status =>
-            WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "active")).getResult
-          )
+          case Some(profile) => userService.activeNVM(profile).map(_ match {
+            case Some(status) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> status)).getResult
+            case None => WebAppResult.Bogus(request, "profile.requestNVM.failure", Nil, "Profile.requestNVM.failure", Json.obj("status" -> "stays active")).getResult
+          })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
         }
       }
@@ -305,7 +307,6 @@ class Profile @Inject() (
     */
   def checkActiveFlag = UserAwareAction.async { implicit request =>
     request.identity match {
-      //dummy function. Need Validation from requestNVM for check if a user is NVM
       //case Some(user) => userService.checkActiveFlag()
       case Some(user) => {
         user.profiles.headOption match {
@@ -323,11 +324,13 @@ class Profile @Inject() (
     request.identity match {
       case Some(user) => {
         user.profiles.headOption match {
-          case Some(profile) =>
-            userService.inActiveNVM(profile)
-            userService.inactiveActiveFlag(profile).map(status =>
-            WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> "inactive")).getResult
-          )
+          case Some(profile) => userService.inActiveNVM(profile).flatMap(_ match {
+              case Some(nvmState) => userService.inactiveActiveFlag(profile).map(_ match {
+                case Some(status) => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> status)).getResult
+                case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active")).getResult
+              })
+              case None => Future.successful(WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active, since nvm has not been removed")).getResult)
+          })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.inactive.notFound", Nil, "Profile.inactive.notFound", Map[String, String]()).getResult)
         }
       }
