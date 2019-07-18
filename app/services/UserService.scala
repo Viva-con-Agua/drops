@@ -238,25 +238,25 @@ class UserService @Inject() (
     })
   }
 
+  def getProfile(id: UUID) : Future[Option[Profile]] = {
+    userDao.find(id).map(_.flatMap(_.profiles.headOption))
+  }
+
   /** checkActiveFlag
     * check if the active flag is set, not set or requested
     */
-  def checkActiveFlag(profile: Profile) = {
+  def checkActiveFlag(profile: Profile) : Future[StatusWithConditions] = {
     //the conditions. Actually we support only one Crew
-    profileDao.getProfile(profile.email.head).flatMap({
+    profileDao.getProfile(profile.email.head).map({
       case Some(p) => {
         val primaryCrew = hasPrimaryCrew(p)
         val status = p.supporter.active match {
           case Some(status) => status
           case _ => "inactive"
         }
-        Future.successful(Json.obj("status" -> status, "conditions" ->
-          Json.obj(
-            "hasCrew" -> primaryCrew
-          )
-        ))
+        StatusWithConditions(status, Conditions(None, Some(primaryCrew), None))
       }
-      case _ => Future.successful(Json.obj("status" -> "inactive", "conditions" -> Json.obj("hasCrew" -> false)))
+      case _ => StatusWithConditions("inactive", Conditions(None, Some(false), None))
     })
   }
 
@@ -277,9 +277,9 @@ class UserService @Inject() (
   /** checkNVM
    * check if the profile is ready for non-voting-membership 
    */
-  def checkNVM(profile: Profile) = {
+  def checkNVM(profile: Profile) : Future[StatusWithConditions] = {
     //the conditions. Actually we support only one Crew
-    profileDao.getProfile(profile.email.head).flatMap({
+    profileDao.getProfile(profile.email.head).map(_ match {
       case Some(p) => {
         val address = hasAddress(p)
         val primaryCrew = hasPrimaryCrew(p)
@@ -294,14 +294,9 @@ class UserService @Inject() (
             case false => "denied"
           }
         }
-        Future.successful(Json.obj("status" -> status, "conditions" -> 
-          Json.obj(
-            "hasAddress" -> address, 
-            "hasPrimaryCrew" -> primaryCrew , 
-            "isActive" -> active)
-          ))
+        StatusWithConditions(status, Conditions(Some(address), Some(primaryCrew), Some(active)))
       }
-      case _ => Future.successful(Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false)))
+      case _ => StatusWithConditions("denied", Conditions(Some(false), Some(false), Some(false)))
     })
   }
  

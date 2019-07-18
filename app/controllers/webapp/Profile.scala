@@ -6,8 +6,6 @@ import java.util.{Date, UUID}
 import javax.inject.Inject
 import java.util.Properties
 
-import org.nats._
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
@@ -34,6 +32,8 @@ import models.dispenser._
 import services.{ Pool1Service, UserService, UserTokenService}
 import utils.Mailer
 import daos.{CrewDao, OauthClientDao, TaskDao}
+import utils.authorization._
+
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -290,8 +290,8 @@ class Profile @Inject() (
       //case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false))).getResult)
       case Some(user) => {
         user.profiles.headOption match {
-          case Some(profile) => userService.checkNVM(profile).map(nvmState =>
-            WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", nvmState).getResult
+          case Some(profile) => userService.checkNVM(profile).map(stateWithConditions =>
+            WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.toJson(stateWithConditions)).getResult
           )
           case None => Future.successful(WebAppResult.NotFound(request, "profile.checkNVM.notFound", Nil, "Profile.checkNVM.notFound", Map[String, String]()).getResult)
         }
@@ -310,8 +310,8 @@ class Profile @Inject() (
       //case Some(user) => userService.checkActiveFlag()
       case Some(user) => {
         user.profiles.headOption match {
-          case Some(profile) => userService.checkActiveFlag(profile).map(activeState =>
-            WebAppResult.Ok(request, "profile.checkActiveFlag.success", Nil, "Profile.checkActiveFlag.success", activeState).getResult
+          case Some(profile) => userService.checkActiveFlag(profile).map(stateWithConditions =>
+            WebAppResult.Ok(request, "profile.checkActiveFlag.success", Nil, "Profile.checkActiveFlag.success", Json.toJson(stateWithConditions)).getResult
           )
           case None => Future.successful(WebAppResult.NotFound(request, "profile.checkActiveFlag.notFound", Nil, "Profile.checkActiveFlag.notFound", Map[String, String]()).getResult)
         }
@@ -355,5 +355,46 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
+
+  case class ActiveRequest(users: List[UUID])
+  object ActiveRequest {
+    implicit val activeRequestFormat = Json.format[ActiveRequest]
+  }
+
+  def declineActiveRequest = SecuredAction((IsVolunteerManager() && IsResponsibleFor(Network)) || WithRole(RoleEmployee) ||  WithRole(RoleAdmin)).async(validateJson[ActiveRequest]) { implicit request =>
+      // TODO Check if user has permissions to change state of other users
+      Future.sequence(request.body.users.map(id => userService.getProfile(id).flatMap(_ match {
+        case Some(profile) => userService.inactiveActiveFlag(profile).map(_ match {
+          case Some(status) => (id, "profile.inactive.success")
+          // Profile could not be set to inactive
+          case None => (id, "profile.inactive.failure")
+        })
+        // No profile found
+        case None => Future.successful((id, "profile.inactive.failure"))
+      }))).map(_.find(_._2 == "profile.inactive.failure") match {
+        // There was no error
+        case None => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "active")).getResult
+        // There was at least one error
+        case Some(error) => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> error._1)).getResult
+      })
+  }
+
+  def acceptActiveRequest = SecuredAction((IsVolunteerManager() && IsResponsibleFor(Network)) || WithRole(RoleEmployee) ||  WithRole(RoleAdmin)).async(validateJson[ActiveRequest]) { implicit request =>
+      // TODO Check if user has permissions to change state of other users
+      Future.sequence(request.body.users.map(id => userService.getProfile(id).flatMap(_ match {
+        case Some(profile) => userService.activeActiveFlag(profile).map(_ match {
+          case Some(status) => (id, "profile.inactive.success")
+          // Profile could not be set to inactive
+          case None => (id, "profile.inactive.failure")
+        })
+        // No profile found
+        case None => Future.successful((id, "profile.inactive.failure"))
+      }))).map(_.find(_._2 == "profile.inactive.failure") match {
+        // There was no error
+        case None => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "active")).getResult
+        // There was at least one error
+        case Some(error) => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "requested")).getResult
+      })
+    }
 
 }

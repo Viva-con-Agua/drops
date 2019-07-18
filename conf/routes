@@ -6,6 +6,8 @@ GET     /users/init/:number/:specialRoleUsers               controllers.Applicat
 GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
 POST    /widgets/users                                      controllers.widgets.Users.getUsers
 POST    /widgets/users/count                                controllers.widgets.Users.getCountUsers
+POST    /widgets/users/inactive                             controllers.webapp.Profile.declineActiveRequest
+POST    /widgets/users/active                               controllers.webapp.Profile.acceptActiveRequest
 
 # WebApp endpoints
 GET     /webapp/identity                                    controllers.webapp.Auth.identity
@@ -35,6 +37,7 @@ POST    /webapp/profile/nvm/inactive                        controllers.webapp.P
 GET     /webapp/profile/active/check                        controllers.webapp.Profile.checkActiveFlag
 POST    /webapp/profile/active/request                      controllers.webapp.Profile.requestActive
 POST    /webapp/profile/active/inactive                     controllers.webapp.Profile.inActive
+
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)
