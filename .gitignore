@@ -14,3 +14,5 @@ drops.iml
 project/idea.sbt
 project/play-fork-run.sbt
 project/sbt-ui.sbt 
+conf/application.conf
+out/
