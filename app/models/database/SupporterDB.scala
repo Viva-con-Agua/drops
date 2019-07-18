@@ -49,7 +49,7 @@ object SupporterDB extends ((Long, Option[String], Option[String], Option[String
     val supporterCrews = entries.map(current => current._2.flatMap(sc => current._3.map(crew => (sc, crew))))
 
     // Get active flag from the crew
-    val active = entries.filter(_._2.isDefined).foldLeft[Option[String]](Option("active"))((active, entry) => entry._2.get.active)
+    val active = entries.filter(_._2.isDefined).foldLeft[Option[String]](None)((active, entry) => entry._2.get.active)
     // Get date for non voting membership
     val nvmDate = entries.filter(_._2.isDefined).foldLeft[Option[Long]](None)((nvmDate, entry) => entry._2.get.nvmDate)
 
