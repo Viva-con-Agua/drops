@@ -288,7 +288,7 @@ class Profile @Inject() (
           case Some(profile) => userService.activeNVM(profile).map(_ match {
             // Return the new state if you get one from the service, otherwise return state "stays active"
             case Some(status) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> status)).getResult
-            case None => WebAppResult.Bogus(request, "profile.requestNVM.failure", Nil, "Profile.requestNVM.failure", Json.obj("status" -> "stays active")).getResult
+            case None => WebAppResult.Bogus(request, "profile.requestNVM.failure", Nil, "Profile.requestNVM.failure", Json.obj("status" -> "stays inactive nvm")).getResult
           })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
         }
@@ -314,7 +314,7 @@ class Profile @Inject() (
           case Some(profile) => userService.inActiveNVM(profile).map(_ match {
             // Return the new state if you get one from the service, otherwise return state "stays active"
             case Some(status) => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> status)).getResult
-            case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active")).getResult
+            case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active nvm")).getResult
           })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
         }
@@ -360,9 +360,10 @@ class Profile @Inject() (
         // Checks if there is an profile for the user
         user.profiles.headOption match {
           // Call userservice and set the active state for the supporter, otherwise return the notFound message
-          case Some(profile) => userService.requestActiveFlag(profile).map(status =>
-            WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> status)).getResult
-          )
+          case Some(profile) => userService.requestActiveFlag(profile).map(_ match {
+            case Some(status) => WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "TODO")).getResult
+            case None => WebAppResult.Bogus(request, "profile.requestActiveFlag.failure", Nil, "Profile.requestActiveFlag.failure", Json.obj("status" -> "stays inactive")).getResult
+          })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestActiveFlag.notFound", Nil, "Profile.requestActiveFlag.notFound", Map[String, String]()).getResult)
         }
       }
