@@ -19,7 +19,7 @@ import play.api.Logger
 import utils.NatsController
 import play.api.libs.json._
 
-class UserService @Inject() (
+class requestActiveFlagUserService @Inject() (
                               userDao:UserDao,
                               profileDao:ProfileDao,
                               poolService: PoolService,
@@ -206,7 +206,12 @@ class UserService @Inject() (
     case Some(profile) => this.assign(crewUUID, user)
     case None => Future.successful(Right("service.user.error.notFound.profile"))
   }
-  
+
+  /**
+    * Calls the profileDao th set the active state to requested on the given profile
+    * @param profile
+    * @return
+    */
   def activeActiveFlag(profile: Profile) = {
     profileDao.setActiveFlag(profile, Some("active")).map(_ match {
       case true => Some("active")
@@ -214,6 +219,11 @@ class UserService @Inject() (
     })
   }
 
+  /**
+    * Calls the profileDao to set the active state to requested on the given profile
+    * @param profile
+    * @return
+    */
   def requestActiveFlag(profile: Profile) = {
     profileDao.getActiveFlag(profile).map(_ match {
       case Some(activeFlag) => activeFlag match {
@@ -231,6 +241,11 @@ class UserService @Inject() (
     })
   }
 
+  /**
+    * Calls the profileDao to set the active state to inactive on the given profile
+    * @param profile
+    * @return
+    */
   def inactiveActiveFlag(profile: Profile) = {
     profileDao.setActiveFlag(profile, Some("inactive")).map(_ match {
       case true => Some("inactive")
@@ -238,18 +253,27 @@ class UserService @Inject() (
     })
   }
 
+  /**
+    * Get the profile with the given id from the userDao
+    * @param id
+    * @return
+    */
   def getProfile(id: UUID) : Future[Option[Profile]] = {
     userDao.find(id).map(_.flatMap(_.profiles.headOption))
   }
 
-  /** checkActiveFlag
-    * check if the active flag is set, not set or requested
+  /**
+    * Calls the profileDao to get the active state of the given profile
+    * @param profile
+    * @return
     */
   def checkActiveFlag(profile: Profile) : Future[StatusWithConditions] = {
-    //the conditions. Actually we support only one Crew
+    // Check for profile existance
     profileDao.getProfile(profile.email.head).map({
       case Some(p) => {
+        // Get primary crew of the supporter
         val primaryCrew = hasPrimaryCrew(p)
+        // Return the current state
         val status = p.supporter.active match {
           case Some(status) => status
           case _ => "inactive"
@@ -260,6 +284,11 @@ class UserService @Inject() (
     })
   }
 
+  /**
+    * Calls the profileDao to set the nvm state to the current time + 1 year on the given profile
+    * @param profile
+    * @return
+    */
   def activeNVM(profile: Profile) = {
     profileDao.setNVM(profile, Some(System.currentTimeMillis() + 1000*60*60*365)).map(_ match {
       case true => Some("active")
@@ -267,20 +296,30 @@ class UserService @Inject() (
     })
   }
 
+  /**
+    * * Calls the profileDao to set the nvm state to inactive on the given profile
+    * @param profile
+    * @return
+    */
   def inActiveNVM(profile: Profile)  = {
     profileDao.setNVM(profile, None).map(_ match {
       case true => Some("inactive")
       case false => None
     })
   }
-  
-  /** checkNVM
-   * check if the profile is ready for non-voting-membership 
-   */
+
+  /**
+    * Calls the profileDao to get the nvm date of the given profile
+    * Checks the preconditions of the nvm state
+    * Convert conditions and state it to the nvm states "active", "inactive", "denied", "expired"
+    * @param profile
+    * @return
+    */
   def checkNVM(profile: Profile) : Future[StatusWithConditions] = {
-    //the conditions. Actually we support only one Crew
+    // Check for profile existance
     profileDao.getProfile(profile.email.head).map(_ match {
       case Some(p) => {
+        // Checks if the supporter has an address, a crew and the current nvm date is in the future
         val address = hasAddress(p)
         val primaryCrew = hasPrimaryCrew(p)
         val active = isActive(p)
@@ -299,7 +338,12 @@ class UserService @Inject() (
       case _ => StatusWithConditions("denied", Conditions(Some(false), Some(false), Some(false)))
     })
   }
- 
+
+  /**
+    * Check if the supporter has an crew
+    * @param profile
+    * @return Boolean
+    */
   private def hasPrimaryCrew(profile: Profile) = {
     profile.supporter.crew match {
       case Some(crew) => true
@@ -307,14 +351,23 @@ class UserService @Inject() (
     }
   }
 
+  /**
+    * Check if the supporter has an address
+    * @param profile
+    * @return Boolean
+    */
   private def hasAddress(profile: Profile) = {
     profile.supporter.address.headOption match {
       case Some(address) => true
       case _ => false
     }
   }
-  
-  //the function is for checkNVM function.
+
+  /**
+    * Check if the active state of a supporter in his crew is active
+    * @param profile
+    * @return
+    */
   private def isActive(profile: Profile) = {
     profile.supporter.active match {
       case Some(active) => if(active == "active") { true } else { false }

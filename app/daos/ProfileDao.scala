@@ -265,18 +265,28 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     }
   }
 
+  /**
+    * Set the active state of a supporter on his primary crew to the new state
+    * @param profile Profile of the supporter
+    * @param activeFlag New state of the supporter
+    * @return Future[Boolean]
+    */
   def setActiveFlag(profile: Profile, activeFlag: Option[String]): Future[Boolean] = {
+    // Get the crew of the current profiles supporter
     profile.supporter.crew match {
       case Some(crew) => {
         crewDao.findDBCrewModel(crew.id).flatMap(_ match {
           case Some (crewDB) => {
+            // Create query to get the supporters
             val supporterQuery = (for {
               p <- profiles.filter(_.email === profile.email)
               s <- supporters.filter(_.profileId === p.id)
             } yield s)
 
+            // Run query and check if we found a supporter
             dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
               case Some(supporterDB) => {
+                // Update the state of the of the supporters crew
                 val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDB.id } yield (sc.active)
                 dbConfig.db.run(updateQ.update(activeFlag)).map(_ match {
                   case 1 => true
@@ -293,16 +303,24 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     }
   }
 
+  /**
+    * Get the active state of a supporter from his primary crew
+    * @param profile Profile of the supporter
+    * @return Future[Option[String]]
+    */
   def getActiveFlag(profile: Profile): Future[Option[String]] = {
+    // Get the crew of the current profiles supporter
     profile.supporter.crew match {
       case Some(crew) => {
         crewDao.findDBCrewModel(crew.id).flatMap(_ match {
           case Some(crewDB) => {
+            // Create query to get the supporters crew and therefore the active state
             val action = for {
               p <- profiles.filter(current => current.email === profile.email) 
               s <- supporters.filter(current => current.profileId === p.id)
               sc <- supporterCrews.filter(current => current.crewId === crewDB.id && current.supporterId === s.id)
             } yield sc.active
+            // Run the query and return the active state
             dbConfig.db.run(action.result).map(_.headOption match {
               case Some(activeFlag) => activeFlag
               case _ => None
@@ -315,18 +333,27 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     } 
   }
 
+  /**
+    * Set the nvm state as an date of a supporter on his primary crew to the new state
+    * @param profile Profile of the supporter
+    * @param nvmDate New date for nvm state of the supporter
+    * @return Future[Boolean]
+    */
   def setNVM(profile: Profile, nvmDate: Option[Long]): Future[Boolean] = {
     profile.supporter.crew match {
+      // Get the crew of the current profiles supporter
       case Some(crew) => {
         crewDao.findDBCrewModel(crew.id).flatMap(_ match {
           case Some (crewDB) => {
+            // Create query to get the supporter
             val supporterQuery = (for {
               p <- profiles.filter(_.email === profile.email)
               s <- supporters.filter(_.profileId === p.id)
             } yield s)
-
+            // Run the query and trigger the update on the result
             dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
               case Some(supporterDB) => {
+                // Update the state of the of the supporters crew
                 val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDB.id } yield (sc.nvmDate)
                 dbConfig.db.run(updateQ.update(nvmDate)).map(_ match {
                   case 1 => true
@@ -343,16 +370,24 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     }
   }
 
+  /**
+    * Get the nvm date of a supporter from his primary crew
+    * @param profile Profile of the supporter
+    * @return Future[Option[Long]]
+    */
   def getNVM(profile: Profile) : Future[Option[Long]] ={
     profile.supporter.crew match {
       case Some(crew) => {
+        // Get the crew of the current profiles supporter
         crewDao.findDBCrewModel(crew.id).flatMap(_ match {
+          // Create query to get the supporters crew and therefore the nvm date
           case Some(crewDB) => {
             val action = for {
               p <- profiles.filter(current => current.email === profile.email) 
               s <- supporters.filter(current => current.profileId === p.id)
               sc <- supporterCrews.filter(current => current.crewId === crewDB.id && current.supporterId === s.id)
             } yield sc.nvmDate
+            // Run the query and return the nvm date
             dbConfig.db.run(action.result).map(_.headOption match {
               case Some(nvmDate) => nvmDate
               case _ => None
