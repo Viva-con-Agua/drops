@@ -19,7 +19,7 @@ import play.api.Logger
 import utils.NatsController
 import play.api.libs.json._
 
-class requestActiveFlagUserService @Inject() (
+class UserService @Inject() (
                               userDao:UserDao,
                               profileDao:ProfileDao,
                               poolService: PoolService,
