@@ -361,7 +361,7 @@ class Profile @Inject() (
         user.profiles.headOption match {
           // Call userservice and set the active state for the supporter, otherwise return the notFound message
           case Some(profile) => userService.requestActiveFlag(profile).map(_ match {
-            case Some(status) => WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "TODO")).getResult
+            case Some(status) => WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> status)).getResult
             case None => WebAppResult.Bogus(request, "profile.requestActiveFlag.failure", Nil, "Profile.requestActiveFlag.failure", Json.obj("status" -> "stays inactive")).getResult
           })
           case None => Future.successful(WebAppResult.NotFound(request, "profile.requestActiveFlag.notFound", Nil, "Profile.requestActiveFlag.notFound", Map[String, String]()).getResult)

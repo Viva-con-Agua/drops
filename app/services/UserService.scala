@@ -212,7 +212,7 @@ class UserService @Inject() (
     * @param profile
     * @return
     */
-  def activeActiveFlag(profile: Profile) = {
+  def activeActiveFlag(profile: Profile): Future[Option[String]] = {
     profileDao.setActiveFlag(profile, Some("active")).map(_ match {
       case true => Some("active")
       case false => None
@@ -224,11 +224,11 @@ class UserService @Inject() (
     * @param profile
     * @return
     */
-  def requestActiveFlag(profile: Profile) = {
-    profileDao.getActiveFlag(profile).map(_ match {
+  def requestActiveFlag(profile: Profile): Future[Option[String]] = {
+    profileDao.getActiveFlag(profile).flatMap(_ match {
       case Some(activeFlag) => activeFlag match {
-        case "active" => activeFlag
-        case "requested" => activeFlag
+        case "active" => Future.successful(Some(activeFlag))
+        case "requested" => Future.successful(Some(activeFlag))
         case "inactive" => profileDao.setActiveFlag(profile, Some("requested")).map(_ match {
           case true => Some("requested")
           case false => None
@@ -246,7 +246,7 @@ class UserService @Inject() (
     * @param profile
     * @return
     */
-  def inactiveActiveFlag(profile: Profile) = {
+  def inactiveActiveFlag(profile: Profile): Future[Option[String]] = {
     profileDao.setActiveFlag(profile, Some("inactive")).map(_ match {
       case true => Some("inactive")
       case false => None
@@ -274,10 +274,7 @@ class UserService @Inject() (
         // Get primary crew of the supporter
         val primaryCrew = hasPrimaryCrew(p)
         // Return the current state
-        val status = p.supporter.active match {
-          case Some(status) => status
-          case _ => "inactive"
-        }
+        val status = getActiveState(p)
         StatusWithConditions(status, Conditions(None, Some(primaryCrew), None))
       }
       case _ => StatusWithConditions("inactive", Conditions(None, Some(false), None))
@@ -289,7 +286,7 @@ class UserService @Inject() (
     * @param profile
     * @return
     */
-  def activeNVM(profile: Profile) = {
+  def activeNVM(profile: Profile): Future[Option[String]] = {
     profileDao.setNVM(profile, Some(System.currentTimeMillis() + 1000*60*60*365)).map(_ match {
       case true => Some("active")
       case false => None
@@ -301,7 +298,7 @@ class UserService @Inject() (
     * @param profile
     * @return
     */
-  def inActiveNVM(profile: Profile)  = {
+  def inActiveNVM(profile: Profile): Future[Option[String]]  = {
     profileDao.setNVM(profile, None).map(_ match {
       case true => Some("inactive")
       case false => None
@@ -360,6 +357,18 @@ class UserService @Inject() (
     profile.supporter.address.headOption match {
       case Some(address) => true
       case _ => false
+    }
+  }
+
+  /**
+    *
+    * @param profile
+    * @return
+    */
+  private def getActiveState(profile: Profile): String = {
+    profile.supporter.active match {
+      case Some(status) => status
+      case _ => "inactive"
     }
   }
 
