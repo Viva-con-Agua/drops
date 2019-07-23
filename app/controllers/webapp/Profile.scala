@@ -73,7 +73,7 @@ class Profile @Inject() (
   def getUser(uuid: String) = UserAwareAction.async { implicit request =>
     request.identity match {
       case Some( u ) => userService.find(UUID.fromString(uuid)).map(_ match {
-        case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(user)).getResult
+        case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(PublicUser(user))).getResult
         case None => WebAppResult.NotFound(request, "profile.notFound.user", Nil, "Profile.NotFound.User", Map[String, String]("uuid" -> uuid) ).getResult
       })
       case None => Future.successful(
