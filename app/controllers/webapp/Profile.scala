@@ -207,7 +207,7 @@ class Profile @Inject() (
         case Some(otherUser) => {
           val p = Pillar(pillar)
           p.isKnown match {
-            case true => user.profiles.headOption match {
+            case true => otherUser.profiles.headOption match {
               case Some(profile) => profile.supporter.crew match {
                 case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, p), otherUser).map(_ match {
                   case Left(i) => WebAppResult.Ok(request, "profile.assignRole.success", Nil, "Profile.AssignRole.Success", Json.obj()).getResult
@@ -222,6 +222,19 @@ class Profile @Inject() (
         }
         case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.otherUserNotFound", Nil, "Profile.AssignRole.OtherUserNotFound", Map[String, String]()).getResult)
       })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+
+  /**
+    * The controller will return all available pillars in a crew
+    *
+    * @see models/Pillar.scala
+    */
+  def getAllPillars = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.getNewsletterSetting.success", Nil, "Profile.GetNewsletterSetting.Success", Json.obj("setting" -> Pillar.getAll)).getResult)
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
@@ -245,7 +258,6 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
-
 
   /**
     * The controller will check the state of the non-voting membership of an user for his primary crew

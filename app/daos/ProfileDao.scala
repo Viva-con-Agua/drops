@@ -289,7 +289,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
                 // Update the state of the of the supporters crew
                 val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDB.id } yield (sc.active)
                 dbConfig.db.run(updateQ.update(activeFlag)).map(_ match {
-                  case 1 => true
+                  case x if x > 0 => true
                   case _ => false
                 })
               }
@@ -356,7 +356,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
                 // Update the state of the of the supporters crew
                 val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDB.id } yield (sc.nvmDate)
                 dbConfig.db.run(updateQ.update(nvmDate)).map(_ match {
-                  case 1 => true
+                  case x if x > 0 => true
                   case _ => false
                 })
               }

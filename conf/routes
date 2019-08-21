@@ -25,6 +25,7 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 GET     /webapp/user/delete                                 controllers.webapp.Auth.deleteUser
 GET     /webapp/user/:uuid                                  controllers.webapp.Profile.getUser(uuid : String)
 GET     /webapp/profile/role/:userUUID/:pillar              controllers.webapp.Profile.assignRole(userUUID : String, pillar : String)
+GET     /webapp/profile/pillar                              controllers.webapp.Profile.getAllPillars
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
 GET     /webapp/profile/assign/:crewUUID                    controllers.webapp.Profile.assignCrew(crewUUID: String)
