@@ -34,6 +34,7 @@ trait ProfileDao {
   def removeCrew(crewUUID: UUID, profile: Profile) : Future[Either[Int, String]]
   def updateProfileEmail(email: String, profile: Profile): Future[Boolean]
   def setCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]]
+  def removeCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]]
   def setActiveFlag(profile: Profile, activeFlag: Option[String]): Future[Boolean]
   def getActiveFlag(profile: Profile): Future[Option[String]]
   def setNVM(profile: Profile, nvmStatus: Option[Long]): Future[Boolean]
@@ -255,6 +256,47 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
             ).exists.result).flatMap(_ match {
               case true => update
               case false => insert
+            })
+          }
+          case None => Future.successful(Right("dao.user.error.notFound.supporter"))
+        })
+      }
+      case Some(crew) => Future.successful(Right("dao.user.error.anotherCrewAssigned"))
+      case None => Future.successful(Right("dao.user.error.notFound.crew"))
+    }
+  }
+
+  /**
+    * Removes a role to a supporter if and only if, the supporter has already the mentioned crew.
+    * @param crewUUID
+    * @param crewDBID
+    * @param role
+    * @param profile
+    * @return
+    */
+  override def removeCrewRole(crewUUID: UUID, crewDBID: Long, role: VolunteerManager, profile: Profile): Future[Either[Int, String]] = {
+    profile.supporter.crew match {
+      case Some(crew) if crew.id == crewUUID => {
+        // get the SupporterDB
+        val supporterQuery = (for {
+          p <- profiles.filter(_.email === profile.email)
+          s <- supporters.filter(_.profileId === p.id)
+        } yield s)
+        dbConfig.db.run(supporterQuery.result).flatMap(_.headOption match {
+          case Some(supporterDB) => {
+            // does the supporter already has the new role?
+            def update = {
+              val updateQ = for { sc <- supporterCrews if sc.supporterId === supporterDB.id && sc.crewId === crewDBID && sc.pillar === role.getPillar.name } yield (sc.role, sc.pillar)
+              dbConfig.db.run(updateQ.update((None, None))).map(_ match {
+                case i if i > 0 => Left(i)
+                case _ => Right("dao.user.error.nothingUpdated")
+              })
+            }
+            dbConfig.db.run(supporterCrews.filter(row =>
+              row.supporterId === supporterDB.id && row.crewId === crewDBID && row.pillar === role.getPillar.name
+            ).exists.result).flatMap(_ match {
+              case true => update
+              case false => Future.successful(Right(role.getPillar.name))
             })
           }
           case None => Future.successful(Right("dao.user.error.notFound.supporter"))

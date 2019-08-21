@@ -169,6 +169,23 @@ class UserService @Inject() (
     })
   }
 
+  /** TODO: FIND CURRENT CREW PILLAR AND SET IT TO NULL */
+  def removeCrewRole(crew: Crew, role: VolunteerManager, user: User): Future[Either[Int, String]] = {
+    crewDao.findDB(crew).flatMap(_ match {
+      case Some(crewDB) => user.profiles.headOption match {
+        case Some(profile) => profileDao.removeCrewRole(crew.id, crewDB.id, role, profile).map(result => {
+          if(result.isLeft && result.left.get > 0) {
+            nats.publishUpdate("USER", user.id)
+            userDao.find(user.id).map(_.map(updated => poolService.update(updated))) // Todo: Consider result?!
+          }
+          result
+        })
+        case None => Future.successful(Right("service.user.error.notFound.profile"))
+      }
+      case None => Future.successful(Right("service.user.error.notFound.crew"))
+    })
+  }
+
   /**
     * Removes a crew from a user.
     * @author Johann Sell

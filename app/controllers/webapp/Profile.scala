@@ -226,6 +226,38 @@ class Profile @Inject() (
     }
   }
 
+  /**
+    * Remove the role (pillar) of an supporter of his crew
+    * @param userUUID
+    * @param pillar
+    * @return
+    */
+  def removeRole(userUUID: String, pillar: String) = UserAwareAction.async { implicit request =>
+    val otherUserID = UUID.fromString(userUUID)
+    request.identity match {
+      case Some(user) => userService.find(otherUserID).flatMap(_ match {
+        case Some(otherUser) => {
+          val p = Pillar(pillar)
+          p.isKnown match {
+            case true => otherUser.profiles.headOption match {
+              case Some(profile) => profile.supporter.crew match {
+                case Some(crew) => userService.removeCrewRole(crew, VolunteerManager(crew, p), otherUser).map(_ match {
+                  case Left(i) => WebAppResult.Ok(request, "profile.removeRole.success", Nil, "Profile.RemoveRole.Success", Json.obj()).getResult
+                  case Right(error) => WebAppResult.NotFound(request, error, Nil, error, Map[String, String]()).getResult
+                })
+                case None => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.crewNotFoundExecutingUser", Nil, "Profile.RemoveRole.CrewNotFoundExecutingUser", Map[String, String]()).getResult)
+              }
+              case None => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.profileNotFoundExecutingUser", Nil, "Profile.RemoveRole.ProfileNotFoundExecutingUser", Map[String, String]()).getResult)
+            }
+            case false => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.givenPillarUnknown", Nil, "Profile.RemoveRole.GivePillarUnknown", Map[String, String]()).getResult)
+          }
+        }
+        case None => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.otherUserNotFound", Nil, "Profile.RemoveRole.OtherUserNotFound", Map[String, String]()).getResult)
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
 
   /**
     * The controller will return all available pillars in a crew
