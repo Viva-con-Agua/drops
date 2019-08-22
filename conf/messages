@@ -166,13 +166,17 @@ error.bogusResetEmailData=There is something wrong with the submitted data.
 success.profile.image.upload=Profile image was successfully uploaded!
 
 mail.welcome.subject=VcA Pool | Welcome
-mail.welcome.hi=Hello, {0}!
+mail.welcome.hi=Hello {0}!
 mail.welcome.instructions=Thanks for signing up. Just go to the following url to activate you account.
 
 mail.reset.subject=VcA Pool | Reset password
-mail.reset.hi=Hello, {0}!
+mail.reset.hi=Hello {0}!
 mail.reset.instructions=We have received a request to reset your password. Just go to the following url to proceed.
 mail.reset.instructionsPool1=We have received your first login with an old Pool Account. Just go to the following url to set a new Password.
+
+mail.reset.subject=VcA Pool | Change email address
+mail.reset.hi=Hello {0}!
+mail.reset.instructions=We have received a request to change your email address. Just go to the following url to proceed.
 
 crew.legend=Crew
 crew.name=Crew Name

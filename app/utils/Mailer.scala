@@ -41,11 +41,20 @@ class Mailer @Inject() (configuration:Configuration, mailer:MailerClient) {
 
   def resetPassword(email:String, link:String)(implicit messages:Messages) = {
     sendEmailAsync(email)(
-      subject = Messages("mail.reset.subject"), 
+      subject = Messages("mail.reset.subject"),
       bodyHtml = Some(views.html.mails.resetPassword(email, link).toString),
       bodyText = Some(views.html.mails.resetPasswordText(email, link).toString)
     )
   }
+
+  def resetEmail(email:String, link:String)(implicit messages:Messages) = {
+    sendEmailAsync(email)(
+      subject = Messages("mail.resetEmail.subject"),
+      bodyHtml = Some(views.html.mails.resetEmail(email, link).toString),
+      bodyText = Some(views.html.mails.resetEmailText(email, link).toString)
+    )
+  }
+
   def resetPasswordPool1(email:String, link:String)(implicit messages:Messages) = {
     sendEmailAsync(email)(
       subject = Messages("mail.reset.subject"), 

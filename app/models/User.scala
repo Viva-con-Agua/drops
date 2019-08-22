@@ -51,7 +51,6 @@ case class Supporter(
 
 object Supporter {
 
-
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday: Option[Long], sex: Option[String]): Supporter = {
     Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, None, Set(), Set(), Set(), None, None)
   }
@@ -79,7 +78,6 @@ object Supporter {
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String]) : Supporter =
     Supporter(firstName, lastName, fullName, None, None, None, None, None, Set(), Set(), Set(), None, None)
-
 
   def apply(firstName: Option[String], lastName: Option[String], fullName: Option[String], mobilePhone: Option[String], placeOfResidence: Option[String], birthday : Option[Long], sex : Option[String], crew: Option[Crew], roles: Set[Role], address : Set[Address], active : Option[String], nvmDate : Option[Long]) : Supporter =
     Supporter(firstName, lastName, fullName, mobilePhone, placeOfResidence, birthday, sex, crew, roles, Set(), address, active, nvmDate)

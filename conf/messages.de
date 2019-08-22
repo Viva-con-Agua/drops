@@ -158,14 +158,17 @@ error.bogusResetEmailData=Die übergebenen Daten können nicht interpretiert wer
 success.profile.image.upload=Tropfenbild des Profils wurde erfolgreich hochgeladen!
 
 mail.welcome.subject=VcA Pool | Willkommen im Boot
-mail.welcome.hi=Moin, {0}!
+mail.welcome.hi=Moin {0}!
 mail.welcome.instructions=Danke, dass du dabei bist. Rufe nur noch den folgenden Link auf, um deinen Account zu aktivieren.
 
-
 mail.reset.subject=VcA Pool | Passwort neu setzen
-mail.reset.hi=Moin, {0}!
+mail.reset.hi=Moin {0}!
 mail.reset.instructions=Du willst dein Passwort neu setzen? Klicke auf den folgenden Link!
 mail.reset.instructionsPool1=Wir haben mitbekommen, dass du dich mit deinem alten Pool Account angemeldet hast. Es ist wichtig das du dein Passwort neu setzt. Klick einfach auf den unteren Link.
+
+mail.resetEmail.subject=VcA Pool | E-Mail Adresse neu setzen
+mail.resetEmail.hi=Moin {0}!
+mail.resetEmail.instructions=Du willst deine E-Mail Adresse neu setzen? Klicke auf den folgenden Link!
 
 crew.legend=Crew
 crew.name=Crew Name
