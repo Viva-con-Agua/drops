@@ -269,7 +269,7 @@
 							"created": {
 								"$ref": "#/components/schemas/ValuesQueryStruct"
 							}
-						},						,
+						},
 						"example": {
 							"publicId": {
 								"1": "11fe6cb7-4320-4f07-bebf-df59f9e05096",
@@ -286,7 +286,7 @@
 							"email": {
 								"$ref": "#/components/schemas/ValuesQueryStruct"
 							}
-						},						,
+						},
 						"example": {
 						}					
 					},
@@ -299,7 +299,7 @@
 							"providerKey": {
 								"$ref": "#/components/schemas/ValuesQueryStruct"
 							}
-						},						,
+						},
 						"example": {
 						}
 					
@@ -328,7 +328,7 @@
 							"sex": {
 								"$ref": "#/components/schemas/ValuesQueryStruct"
 							}
-						},						,
+						},
 						"example": {
 						}
 					},
@@ -347,7 +347,7 @@
 							"name": {
 								"$ref": "#/components/schemas/ValuesQueryStruct"
 							}
-						},						,
+						},
 						"example": {
 						}
 					
@@ -373,7 +373,7 @@
 							"country": {
 								"$ref": "#/components/schemas/ValuesQueryStruct"
 							}
-						},						,
+						},
 						"example": {
 						}
 					
