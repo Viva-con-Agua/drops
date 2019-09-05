@@ -1,0 +1,1130 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"title": "Viva con Agua Drops REST API",
+		"description": "Drops handles the business objects `User`, `Crew` and `Organization`. For the objects `User` and `Crew` are already some endpoints defined.",
+		"version": "0.1.1"		
+	},
+	"servers": [
+		{
+			"url": "https://pool.vivaconagua.org/drops/rest",
+			"description": "Live Server"
+		},
+		{
+			"url": "https://vca.informatik.hu-berlin.de/drops/rest",
+			"description": "Staging Server"
+		}
+	],
+	"components": {
+		"schemas": {
+			"Error": {
+				"type": "object",
+				"properties": {
+					"status": {
+						"type": "string",
+						"example": "error"
+					},
+					"code": {
+						"type": "integer",
+						"example": 403
+					},
+					"type": {
+						"type": "string",
+						"example": "UserIDMismatch"
+					},
+					"msg": {
+						"type": "string",
+						"example": "Defined Identifiers dont't match"
+					}
+				}
+			},
+			"Sort": {
+				"type": "object",
+				"properties": {
+					"attributes": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"enum": [ 
+								"User_Id", "User_publicId", "User_roles", "User_updated", "User_created", "Profile_id", "Profile_confirmed", "Profile_email", "Profile_userId", "Supporter_id",
+								"Supporter_firstName", "Supporter_lastName", "Supporter_fullName", "Supporter_mobilePhone", "Supporter_placeOfResidence", "Supporter_birthday", "Supporter_sex",
+								"Supporter_profileId", "LoginInfo_id", "LoginInfo_providerId", "LoginInfo_providerKey", "LoginInfo_profileId", "ProfileInfo_id", "ProfileInfo_hasher", "ProfileInfo_password",
+								"ProfileInfo_profileId", "OAuth1Token_id", "OAuth1Token_token", "OAuth1Token_secret", "OAuth1Token_profileId", "SupporterCrew_id", "SupporterCrew_supporterId", "SupporterCrew_crewId",
+								"SupporterCrew_role", "SupporterCrew_pillar", "SupporterCrew_created", "SupporterCrew_updated", "SupporterCrew_active", "SupporterCrew_nvmDate", "Address_id", "Address_publicId",
+								"Address_street", "Address_additional", "Address_zip", "Address_city", "Address_country", "Address_supporterId", "SupporterCrew_publicId", "SupporterCrew_name"
+							]
+						},
+						"example": [ "User_created" ]
+					},
+					"dir": {
+						"type": "string",
+						"enum": [ "ASC", "DESC" ],
+						"example": "ASC"
+					}
+				},
+				"required": [ "attributes", "dir" ]
+			},
+			"PublicUser": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"example": "4c4ac754-51c2-4919-8e14-2c2631cff5f3"
+					},
+					"profiles": {
+						"type": "object",
+						"properties": {
+							"loginInfo": {
+								"type": "object",
+								"properties": {
+									"providerID": {
+										"type": "string",
+										"example": "Credentials"
+									},
+									"providerKey": {
+										"type": "string",
+										"example": "freak@vivaconagua.org"
+									}
+								},
+								"required": [ "providerID", "providerKey" ]
+							},
+							"primary": {
+								"type": "boolean",
+								"example": true
+							},
+							"confirmed": {
+								"type": "boolean",
+								"example": true
+							},
+							"email": {
+								"type": "string",
+								"example": "freak@vivaconagua.org"
+							},
+							"supporter": {
+								"type": "object",
+								"properties": {
+									"firstName": {
+										"type": "string",
+										"example": "Bud"
+									},
+									"lastName": {
+										"type": "string",
+										"example": "Spencer"
+									},
+									"fullName": {
+										"type": "string",
+										"example": "Bud Spencer"
+									},
+									"mobilePhone": {
+										"type": "string",
+										"example": "0176/00000001"
+									},
+									"placeOfResidence": {
+										"type": "string",
+										"example": "Bielefeld"
+									},
+									"birthday": {
+										"type": "integer",
+										"example": 26251209
+									},
+									"sex": {
+										"type": "string",
+										"example": "male"
+									},
+									"crew": {
+										"$ref": "#/components/schemas/Crew"										
+									},
+									"roles": {
+										"type": "array",
+										"items": {
+											"$ref": "#/components/schemas/Role"	
+										}
+									},
+									"pillars": {
+										"type": "array",
+										"items": {
+											"$ref": "#/components/schemas/Pillar"	
+										}
+									},
+									"address": {
+										"type": "array",
+										"items": {
+											"$ref": "#/components/schemas/Address"	
+										}
+									},
+									"active": {
+										"type": "string"
+									},
+									"nvmDate": {
+										"type": "integer",
+										"example": 1546372809
+									}
+								}							
+							}
+						},
+						"required": [ "loginInfo", "primary", "confirmed", "supporter" ]
+					},
+					"roles": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Role"	
+						},
+						"example": [ "supporter", "employee" ]
+					},
+					"updated": {
+						"type": "integer",
+						"example": 1351713609
+					},
+					"created": {
+						"type": "integer",
+						"example": 1351713609
+					}
+				},
+				"required": [ "id", "profiles", "roles", "updated", "created" ]
+			},
+			"Role": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"enum": [ "VolunteerManager", "supporter", "employee", "admin" ],
+						"example": "VolunteerManager"
+					},
+					"crew": {
+						"$ref": "#/components/schemas/Crew"	
+					},
+					"pillar": {
+						"$ref": "#/components/schemas/Pillar"
+					}
+				},
+				"required": [ "name" ]
+			},
+			"Pillar": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"enum": [ "education", "operation", "finance", "network" ],
+						"example": "network"
+					}
+				},
+				"required": [ "name" ]
+			},
+			"Address": {
+				"type": "object",
+				"properties": {
+					"publicId": {
+						"type": "string",
+						"example": "c17dd4dd-0b75-4a5c-8275-38b67acc45fb"
+					},
+					"street": {
+						"type": "string",
+						"example": "Neuer Kamp 32"
+					},
+					"additional": {
+						"type": "string"
+					},
+					"zip": {
+						"type": "string",
+						"example": "20357"
+					},
+					"city": {
+						"type": "string",
+						"example": "Hamburg"
+					},
+					"country": {
+						"type": "string",
+						"example": "Deutschland"
+					}
+				},
+				"required": [ "street", "zip", "city", "country" ]
+			},
+			"ValuesQueryStruct": {
+				"oneOf": [
+					{
+						"type": "string"
+					},
+					{
+						"type": "object",
+						"description": "An object that has consecutive numbers as keys, representing the place inside the query string where the value has to be inserted.",
+						"additionalProperties": true
+					}
+				]
+			},
+			"ValuesQueryUser": {
+				"type": "object",
+				"properties": {
+					"user": {
+						"type": "object",
+						"properties": {
+							"publicId": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"roles": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"updated": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"created": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						},						,
+						"example": {
+							"publicId": {
+								"1": "11fe6cb7-4320-4f07-bebf-df59f9e05096",
+								"2": "4c4ac754-51c2-4919-8e14-2c2631cff5f3"
+							}
+						}
+					},
+					"profile": {
+						"type": "object",
+						"properties": {
+							"confirmed": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"email": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						},						,
+						"example": {
+						}					
+					},
+					"loginInfo": {
+						"type": "object",
+						"properties": {
+							"providerId": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"providerKey": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						},						,
+						"example": {
+						}
+					
+					},
+					"supporter": {
+						"type": "object",
+						"properties": {
+							"firstName": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"lastName": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"fullName": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"mobilePhone": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"placeOfResidence": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"birthday": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"sex": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						},						,
+						"example": {
+						}
+					},
+					"supporterCrew": {
+						"type": "object",
+						"properties": {
+							"publicId": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"role": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"pillar": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"name": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						},						,
+						"example": {
+						}
+					
+					},
+					"address": {
+						"type": "object",
+						"properties": {
+							"publicId": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"street": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"additional": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"zip": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"city": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"country": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						},						,
+						"example": {
+						}
+					
+					},
+				}
+			},
+			"ValuesQueryCrew": {
+				"type": "object",
+				"properties": {
+					"crew": {
+						"type": "object",
+						"properties": {
+							"id": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"name": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						}
+					},
+					"city": {
+						"type": "object",
+						"properties": {
+							"country": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							},
+							"name": {
+								"$ref": "#/components/schemas/ValuesQueryStruct"
+							}
+						}
+					}
+				}
+			},
+			"Crew": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"example": "dd3a888c-382c-4cba-b5d0-5d82dcb8b5ae"
+					},
+					"name": {
+						"type": "string",
+						"example": "VcA OWL"
+					},
+					"cities": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/City"
+						}
+					}
+				},
+				"required": [ "id", "name", "cities" ]
+			},
+			"City": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"example": "Bielefeld"
+					},
+					"country": {
+						"type": "string",
+						"example": "Deutschland"
+					}
+				},
+				"required": [ "name", "country" ]
+			}
+		},
+		"parameters": {
+			"UserID": {
+				"name": "id",
+				"in": "path",
+				"required": true,
+				"description": "Identifies the user.",
+				"schema": {
+					"type": "string",
+					"example": "4c4ac754-51c2-4919-8e14-2c2631cff5f3"
+				}
+			},
+			"UserUUID": {
+				"name": "uuidUser",
+				"in": "path",
+				"required": true,
+				"description": "Identifies the user.",
+				"schema": {
+					"type": "string",
+					"example": "4c4ac754-51c2-4919-8e14-2c2631cff5f3"
+				}
+			},
+			"CrewUUID": {
+				"name": "uuidCrew",
+				"in": "path",
+				"required": true,
+				"description": "Identifies the crew.",
+				"schema": {
+					"type": "string",
+					"example": "dd3a888c-382c-4cba-b5d0-5d82dcb8b5ae"
+				}
+			}
+				
+		}
+	},
+	"paths": {
+		"/user": {
+			"post": {
+				"summary": "Returns a list of users.",
+				"description": "Takes a query as body content and filters, sorts and paginates the users inside the database by the given parameters.",
+				"tags": ["User"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"query": {
+										"type": "string",
+										"example": "User.id.1.=_OR_User.id.2.="
+									},
+									"values": {
+										"$ref": "#/components/schemas/ValuesQueryUser"
+									},
+									"sort": {
+										"$ref": "#/components/schemas/Sort"
+									},
+									"offset": {
+										"type": "integer",
+										"example": 10
+									},
+									"limit": {
+										"type": "integer",
+										"example": 20
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "A JSON array of users.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/PublicUser"
+									}
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "A parsing error occurred. Normally, either the given query string or the given value object is missformatted.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "An internal error occurred. Normally, some kind of database error occurred. Contact the Drops provider.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/{id}": {
+			"post": {
+				"summary": "Returns one user identified by the given ID.",
+				"description": "It's a `POST` by accident. It does nothing with the request body and ignores it.",
+				"tags": ["User"],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/UserID"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "A JSON representing a `User`.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicUser"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "There is no user with the given UUID.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error" 
+								},
+								"example": {
+									"status": "error",
+									"code": 404,
+									"type": "UserNotFound",
+									"msg": "rest.api.canNotFindGivenUser"
+								}
+							}
+						}
+					}
+				}
+			},
+			"put": {
+				"summary": "Updates a user.",
+				"description": "The given UUID identifies the user that has to be updated and the body contains the new data.",
+				"tags": ["User"],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/UserID"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"email": {
+										"type": "string",
+										"example": "freak@vivaconagua.org"
+									},
+									"firstName": {
+										"type": "string",
+										"example": "Terence"
+									},
+									"lastName": {
+										"type": "string",
+										"example": "Hill"
+									},
+									"mobilePhone": {
+										"type": "string",
+										"example": "0176/10000000"
+									},
+									"placeOfResidence": {
+										"type": "string",
+										"example": "Lippe"
+									},
+									"birthday": {
+										"type": "integer",
+										"example": 7588809
+									},
+									"sex": {
+										"type": "string",
+										"example": "male"
+									}
+								},
+								"required": [ "email" ]
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "A JSON representing the updated user.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicUser"
+								},
+								"example": {
+									"id": "4c4ac754-51c2-4919-8e14-2c2631cff5f3",
+									"profiles": {
+										"loginInfo": {
+											"providerID": "Credentials",
+											"providerKey": "freak@vivaconagua.org"
+										},
+										"primary": true,
+										"confirmed": true,
+										"email": "freak@vivaconagua.org",
+										"supporter": {
+											"firstName": "Terence",
+											"lastName": "Hill",
+											"fullName": "Terence Hill",
+											"mobilePhone": "0176/10000000",
+											"placeOfResidence": "Lippe",
+											"birthday": 7588809,
+											"sex": "male",
+											"crew": {
+												"id": "dd3a888c-382c-4cba-b5d0-5d82dcb8b5ae",
+												"name": "VcA OWL",
+												"cities": [
+												  {
+													"name": "Bielefeld",
+													"country": "Deutschland"
+												  }
+												]
+											},
+											"roles": [
+												{
+													"name": "VolunteerManager",
+													"crew": {
+														"id": "dd3a888c-382c-4cba-b5d0-5d82dcb8b5ae",
+														"name": "VcA OWL",
+														"cities": [
+															{
+																"name": "Bielefeld",
+																"country": "Deutschland"
+															}
+														]
+													},
+													"pillar": {
+														"name": "network"
+													}
+												}
+											],
+											"pillars": [
+												{
+													"name": "network"
+												}
+											],
+											"address": [
+												{
+													"publicId": "c17dd4dd-0b75-4a5c-8275-38b67acc45fb",
+													"street": "Neuer Kamp 32",
+													"additional": "string",
+													"zip": "20357",
+													"city": "Hamburg",
+													"country": "Deutschland"
+												}
+											],
+											"active": "string",
+											"nvmDate": 1546372809
+										}
+									},
+									"roles": [
+										"supporter",
+										"employee"
+									],
+									"updated": 1351713609,
+									"created": 1351713609
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "The given UUID does not matches the identified user.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error" 
+								},
+								"example": {
+									"status": "error",
+									"code": 403,
+									"type": "UserIDMismatch",
+									"msg": "Defined Identifiers dont't match"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "There is no user with the given UUID.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error" 
+								},
+								"example": {
+									"status": "error",
+									"code": 404,
+									"type": "UserNotFound",
+									"msg": "The requested user can't be found"
+								}
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"summary": "Deletes a user.",
+				"description": "The given UUID identifies the user that has to be deleted.",
+				"tags": ["User"],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/UserID"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"email": {
+										"type": "string",
+										"example": "freak@vivaconagua.org"
+									}
+								},
+								"required": [ "email" ]
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "A JSON boolean that indicates, if the user has been deleted.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "boolean",
+									"example": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "The given UUID does not matches the identified user.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								},
+								"example": {
+									"status": "error",
+									"code": 403,
+									"type": "UserIDMismatch",
+									"msg": "Defined Identifiers dont't match"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "There is no user with the given email.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Error"
+								},
+								"example": {
+									"status": "error",
+									"code": 404,
+									"type": "UserNotFound",
+									"msg": "The requested user can't be found"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/create": {
+			"post": {
+				"summary": "Creates a user.",
+				"description": "The new user has to be described by the request body.",
+				"tags": ["User"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"email": {
+										"type": "string",
+										"example": "freak@millerntor.org"
+									},
+									"firstName": {
+										"type": "string",
+										"example": "Franco"
+									},
+									"lastName": {
+										"type": "string",
+										"example": "Nero"
+									},
+									"mobilePhone": {
+										"type": "string",
+										"example": "0176/21010102"
+									},
+									"placeOfResidence": {
+										"type": "string",
+										"example": "Höxter"
+									},
+									"birthday": {
+										"type": "integer",
+										"example": 28238409
+									},
+									"sex": {
+										"type": "string",
+										"example": "male"
+									},
+									"password": {
+										"type": "string",
+										"example": "5z?(Y^5?fpA>.VsX"
+									}
+								},
+								"required": [ "email", "firstName", "lastName", "mobilePhone", "placeOfResidence", "birthday", "sex" ]
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "A JSON representing the user that should have been created, but was already found inside the database.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicUser"
+								}
+							}
+						}
+					},
+					"200": {
+						"description": "A JSON representing the created user.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicUser"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/user/crew/{uuidUser}/{uuidCrew}": {
+			"post": {
+				"summary": "Assigns a user to a crew.",
+				"description": "The given user's UUID is used to identify the user that will be assigned to the crew identified by the given second UUID.",
+				"tags": ["User", "Crew"],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/UserUUID"
+					},
+					{
+						"$ref": "#/components/parameters/CrewUUID"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "A success message formated as a string.",
+						"content": {
+							"text/plain; charset=utf-8": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"304": {
+						"description": "Already assigned. Nothing has been done, since the user is already assigned to the given crew.",
+						"content": {
+							"text/plain; charset=utf-8": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Missing pillar. In this case, the user's pillar was expected, but not given.",
+						"content": {
+							"text/plain; charset=utf-8": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "First case: User or crew has not been identified, by the given ids. Second case: The pillar has not been identified.",
+						"content": {
+							"text/plain; charset=utf-8": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/crew": {
+			"post": {
+				"summary": "Returns a list of crews.",
+				"description": "Takes a query as body content and filters, sorts and paginates the crews inside the database by the given parameters.",
+				"tags": ["Crew"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"query": {
+										"type": "string"
+									},
+									"values": {
+										"$ref": "#/components/schemas/ValuesQueryCrew"
+									},
+									"sort": {
+										"$ref": "#/components/schemas/Sort"
+									},
+									"offset": {
+										"type": "integer"
+									},
+									"limit": {
+										"type": "integer"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "A JSON array of crews.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": {
+										"$ref": "#/components/schemas/Crew"
+									}
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "A parsing error occurred. Normally, either the given query string or the given value object is missformatted.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "An internal error occurred. Normally, some kind of database error occurred. Contact the Drops provider.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"error": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/crew/create": {
+			"post": {
+				"summary": "Creates a crew.",
+				"description": "The new crew has to be described by the request body.",
+				"tags": ["Crew"],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"type": "string",
+										"example": "VcA Berlin"
+									},
+									"cities": {
+										"type": "array",
+										"items": {
+											"$ref": "#/components/schemas/City"
+										},
+										"example": [
+											{
+												"name": "Berlin",
+												"country": "Deutschland"
+											}
+										]
+									}
+								},
+								"required": [ "name", "cities" ]
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "A JSON representing the crew that should have been created, but was already found inside the database.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Crew"
+								},
+								"example": {
+									"id": "5e00f24a-0df9-48c3-9cfa-8c32748eb8bf",
+									"name": "VcA Berlin",
+									"cities": [
+										{
+											"name": "Berlin",
+											"country": "Deutschland"
+										}
+									]
+								}
+							}
+						}
+					},
+					"200": {
+						"description": "A JSON representing the created crew.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Crew"
+								},
+								"example": {
+									"id": "5e00f24a-0df9-48c3-9cfa-8c32748eb8bf",
+									"name": "VcA Berlin",
+									"cities": [
+										{
+											"name": "Berlin",
+											"country": "Deutschland"
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
