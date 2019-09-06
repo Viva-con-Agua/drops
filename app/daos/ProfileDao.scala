@@ -244,18 +244,19 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
                 case _ => Right("dao.user.error.nothingUpdated")
               })
             }
-            def insert = {
-              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None, None, None)
+            def insert(active: Option[String] = None, nvmDate: Option[Long] = None) = {
+              val sc = SupporterCrewDB(supporterDB.id, crewDBID, Some(role), None, active, nvmDate)
               dbConfig.db.run(supporterCrews += sc).map(_ match {
                 case i if i > 0 => Left(i)
                 case _ => Right("dao.user.error.nothingUpdated")
               })
             }
             dbConfig.db.run(supporterCrews.filter(row =>
-              row.supporterId === supporterDB.id && row.crewId === crewDBID && row.role.isEmpty && row.pillar.isEmpty
-            ).exists.result).flatMap(_ match {
-              case true => update
-              case false => insert
+              row.supporterId === supporterDB.id && row.crewId === crewDBID
+            ).result).flatMap(sc => sc.size match {
+              case 0 => insert()
+              case i if i > 0 => insert(sc.head.active, sc.head.nvmDate)
+              case _ =>  Future.successful(Right("dao.user.error.nothingUpdated"))
             })
           }
           case None => Future.successful(Right("dao.user.error.notFound.supporter"))

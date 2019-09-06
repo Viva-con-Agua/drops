@@ -141,7 +141,7 @@ class Profile @Inject() (
                   request.body.placeOfResidence,
                   request.body.birthday,
                   request.body.sex,
-                  profile.supporter.crew,
+                  None,
                   profile.supporter.roles,
                   profile.supporter.pillars,
                   request.body.address match {
