@@ -337,7 +337,8 @@ case class SupporterCrewView(
                               role : Option[Map[String, String]],
                               pillar : Option[Map[String, String]],
                               publicId : Option[Map[String, UUID]],
-                              name : Option[Map[String, String]]
+                              name : Option[Map[String, String]],
+                              active : Option[Map[String, String]]
                             ) extends ViewBase {
   def getValue(fieldname: String, index: Int): Any = {
     fieldname match {
@@ -345,6 +346,7 @@ case class SupporterCrewView(
       case "pillar" => pillar.get.get(index.toString).get
       case "publicId" => publicId.get.get(index.toString).get
       case "name" => name.get.get(index.toString).get
+      case "active" => active.get.get(index.toString).get
     }
   }
 
@@ -376,19 +378,26 @@ case class SupporterCrewView(
           case false => false
         }
       }
+      case "active" => {
+        active.isDefined match {
+          case true => active.get.keySet.contains(index.toString)
+          case false => false
+        }
+      }
     }
   }
 }
 
 object SupporterCrewView {
-  def apply(t: (Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, UUID]], Option[Map[String, String]])): SupporterCrewView =
-    SupporterCrewView(t._1, t._2, t._3, t._4)
+  def apply(t: (Option[Map[String, String]], Option[Map[String, String]], Option[Map[String, UUID]], Option[Map[String, String]], Option[Map[String, String]])): SupporterCrewView =
+    SupporterCrewView(t._1, t._2, t._3, t._4, t._5)
 
   implicit val supporterCrewViewWrites : OWrites[SupporterCrewView] = (
     (JsPath \ "role").writeNullable[Map[String, String]] and
       (JsPath \ "pillar").writeNullable[Map[String, String]] and
       (JsPath \ "publicId").writeNullable[Map[String, UUID]] and
-      (JsPath \ "name").writeNullable[Map[String, String]]
+      (JsPath \ "name").writeNullable[Map[String, String]] and
+      (JsPath \ "active").writeNullable[Map[String, String]]
     )(unlift(SupporterCrewView.unapply))
 
   implicit val supporterCrewViewReads : Reads[SupporterCrewView] = (
@@ -399,7 +408,9 @@ object SupporterCrewView {
       (JsPath \ "publicId").readNullable[Map[String, UUID]].orElse(
         (JsPath \ "publicId").readNullable[UUID].map(_.map(p => Map("0" -> p)))) and
       (JsPath \ "name").readNullable[Map[String, String]].orElse(
-        (JsPath \ "name").readNullable[String].map(_.map(n => Map("0" -> n))))
+        (JsPath \ "name").readNullable[String].map(_.map(n => Map("0" -> n)))) and
+      (JsPath \ "active").readNullable[Map[String, String]].orElse(
+        (JsPath \ "active").readNullable[String].map(_.map(n => Map("inactive" -> n))))
 
     ).tupled.map(SupporterCrewView( _ ))
 }

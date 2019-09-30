@@ -6,6 +6,8 @@ GET     /users/init/:number/:specialRoleUsers               controllers.Applicat
 GET     /widgets/user/:uuid                                 controllers.widgets.Users.getUser(uuid: String)
 POST    /widgets/users                                      controllers.widgets.Users.getUsers
 POST    /widgets/users/count                                controllers.widgets.Users.getCountUsers
+POST    /widgets/users/inactive                             controllers.webapp.Profile.declineActiveRequest
+POST    /widgets/users/active                               controllers.webapp.Profile.acceptActiveRequest
 
 # WebApp endpoints
 GET     /webapp/identity                                    controllers.webapp.Auth.identity
@@ -23,14 +25,21 @@ GET     /webapp/signup/:tokenId                             controllers.webapp.A
 GET     /webapp/user/delete                                 controllers.webapp.Auth.deleteUser
 GET     /webapp/user/:uuid                                  controllers.webapp.Profile.getUser(uuid : String)
 GET     /webapp/profile/role/:userUUID/:pillar              controllers.webapp.Profile.assignRole(userUUID : String, pillar : String)
+GET     /webapp/profile/role/remove/:userUUID/:pillar       controllers.webapp.Profile.removeRole(userUUID : String, pillar : String)
+GET     /webapp/profile/pillar                              controllers.webapp.Profile.getAllPillars
 GET     /webapp/profile/get                                 controllers.webapp.Profile.get
 POST    /webapp/profile/update                              controllers.webapp.Profile.update
 GET     /webapp/profile/assign/:crewUUID                    controllers.webapp.Profile.assignCrew(crewUUID: String)
 DELETE  /webapp/profile/remove/crew                         controllers.webapp.Profile.removeCrew
 GET     /webapp/profile/newsletter                          controllers.webapp.Profile.getNewsletterSettingsPool1
 POST    /webapp/profile/newsletter/:setting                 controllers.webapp.Profile.setNewsletterSettingsPool1(setting: String)
-GET     /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
 GET     /webapp/profile/nvm/check                           controllers.webapp.Profile.checkNVM
+POST    /webapp/profile/nvm/request                         controllers.webapp.Profile.requestNVM
+POST    /webapp/profile/nvm/inactive                        controllers.webapp.Profile.inActiveNVM
+GET     /webapp/profile/active/check                        controllers.webapp.Profile.checkActiveFlag
+POST    /webapp/profile/active/request                      controllers.webapp.Profile.requestActive
+POST    /webapp/profile/active/inactive                     controllers.webapp.Profile.inActive
+
 #WebApp crew
 GET     /webapp/crew/ws                                     controllers.webapp.CrewSocketController.socket
 GET     /webapp/crew/get/:id                                controllers.webapp.CrewController.get(id: String)

@@ -6,8 +6,6 @@ import java.util.{Date, UUID}
 import javax.inject.Inject
 import java.util.Properties
 
-import org.nats._
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
@@ -34,6 +32,8 @@ import models.dispenser._
 import services.{ Pool1Service, UserService, UserTokenService}
 import utils.Mailer
 import daos.{CrewDao, OauthClientDao, TaskDao}
+import utils.authorization._
+
 import org.joda.time.DateTime
 import persistence.pool1.PoolService
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
@@ -73,7 +73,7 @@ class Profile @Inject() (
   def getUser(uuid: String) = UserAwareAction.async { implicit request =>
     request.identity match {
       case Some( u ) => userService.find(UUID.fromString(uuid)).map(_ match {
-        case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(user)).getResult
+        case Some(user) => WebAppResult.Ok(request, "profile.found.user", Nil, "Profile.Found.User", Json.toJson(PublicUser(user))).getResult
         case None => WebAppResult.NotFound(request, "profile.notFound.user", Nil, "Profile.NotFound.User", Map[String, String]("uuid" -> uuid) ).getResult
       })
       case None => Future.successful(
@@ -141,7 +141,7 @@ class Profile @Inject() (
                   request.body.placeOfResidence,
                   request.body.birthday,
                   request.body.sex,
-                  profile.supporter.crew,
+                  None,
                   profile.supporter.roles,
                   profile.supporter.pillars,
                   request.body.address match {
@@ -207,7 +207,7 @@ class Profile @Inject() (
         case Some(otherUser) => {
           val p = Pillar(pillar)
           p.isKnown match {
-            case true => user.profiles.headOption match {
+            case true => otherUser.profiles.headOption match {
               case Some(profile) => profile.supporter.crew match {
                 case Some(crew) => userService.assignCrewRole(crew, VolunteerManager(crew, p), otherUser).map(_ match {
                   case Left(i) => WebAppResult.Ok(request, "profile.assignRole.success", Nil, "Profile.AssignRole.Success", Json.obj()).getResult
@@ -222,6 +222,51 @@ class Profile @Inject() (
         }
         case None => Future.successful(WebAppResult.NotFound(request, "profile.assignRole.otherUserNotFound", Nil, "Profile.AssignRole.OtherUserNotFound", Map[String, String]()).getResult)
       })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * Remove the role (pillar) of an supporter of his crew
+    * @param userUUID
+    * @param pillar
+    * @return
+    */
+  def removeRole(userUUID: String, pillar: String) = UserAwareAction.async { implicit request =>
+    val otherUserID = UUID.fromString(userUUID)
+    request.identity match {
+      case Some(user) => userService.find(otherUserID).flatMap(_ match {
+        case Some(otherUser) => {
+          val p = Pillar(pillar)
+          p.isKnown match {
+            case true => otherUser.profiles.headOption match {
+              case Some(profile) => profile.supporter.crew match {
+                case Some(crew) => userService.removeCrewRole(crew, VolunteerManager(crew, p), otherUser).map(_ match {
+                  case Left(i) => WebAppResult.Ok(request, "profile.removeRole.success", Nil, "Profile.RemoveRole.Success", Json.obj()).getResult
+                  case Right(error) => WebAppResult.NotFound(request, error, Nil, error, Map[String, String]()).getResult
+                })
+                case None => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.crewNotFoundExecutingUser", Nil, "Profile.RemoveRole.CrewNotFoundExecutingUser", Map[String, String]()).getResult)
+              }
+              case None => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.profileNotFoundExecutingUser", Nil, "Profile.RemoveRole.ProfileNotFoundExecutingUser", Map[String, String]()).getResult)
+            }
+            case false => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.givenPillarUnknown", Nil, "Profile.RemoveRole.GivePillarUnknown", Map[String, String]()).getResult)
+          }
+        }
+        case None => Future.successful(WebAppResult.NotFound(request, "profile.removeRole.otherUserNotFound", Nil, "Profile.RemoveRole.OtherUserNotFound", Map[String, String]()).getResult)
+      })
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+
+  /**
+    * The controller will return all available pillars in a crew
+    *
+    * @see models/Pillar.scala
+    */
+  def getAllPillars = UserAwareAction.async { implicit request =>
+    request.identity match {
+      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.getNewsletterSetting.success", Nil, "Profile.GetNewsletterSetting.Success", Json.obj("setting" -> Pillar.getAll)).getResult)
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
@@ -245,35 +290,228 @@ class Profile @Inject() (
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
-  /**
-   * NVM = non voting membership
-   * The controller will check if a user is in the posebility to be active member. 
-   * Store the user in a list for Network-ASP to check if the request is valid
-   */
 
-  /*def requestActiveFlag = SecuredAction.async { implicit request =>
-    userService.requestActiveFlag(request.identity).map(_ match {
-      Some()
-    })
-  }*/
-  def requestNVM = UserAwareAction.async { implicit request =>
-    request.identity match {
-      //dummy function. Validation test not implemented
-      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> "in progress")).getResult)
-      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
-    }
-  }
-  
+  /**
+    * The controller will check the state of the non-voting membership of an user for his primary crew
+    * NVM = non voting membership
+    *
+    * @see services/UserService.scala
+    */
   def checkNVM = UserAwareAction.async { implicit request =>
+    // Checks if the requested user has an identity user (means that he is logged in)
     request.identity match {
-      //dummy function. Need Validation from requestNVM for check if a user is NVM
-      case Some(user) => Future.successful(WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.obj("status" -> "denied", "conditions" -> Json.obj("hasAddress" -> false, "hasPrimaryCrew" -> false, "isActive" -> false))).getResult)
-      //case Some(user) => userService.checkNVM(user).map(_ match {
-	//case Some(nvmState) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj(nvmState)).getResult
-	//case None => WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult
-      //})
+      case Some(user) => {
+	      // Checks if there is an profile for the user
+        user.profiles.headOption match {
+	        // Call userservice and request state for the supporter, otherwise return the notFound message
+          case Some(profile) => userService.checkNVM(profile).map(stateWithConditions =>
+	          // Return the state if you get one from the service
+            WebAppResult.Ok(request, "profile.checkNVM.success", Nil, "Profile.checkNVM.success", Json.toJson(stateWithConditions)).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.checkNVM.notFound", Nil, "Profile.checkNVM.notFound", Map[String, String]()).getResult)
+        }
+      }
+      // There is no user found, so we return an unauthorized state
       case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
     }
   }
+
+  /**
+    * The controller will add the non-voting membership of an user for his primary crew
+    * NVM = non voting membership
+    *
+    * @see services/UserService.scala
+    */
+  def requestNVM = UserAwareAction.async { implicit request =>
+    // Checks if the requested user has an identity user (means that he is logged in)
+    request.identity match {
+      case Some(user) => {
+	      // Checks if there is an profile for the user
+        user.profiles.headOption match {
+          // Call userservice and set the nvm state for the profile
+          case Some(profile) => userService.activeNVM(profile).map(_ match {
+            // Return the new state if you get one from the service, otherwise return state "stays active"
+            case Some(status) => WebAppResult.Ok(request, "profile.requestNVM.success", Nil, "Profile.requestNVM.success", Json.obj("status" -> status)).getResult
+            case None => WebAppResult.Bogus(request, "profile.requestNVM.failure", Nil, "Profile.requestNVM.failure", Json.obj("status" -> "stays inactive nvm")).getResult
+          })
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
+        }
+      }
+      // There is no user found, so we return an unauthorized state
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * The controller will remove the non-voting membershipt of an user for his primary crew
+    * NVM = non voting membership
+    *
+    * @see services/UserService.scala
+    */
+  def inActiveNVM = UserAwareAction.async { implicit request =>
+    // Checks if the requested user has an identity user (means that he is logged in)
+    request.identity match {
+      case Some(user) => {
+	      // Checks if there is an profile for the user
+        user.profiles.headOption match {
+	        // Call userservice and set the nvm state for the profile
+          case Some(profile) => userService.inActiveNVM(profile).map(_ match {
+            // Return the new state if you get one from the service, otherwise return state "stays active"
+            case Some(status) => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> status)).getResult
+            case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active nvm")).getResult
+          })
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.requestNVM.notFound", Nil, "Profile.requestNVM.notFound", Map[String, String]()).getResult)
+        }
+      }
+      // There is no user found, so we return an unauthorized state
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * The controller will check if a user is an active supporter of his main crew.
+    * The controller will therefore get the current active state and also get the conditions states to become active
+    *
+    * @see services/UserService.scala, services/StateWithConditions.scala
+    */
+  def checkActiveFlag = UserAwareAction.async { implicit request =>
+    // Checks if the requested user has an identity user (means that he is logged in)
+    request.identity match {
+      case Some(user) => {
+	      // Checks if there is an profile for the user
+        user.profiles.headOption match {
+	        // Call userservice and request state for the supporter, otherwise return the notFound message
+          case Some(profile) => userService.checkActiveFlag(profile).map(stateWithConditions =>
+            WebAppResult.Ok(request, "profile.checkActiveFlag.success", Nil, "Profile.checkActiveFlag.success", Json.toJson(stateWithConditions)).getResult
+          )
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.checkActiveFlag.notFound", Nil, "Profile.checkActiveFlag.notFound", Map[String, String]()).getResult)
+        }
+      }
+      // There is no user found, so we return an unauthorized state
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * The controller will set the active state of the supporter to requested
+    *
+    * @see services/UserService.scala
+    */
+  def requestActive = UserAwareAction.async { implicit request =>
+    // Checks if the requested user has an identity user (means that he is logged in)
+    request.identity match {
+      case Some(user) => {
+        // Checks if there is an profile for the user
+        user.profiles.headOption match {
+          // Call userservice and set the active state for the supporter, otherwise return the notFound message
+          case Some(profile) => userService.requestActiveFlag(profile).map(_ match {
+            case Some(status) => WebAppResult.Ok(request, "profile.requestActiveFlag.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> status)).getResult
+            case None => WebAppResult.Bogus(request, "profile.requestActiveFlag.failure", Nil, "Profile.requestActiveFlag.failure", Json.obj("status" -> "stays inactive")).getResult
+          })
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.requestActiveFlag.notFound", Nil, "Profile.requestActiveFlag.notFound", Map[String, String]()).getResult)
+        }
+      }
+      // There is no user found, so we return an unauthorized state
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * The controller will reset the active state of the supporter to inactive
+    * Also it will reset the nvm state to inactive, because this state depends on the active state of a supporter
+    *
+    * @see services/UserService.scala
+    */
+  def inActive = UserAwareAction.async { implicit request =>
+    // Checks if the requested user has an identity user (means that he is logged in)
+    request.identity match {
+      case Some(user) => {
+        // Checks if there is an profile for the user
+        user.profiles.headOption match {
+          // Call userservice and reset the nvm state for the supporter (cause its depending on the active state), otherwise return the notFound message
+          case Some(profile) => userService.inActiveNVM(profile).flatMap(_ match {
+              case Some(nvmState) => userService.inactiveActiveFlag(profile).map(_ match {
+                // Call userservice and reset the active state for the supporter, otherwise return the failuree message
+                case Some(status) => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> status)).getResult
+                case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active")).getResult
+              })
+              case None => userService.inactiveActiveFlag(profile).map(_ match {
+                // Call userservice and reset the active state for the supporter, otherwise return the failuree message
+                case Some(status) => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.inactive.success", Json.obj("status" -> status)).getResult
+                case None => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "stays active")).getResult
+              })
+          })
+          case None => Future.successful(WebAppResult.NotFound(request, "profile.inactive.notFound", Nil, "Profile.inactive.notFound", Map[String, String]()).getResult)
+        }
+      }
+      // There is no user found, so we return an unauthorized state
+      case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
+    }
+  }
+
+  /**
+    * ActiveRequest case class
+    * Helper to validate the format of a list of users UUIDs
+    */
+  case class ActiveRequest(users: List[UUID])
+  object ActiveRequest {
+    implicit val activeRequestFormat = Json.format[ActiveRequest]
+  }
+
+  /**
+    * The controller is a secured action to decline a list of active requests
+    *
+    * VolunteerManagers with the pillar Network are allowed to handle reuqests
+    * Employees are allowed to handle reuqests
+    * Administrators are allowed to handle reuqests
+    *
+    * @see services/UserService.scala
+    */
+  def declineActiveRequest = SecuredAction((IsVolunteerManager() && IsResponsibleFor(Network)) || WithRole(RoleEmployee) ||  WithRole(RoleAdmin)).async(validateJson[ActiveRequest]) { implicit request =>
+      // Map all given ids from the request to find the corresponding profile of the user
+      Future.sequence(request.body.users.map(id => userService.getProfile(id).flatMap(_ match {
+        // Call userservice and reset the active state for the supporter, otherwise return the failuree message
+        case Some(profile) => userService.inactiveActiveFlag(profile).map(_ match {
+          case Some(status) => (id, "profile.inactive.success")
+          // Profile could not be set to inactive
+          case None => (id, "profile.inactive.failure")
+        })
+        // There is no profile found for the given user
+        case None => Future.successful((id, "profile.inactive.failure"))
+      }))).map(_.find(_._2 == "profile.inactive.failure") match {
+        // If there was no error, return state active
+        case None => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "active")).getResult
+        // There was at least one error, so we return the error
+        case Some(error) => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> error._1)).getResult
+      })
+  }
+
+  /**
+    * The controller is a secured action to accept a list of active requests
+    *
+    * VolunteerManagers with the pillar Network are allowed to handle reuqests
+    * Employees are allowed to handle reuqests
+    * Administrators are allowed to handle reuqests
+    *
+    * @see services/UserService.scala
+    */
+  def acceptActiveRequest = SecuredAction((IsVolunteerManager() && IsResponsibleFor(Network)) || WithRole(RoleEmployee) ||  WithRole(RoleAdmin)).async(validateJson[ActiveRequest]) { implicit request =>
+      // Map all given ids from the request to find the corresponding profile of the user
+      Future.sequence(request.body.users.map(id => userService.getProfile(id).flatMap(_ match {
+        // Call userservice and set the active state for the supporter, otherwise return the failuree message
+        case Some(profile) => userService.activeActiveFlag(profile).map(_ match {
+          case Some(status) => (id, "profile.inactive.success")
+          // Profile could not be set to active
+          case None => (id, "profile.inactive.failure")
+        })
+        // There is no profile found for the given user
+        case None => Future.successful((id, "profile.inactive.failure"))
+      }))).map(_.find(_._2 == "profile.inactive.failure") match {
+        // If there was no error, return state active
+        case None => WebAppResult.Ok(request, "profile.inactive.success", Nil, "Profile.requestActiveFlag.success", Json.obj("status" -> "active")).getResult
+        // There was at least one error, so we return the error
+        case Some(error) => WebAppResult.Bogus(request, "profile.inactive.failure", Nil, "Profile.inactive.failure", Json.obj("status" -> "requested")).getResult
+      })
+    }
 
 }

@@ -456,7 +456,7 @@ class Auth @Inject() (
           case Some(user) => for {
             token <- userTokenService.save(UserToken.create(user.id, email.address, isSignUp = false))
           } yield {
-            mailer.resetPassword(email.address, link = controllers.webapp.routes.Auth.resetEmail(token.id.toString).absoluteURL())
+            mailer.resetEmail(email.address, link = controllers.webapp.routes.Auth.resetEmail(token.id.toString).absoluteURL())
             WebAppResult.Ok(request, "reset.instructions", List(email.address), "AuthProvider.ResetEmail.Success").getResult
           }
         }
