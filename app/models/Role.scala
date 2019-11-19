@@ -40,11 +40,21 @@ object Role {
 trait ContextFreeRole extends Role
 
 object ContextFreeRole {
-
+  
   def apply(role: String): ContextFreeRole = role match {
     case RoleAdmin.name             => RoleAdmin
     case RoleEmployee.name          => RoleEmployee
     case RoleSupporter.name         => RoleSupporter
+    case RoleVcADE.name             => RoleVcADE
+    case RoleVcACA.name             => RoleVcACA
+    case RoleVcACH.name             => RoleVcACH
+    case RoleVcAZA.name             => RoleVcAZA
+    case RoleVcAAT.name             => RoleVcAAT
+    case RoleVcAUG.name             => RoleVcAUG
+    case RoleWasserGmbh.name        => RoleWasserGmbh
+    case RoleMillantorGallery.name  => RoleMillantorGallery
+    case RoleStiftung.name          => RoleStiftung
+    case RoleGoldeimer.name         => RoleGoldeimer
     case _                          => RoleUnknown
   }
 
@@ -73,6 +83,75 @@ object RoleEmployee extends ContextFreeRole {
 object RoleSupporter extends ContextFreeRole {
   val name = "supporter"
 }
+/**
+  * VcA DE user role
+  */
+object RoleVcADE extends ContextFreeRole {
+  val name = "vcade"
+}
+
+/**
+  * VcA CA user role
+  */
+object RoleVcACA extends ContextFreeRole {
+  val name = "vcaca"
+}
+
+/**
+  * VcA Wasser GmbH user role
+  */
+object RoleWasserGmbh extends ContextFreeRole {
+  val name = "wassergmbh"
+}
+/**
+  * MILLERNTOR GALLERY user role
+  */
+object RoleMillantorGallery extends ContextFreeRole {
+  val name = "millgall"
+}
+
+/**
+  * VcA Stiftung user role
+  */
+object RoleStiftung extends ContextFreeRole {
+  val name = "stiftung"
+}
+
+/**
+  * VcA CH user role
+  */
+object RoleVcACH extends ContextFreeRole {
+  val name = "vcach"
+}
+
+/**
+  * VcA At user role
+  */
+object RoleVcAAT extends ContextFreeRole {
+  val name = "vcaat"
+}
+
+/**
+  * VcA ZA user role
+  */
+object RoleVcAZA extends ContextFreeRole {
+  val name = "vcaza"
+}
+
+/**
+  * MILLERNTOR GALLERY user role
+  */
+object RoleVcAUG extends ContextFreeRole {
+  val name = "vcaug"
+}
+/**
+  * Goldeimer user role
+  */
+object RoleGoldeimer extends ContextFreeRole {
+  val name = "goldeimer"
+}
+
+
 
 /**
   * The generic unknown role
