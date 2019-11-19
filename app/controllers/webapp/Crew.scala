@@ -2,6 +2,7 @@ package controllers.webapp
 
 import play.api.mvc._
 import play.api.Play.current
+import play.api.Logger
 import javax.inject.Inject
 import scala.concurrent.Future
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -37,21 +38,22 @@ class CrewController @Inject() (
   val env: Environment[User, CookieAuthenticator]
   ) extends Silhouette[User, CookieAuthenticator] {
     implicit val mApi = messagesApi
+    override val logger = Logger(this.getClass())
     
     def validateJson[B: Reads] = BodyParsers.parse.json.validate(_.validate[B].asEither.left.map(e => BadRequest(JsError.toJson(e))))
     
-    def get(id: UUID) = SecuredAction.async { implicit request =>
+    def get(id: String) = SecuredAction.async { implicit request =>
       userService.retrieve(request.authenticator.loginInfo).flatMap {
         case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
         case Some(user) => {
-          crewService.get(id).map {
+          crewService.get(UUID.fromString(id)).map {
             case Some(crew) => WebAppResult.Ok(request, "crew.get", Nil, "AuthProvider.Identity.Success", Json.toJson(crew)).getResult
             case _ => WebAppResult.Bogus(request, "crew.notExist", Nil, "402", Json.toJson("")).getResult
-          }   
+          }
         }
       }
     }
-    def get(name: String) = SecuredAction.async { implicit request => 
+    def getByName(name: String) = SecuredAction.async { implicit request =>
       userService.retrieve(request.authenticator.loginInfo).flatMap {
         case None => Future.successful(WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult)
         case Some(user) => {
