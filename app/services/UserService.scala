@@ -304,7 +304,7 @@ class UserService @Inject() (
     * @return
     */
   def activeNVM(profile: Profile): Future[Option[String]] = {
-    profileDao.setNVM(profile, Some(System.currentTimeMillis() + 1000*60*60*365)).map(_ match {
+    profileDao.setNVM(profile, Some(System.currentTimeMillis() + 31536000000L)).map(_ match {
       case true => Some("active")
       case false => None
     })
