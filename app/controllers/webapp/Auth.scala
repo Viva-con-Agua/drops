@@ -205,7 +205,6 @@ class Auth @Inject() (
     Future.successful(request.identity match {
       case Some(user) => WebAppResult.Ok(request, "signin.success", Nil, "AuthProvider.Identity.Success", PublicUser(user)).getResult
       case _ => WebAppResult.Unauthorized(request, "error.noAuthenticatedUser", Nil, "AuthProvider.Identity.Unauthorized", Map[String, String]()).getResult
-
     })
   }
 
