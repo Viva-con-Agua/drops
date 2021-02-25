@@ -13,6 +13,7 @@ resolvers ++= Seq(
   "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
   Resolver.sonatypeRepo("snapshots")
  )
+resolvers += Resolver.jcenterRepo
 
 pipelineStages := Seq(digest,gzip)
 
