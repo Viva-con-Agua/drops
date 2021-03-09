@@ -139,7 +139,20 @@ class Auth @Inject() (
           case Some(_) =>
             Future.successful(WebAppResult.Bogus(request, "error.userExists", List(signUpData.email), "AuthProvider.SignUp.UserExists", Json.toJson(Map[String, String]())).getResult)
           case None =>
-            val profile = Profile(loginInfo, signUpData.email, signUpData.firstName, signUpData.lastName, signUpData.mobilePhone, signUpData.placeOfResidence, signUpData.birthday, signUpData.gender, signUpData.address)
+            val profile = Profile(
+              loginInfo,
+              signUpData.email,
+              signUpData.firstName,
+              signUpData.lastName,
+              signUpData.mobilePhone,
+              signUpData.placeOfResidence,
+              signUpData.birthday,
+              signUpData.gender,
+              signUpData.address.flatMap(a => a.isEmpty match {
+                case true => None
+                case _ => Some(a)
+              })
+            )
             for {
               avatarUrl <- avatarService.retrieveURL(signUpData.email)
               user <- userService.save(User(id = UUID.randomUUID(), List(profile), updated = System.currentTimeMillis(), created = System.currentTimeMillis()))
