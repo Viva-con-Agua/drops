@@ -72,7 +72,7 @@ docker rm drops
 
 >
 *Notice:* 
-All server generated output will be written to the `server-output` file.
+All server generated output will be written to the command line (logs in the case of a docker image).
 This is also needed to confirm users since the production server also uses a mock
 mail server.
 >
