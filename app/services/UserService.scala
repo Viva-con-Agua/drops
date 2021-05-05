@@ -34,7 +34,10 @@ class UserService @Inject() (
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = {
     userDao.save(user).map(user => {
-      nats.publishCreate("USER", user.id)
+      user.map(u => {
+        nats.publishCreate("USER", u.id)
+        poolService.save(u)
+      })
       user
     })
   }
@@ -42,8 +45,10 @@ class UserService @Inject() (
 
   def update(updatedUser: User) = {
     userDao.replace(updatedUser).map(user => {
-      nats.publishUpdate("USER", updatedUser.id)
-      poolService.update(user) // Todo: Consider result?!
+      user.map(u => {
+        nats.publishUpdate("USER", u.id)
+        poolService.update(u) // Todo: Consider result?!
+      })
       user
     })
   }
@@ -100,22 +105,27 @@ class UserService @Inject() (
   }
 
   def save(socialProfile:CommonSocialProfile) = {
-    def onSuccess(user: User, create: Boolean) = {
-      if(create) {
-        nats.publishCreate("USER", user.id)
-        poolService.save(user) // Todo: Consider result?!
-      } else {
-        nats.publishUpdate("USER", user.id)
-        poolService.update(user) // Todo: Consider result?!
-      }
+    def onCreate(user: Option[User]) = {
+      user.map(u => {
+        nats.publishCreate("USER", u.id)
+        poolService.save(u)
+      })
+      user
+    }
+
+    def onUpdate(user: Option[User]) = {
+      user.map(u => {
+        nats.publishUpdate("USER", u.id)
+        poolService.update(u)
+      })
       user
     }
     val profile = Profile(socialProfile)
     userDao.find(profile.loginInfo).flatMap {
       case None => userDao.save(User(UUID.randomUUID(), List(profile), System.currentTimeMillis(), System.currentTimeMillis()))
-        .map(onSuccess(_, true))
+        .map(onCreate(_))
       case Some(user) => userDao.update(profile)
-        .map(onSuccess(_, false))
+        .map(onUpdate(_))
     }
   }
 

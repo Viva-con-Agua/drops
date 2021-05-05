@@ -27,11 +27,11 @@ trait UserDao extends ObjectIdResolver with CountResolver{
 //  def getObjectId(userId: UUID):Future[Option[ObjectIdWrapper]]
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
-  def save(user:User):Future[User]
-  def replace(user:User):Future[User]
+  def save(user:User):Future[Option[User]]
+  def replace(user:User):Future[Option[User]]
   def confirm(loginInfo:LoginInfo):Future[User]
-  def link(user:User, profile:Profile):Future[User]
-  def update(profile:Profile):Future[User]
+  def link(user:User, profile:Profile):Future[Option[User]]
+  def update(profile:Profile):Future[Option[User]]
   def list : Future[List[User]]
   def listOfStubs : Future[List[UserStub]]
   def delete (userId:UUID):Future[Boolean]
@@ -110,17 +110,26 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     * @param user
     * @return
     */
-  override def save(user: User): Future[User]={
+  override def save(user: User): Future[Option[User]]={
     val userDBObj = UserDB(user)
 
-    dbConfig.db.run((users returning users.map(_.id)) += userDBObj).flatMap(id => {
-      findDBUserModel(id)
-    }).flatMap(userObj => {
-      addProfiles(userObj, user.profiles)
-    })
+    val crewIds : Future[Map[String, Option[Long]]] = Future.sequence(user.profiles.map(profile =>
+      profile.supporter.crew match {
+        // if supporter has a crew, find the CrewDB.id by UUID crew.id
+        case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+          case Some(c) => (profile.loginInfo.providerKey, Some(c.id))
+          case None => (profile.loginInfo.providerKey, None)
+        })
+        //else None
+        case _ => Future.successful((profile.loginInfo.providerKey, None))
+      }
+    )).map(_.toMap)
+    crewIds.flatMap(c_ids =>
+      dbConfig.db.run(insertUser(userDBObj, user.profiles, c_ids))
+    ).flatMap(id => find(id))
   }
 
-  override def replace(updatedUser: User): Future[User] = {
+  override def replace(updatedUser: User): Future[Option[User]] = {
     findDBUserModel(updatedUser.id).flatMap(user => {
       //Delete Profiles
       val deleteProfile = profiles.filter(_.userId === user.id)
@@ -132,9 +141,25 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       dbConfig.db.run(
         (deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteAddress.delete andThen deleteSupporterCrew.delete andThen
           deleteSupporter.delete andThen deleteProfile.delete).transactionally
-      ).flatMap(_ =>
-          addProfiles(user, updatedUser.profiles)
-      )
+      ).flatMap(_ => {
+        // now insert the new profiles
+        // start with retrieving the crew IDs of the assigned crews
+        val crewIds: Future[Map[String, Option[Long]]] = Future.sequence(updatedUser.profiles.map(profile =>
+          profile.supporter.crew match {
+            // if supporter has a crew, find the CrewDB.id by UUID crew.id
+            case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+              case Some(c) => (profile.loginInfo.providerKey, Some(c.id))
+              case None => (profile.loginInfo.providerKey, None)
+            })
+            //else None
+            case _ => Future.successful((profile.loginInfo.providerKey, None))
+          }
+        )).map(_.toMap)
+        crewIds.flatMap(c_ids =>
+          dbConfig.db.run(insertProfiles(user.id, updatedUser.profiles, c_ids))
+        ).flatMap(_ => find(user.id))
+        //addProfiles(user, updatedUser.profiles)
+      })
     })
   }
 
@@ -151,10 +176,25 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     * @param profile
     * @return
     */
-  override def link(user: User, profile: Profile): Future[User] = {
+  override def link(user: User, profile: Profile): Future[Option[User]] = {
     find(profile.loginInfo).flatMap(user => {
       findDBUserModel(user.get.id).flatMap(userDB => {
-          addProfiles(userDB, List(profile))
+        // now insert the new profiles
+        // start with retrieving the crew IDs of the assigned crews
+        val crewIds : Future[Map[String, Option[Long]]] =
+          profile.supporter.crew match {
+            // if supporter has a crew, find the CrewDB.id by UUID crew.id
+            case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+              case Some(c) => Map(profile.loginInfo.providerKey -> Some(c.id))
+              case None => Map(profile.loginInfo.providerKey -> None)
+            })
+            //else None
+            case _ => Future.successful(Map(profile.loginInfo.providerKey -> None))
+          }
+        crewIds.flatMap(c_ids =>
+          dbConfig.db.run(insertProfiles(userDB.id, List(profile), c_ids))
+        ).flatMap(_ => find(userDB.id))
+          //addProfiles(userDB, List(profile))
       })
     })
   }
@@ -166,7 +206,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     * @param profile
     * @return
     */
-  override def update(profile: Profile): Future[User] = {
+  override def update(profile: Profile): Future[Option[User]] = {
     find(profile.loginInfo).flatMap(user => {
       findDBUserModel(user.get.id).flatMap(userDB => {
         //Delete Profile
@@ -179,9 +219,24 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         dbConfig.db.run(
           (deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteAddress.delete andThen deleteSupporterCrew.delete andThen
             deleteSupporter.delete andThen deleteProfile.delete).transactionally
-        ).flatMap(_ =>
-          addProfiles(userDB, List(profile))
-        )
+        ).flatMap(_ => {
+          // now insert the new profiles
+          // start with retrieving the crew IDs of the assigned crews
+          val crewIds: Future[Map[String, Option[Long]]] =
+          profile.supporter.crew match {
+            // if supporter has a crew, find the CrewDB.id by UUID crew.id
+            case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+              case Some(c) => Map(profile.loginInfo.providerKey -> Some(c.id))
+              case None => Map(profile.loginInfo.providerKey -> None)
+            })
+            //else None
+            case _ => Future.successful(Map(profile.loginInfo.providerKey -> None))
+          }
+          crewIds.flatMap(c_ids =>
+            dbConfig.db.run(insertProfiles(userDB.id, List(profile), c_ids))
+          ).flatMap(_ => find(userDB.id))
+          //addProfiles(userDB, List(profile))
+        })
       })
     })
   }
@@ -296,6 +351,78 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
 
   private def findDBUserModel(id : Long) : Future[UserDB] = {
     dbConfig.db.run(users.filter(_.id === id).result).map(r => r.head)
+  }
+
+  /**
+   * Creates a [[DBIOAction]] that inserts a complete user as a transaction that inserts into multiple columns.
+   *
+   * @author Johann Sell
+   * @param userDB
+   * @param userProfiles
+   * @param crewDBids
+   * @return
+   */
+  private def insertUser(userDB: UserDB, userProfiles: List[Profile], crewDBids: Map[String, Option[Long]]) : DBIOAction[Long,slick.dbio.NoStream,slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Transactional with slick.dbio.Effect.Transactional] = {
+    (for {
+      u <- (users returning users.map(_.id)) += userDB
+      _ <- insertProfiles(u, userProfiles, crewDBids)
+    } yield u).transactionally
+  }
+
+  /**
+   * Creates a [[DBIOAction]] that inserts all given profiles as a transaction and assigns them to a given users ID.
+   *
+   * @author Johann Sell
+   * @param userID
+   * @param userProfiles
+   * @param crewDBids
+   * @return
+   */
+  private def insertProfiles(userID: Long, userProfiles: List[Profile], crewDBids: Map[String, Option[Long]]): DBIOAction[List[Long],slick.dbio.NoStream,slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Transactional] = {
+    // Assign a Supporter to an Crew via SupporterCrew. Each SupporterCrew Object contains one Role.
+    def supporterCrewAssignment(crewDBiD: Option[Long], s: Long, r: Option[Role]) = crewDBiD match {
+      case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += (SupporterCrewDB(s, crewId, r, None, None, None))
+      case _ => DBIO.successful(false)
+    }
+
+    // Assign Address to Supporter.
+    def addressAssignment(address: Option[Address], supporterId: Long) = address match {
+      case Some(a) => (addresses returning addresses.map(_.id)) += AddressDB(0, a, supporterId)
+      case _ => DBIO.successful(false)
+    }
+
+    DBIO.sequence(userProfiles.map(profile => (for {
+      // insert Profile and return long id as p
+      p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userID)
+      // insert Supporter with profile_id = p and return long id as s
+      s <- (supporters returning supporters.map(_.id)) += SupporterDB(0, profile.supporter, p)
+      //insert Addresses with supporter_id = s.
+      _ <- profile.supporter.address match {
+        // if Addresses is a list and not Empty we insert every address in the list and return a DBIO.seq with all id's
+        case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(addressAssignment(list.headOption, s)))(
+          (seq, address) => DBIO.seq(seq, addressAssignment(Some(address), s))
+        )
+        // else return Database false
+        case _ => DBIO.successful(false)
+      }
+      // same as address for all roles
+      _ <- profile.supporter.roles match {
+        case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, list.headOption)))(
+          (seq, role) => DBIO.seq(seq, supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, Some(role)))
+        )
+        case _ => DBIO.seq(supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, None))
+      }
+      // insert the LoginInfo PasswordInfo and OAuthInfo Models
+      _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, profile.loginInfo, p)
+      _ <- (profile.passwordInfo match {
+        case Some(passwordInfo) => (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+        case None => DBIO.successful(false)
+      })
+      _ <- (profile.oauth1Info match {
+        case Some(oAuth1Info) => (oauth1Infos returning oauth1Infos.map(_.id)) += OAuth1InfoDB(oAuth1Info, p)
+        case None => DBIO.successful(false)
+      })
+    } yield p).transactionally))
   }
 
   //ToDo: Export Profile DB Operations to ProfileDAO. This has to be protected, becaus it should not used outside the DAO Package
