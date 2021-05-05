@@ -1,8 +1,9 @@
 import com.typesafe.sbt.packager.docker.Cmd
 
 name := """Drops"""
+organization := "net.soteto"
 
-version := "0.36.63"
+version := "0.36.65"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala).enablePlugins(DockerPlugin)
 
@@ -13,6 +14,7 @@ resolvers ++= Seq(
   "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases",
   Resolver.sonatypeRepo("snapshots")
  )
+resolvers += Resolver.jcenterRepo
 
 pipelineStages := Seq(digest,gzip)
 
@@ -59,10 +61,11 @@ excludeFilter in (Assets, LessKeys.less) := "_*.less"
 
 // setting a maintainer which is used for all packaging types</pre>
 maintainer in Docker := "Johann Sell"
-
 // exposing the play ports
 dockerExposedPorts := Seq(9000, 9443)
-
-dockerRepository := Some("vivaconagua")
-version in Docker := "latest"
-
+dockerRepository := Some("soteto")
+//dockerUsername := Some("soteto")
+//dockerUpdateLatest := true
+routesGenerator := InjectedRoutesGenerator
+packageName in Docker := packageName.value
+version in Docker := version.value

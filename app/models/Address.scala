@@ -29,6 +29,9 @@ case class AddressStub (
 
 ) extends AddressBase {
   def toAddress: Address = Address(Some(UUID.randomUUID()), street, additional, zip, city, country)
+
+  def isEmpty: Boolean =
+    street == "" && additional.map(_ == "").getOrElse(true) && zip == "" && city == "" && country == ""
 }
 
 /**
