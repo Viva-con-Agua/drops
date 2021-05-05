@@ -308,7 +308,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   }
 
   /**
-   * Creates an DBIOAction that inserts a complete user as a transaction that inserts into multiple columns.
+   * Creates a [[DBIOAction]] that inserts a complete user as a transaction that inserts into multiple columns.
    *
    * @author Johann Sell
    * @param userDB
@@ -317,7 +317,22 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
    * @return
    */
   private def insertUser(userDB: UserDB, userProfiles: List[Profile], crewDBids: Map[String, Option[Long]]) : DBIOAction[Long,slick.dbio.NoStream,slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Transactional with slick.dbio.Effect.Transactional] = {
+    (for {
+      u <- (users returning users.map(_.id)) += userDB
+      _ <- insertProfiles(u, userProfiles, crewDBids)
+    } yield u).transactionally
+  }
 
+  /**
+   * Creates a [[DBIOAction]] that inserts all given profiles as a transaction and assigns them to a given users ID.
+   *
+   * @author Johann Sell
+   * @param userID
+   * @param userProfiles
+   * @param crewDBids
+   * @return
+   */
+  private def insertProfiles(userID: Long, userProfiles: List[Profile], crewDBids: Map[String, Option[Long]]): DBIOAction[List[Long],slick.dbio.NoStream,slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Transactional] = {
     // Assign a Supporter to an Crew via SupporterCrew. Each SupporterCrew Object contains one Role.
     def supporterCrewAssignment(crewDBiD: Option[Long], s: Long, r: Option[Role]) = crewDBiD match {
       case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += (SupporterCrewDB(s, crewId, r, None, None, None))
@@ -330,41 +345,38 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       case _ => DBIO.successful(false)
     }
 
-    (for {
-      u <- (users returning users.map(_.id)) += userDB
-      _ <- DBIO.sequence(userProfiles.map(profile => (for {
-        // insert Profile and return long id as p
-        p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, u)
-        // insert Supporter with profile_id = p and return long id as s
-        s <- (supporters returning supporters.map(_.id)) += SupporterDB(0, profile.supporter, p)
-        //insert Addresses with supporter_id = s.
-        _ <- profile.supporter.address match {
-          // if Addresses is a list and not Empty we insert every address in the list and return a DBIO.seq with all id's
-          case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(addressAssignment(list.headOption, s)))(
-            (seq, address) => DBIO.seq(seq, addressAssignment(Some(address), s))
-          )
-          // else return Database false
-          case _ => DBIO.successful(false)
-        }
-        // same as address for all roles
-        _ <- profile.supporter.roles match {
-          case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, list.headOption)))(
-            (seq, role) => DBIO.seq(seq, supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, Some(role)))
-          )
-          case _ => DBIO.seq(supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, None))
-        }
-        // insert the LoginInfo PasswordInfo and OAuthInfo Models
-        _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, profile.loginInfo, p)
-        _ <- (profile.passwordInfo match {
-          case Some(passwordInfo) => (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
-          case None => DBIO.successful(false)
-        })
-        _ <- (profile.oauth1Info match {
-          case Some(oAuth1Info) => (oauth1Infos returning oauth1Infos.map(_.id)) += OAuth1InfoDB(oAuth1Info, p)
-          case None => DBIO.successful(false)
-        })
-      } yield ()).transactionally))
-    } yield u).transactionally
+    DBIO.sequence(userProfiles.map(profile => (for {
+      // insert Profile and return long id as p
+      p <- (profiles returning profiles.map(_.id)) += ProfileDB(profile, userID)
+      // insert Supporter with profile_id = p and return long id as s
+      s <- (supporters returning supporters.map(_.id)) += SupporterDB(0, profile.supporter, p)
+      //insert Addresses with supporter_id = s.
+      _ <- profile.supporter.address match {
+        // if Addresses is a list and not Empty we insert every address in the list and return a DBIO.seq with all id's
+        case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(addressAssignment(list.headOption, s)))(
+          (seq, address) => DBIO.seq(seq, addressAssignment(Some(address), s))
+        )
+        // else return Database false
+        case _ => DBIO.successful(false)
+      }
+      // same as address for all roles
+      _ <- profile.supporter.roles match {
+        case list if list.nonEmpty => list.tail.foldLeft(DBIO.seq(supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, list.headOption)))(
+          (seq, role) => DBIO.seq(seq, supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, Some(role)))
+        )
+        case _ => DBIO.seq(supporterCrewAssignment(crewDBids.getOrElse(profile.loginInfo.providerKey, None), s, None))
+      }
+      // insert the LoginInfo PasswordInfo and OAuthInfo Models
+      _ <- (loginInfos returning loginInfos.map(_.id)) += LoginInfoDB(0, profile.loginInfo, p)
+      _ <- (profile.passwordInfo match {
+        case Some(passwordInfo) => (passwordInfos returning passwordInfos.map(_.id)) += PasswordInfoDB(0, passwordInfo, p)
+        case None => DBIO.successful(false)
+      })
+      _ <- (profile.oauth1Info match {
+        case Some(oAuth1Info) => (oauth1Infos returning oauth1Infos.map(_.id)) += OAuth1InfoDB(oAuth1Info, p)
+        case None => DBIO.successful(false)
+      })
+    } yield p).transactionally))
   }
 
   //ToDo: Export Profile DB Operations to ProfileDAO. This has to be protected, becaus it should not used outside the DAO Package
