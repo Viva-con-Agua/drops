@@ -34,7 +34,10 @@ class UserService @Inject() (
   def retrieve(loginInfo:LoginInfo):Future[Option[User]] = userDao.find(loginInfo)
   def save(user:User) = {
     userDao.save(user).map(user => {
-      user.map(u => nats.publishCreate("USER", u.id))
+      user.map(u => {
+        nats.publishCreate("USER", u.id)
+        poolService.save(u)
+      })
       user
     })
   }
@@ -42,8 +45,10 @@ class UserService @Inject() (
 
   def update(updatedUser: User) = {
     userDao.replace(updatedUser).map(user => {
-      nats.publishUpdate("USER", updatedUser.id)
-      poolService.update(user) // Todo: Consider result?!
+      user.map(u => {
+        nats.publishUpdate("USER", u.id)
+        poolService.update(u) // Todo: Consider result?!
+      })
       user
     })
   }
@@ -108,9 +113,11 @@ class UserService @Inject() (
       user
     }
 
-    def onUpdate(user: User) = {
-      nats.publishUpdate("USER", user.id)
-      poolService.update(user)
+    def onUpdate(user: Option[User]) = {
+      user.map(u => {
+        nats.publishUpdate("USER", u.id)
+        poolService.update(u)
+      })
       user
     }
     val profile = Profile(socialProfile)

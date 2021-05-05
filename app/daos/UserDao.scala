@@ -28,10 +28,10 @@ trait UserDao extends ObjectIdResolver with CountResolver{
   def find(loginInfo:LoginInfo):Future[Option[User]]
   def find(userId:UUID):Future[Option[User]]
   def save(user:User):Future[Option[User]]
-  def replace(user:User):Future[User]
+  def replace(user:User):Future[Option[User]]
   def confirm(loginInfo:LoginInfo):Future[User]
-  def link(user:User, profile:Profile):Future[User]
-  def update(profile:Profile):Future[User]
+  def link(user:User, profile:Profile):Future[Option[User]]
+  def update(profile:Profile):Future[Option[User]]
   def list : Future[List[User]]
   def listOfStubs : Future[List[UserStub]]
   def delete (userId:UUID):Future[Boolean]
@@ -129,7 +129,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     ).flatMap(id => find(id))
   }
 
-  override def replace(updatedUser: User): Future[User] = {
+  override def replace(updatedUser: User): Future[Option[User]] = {
     findDBUserModel(updatedUser.id).flatMap(user => {
       //Delete Profiles
       val deleteProfile = profiles.filter(_.userId === user.id)
@@ -141,9 +141,25 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
       dbConfig.db.run(
         (deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteAddress.delete andThen deleteSupporterCrew.delete andThen
           deleteSupporter.delete andThen deleteProfile.delete).transactionally
-      ).flatMap(_ =>
-          addProfiles(user, updatedUser.profiles)
-      )
+      ).flatMap(_ => {
+        // now insert the new profiles
+        // start with retrieving the crew IDs of the assigned crews
+        val crewIds: Future[Map[String, Option[Long]]] = Future.sequence(updatedUser.profiles.map(profile =>
+          profile.supporter.crew match {
+            // if supporter has a crew, find the CrewDB.id by UUID crew.id
+            case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+              case Some(c) => (profile.loginInfo.providerKey, Some(c.id))
+              case None => (profile.loginInfo.providerKey, None)
+            })
+            //else None
+            case _ => Future.successful((profile.loginInfo.providerKey, None))
+          }
+        )).map(_.toMap)
+        crewIds.flatMap(c_ids =>
+          dbConfig.db.run(insertProfiles(user.id, updatedUser.profiles, c_ids))
+        ).flatMap(_ => find(user.id))
+        //addProfiles(user, updatedUser.profiles)
+      })
     })
   }
 
@@ -160,10 +176,25 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     * @param profile
     * @return
     */
-  override def link(user: User, profile: Profile): Future[User] = {
+  override def link(user: User, profile: Profile): Future[Option[User]] = {
     find(profile.loginInfo).flatMap(user => {
       findDBUserModel(user.get.id).flatMap(userDB => {
-          addProfiles(userDB, List(profile))
+        // now insert the new profiles
+        // start with retrieving the crew IDs of the assigned crews
+        val crewIds : Future[Map[String, Option[Long]]] =
+          profile.supporter.crew match {
+            // if supporter has a crew, find the CrewDB.id by UUID crew.id
+            case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+              case Some(c) => Map(profile.loginInfo.providerKey -> Some(c.id))
+              case None => Map(profile.loginInfo.providerKey -> None)
+            })
+            //else None
+            case _ => Future.successful(Map(profile.loginInfo.providerKey -> None))
+          }
+        crewIds.flatMap(c_ids =>
+          dbConfig.db.run(insertProfiles(userDB.id, List(profile), c_ids))
+        ).flatMap(_ => find(userDB.id))
+          //addProfiles(userDB, List(profile))
       })
     })
   }
@@ -175,7 +206,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
     * @param profile
     * @return
     */
-  override def update(profile: Profile): Future[User] = {
+  override def update(profile: Profile): Future[Option[User]] = {
     find(profile.loginInfo).flatMap(user => {
       findDBUserModel(user.get.id).flatMap(userDB => {
         //Delete Profile
@@ -188,9 +219,24 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
         dbConfig.db.run(
           (deletePasswordInfo.delete andThen deleteLoginInfo.delete andThen deleteAddress.delete andThen deleteSupporterCrew.delete andThen
             deleteSupporter.delete andThen deleteProfile.delete).transactionally
-        ).flatMap(_ =>
-          addProfiles(userDB, List(profile))
-        )
+        ).flatMap(_ => {
+          // now insert the new profiles
+          // start with retrieving the crew IDs of the assigned crews
+          val crewIds: Future[Map[String, Option[Long]]] =
+          profile.supporter.crew match {
+            // if supporter has a crew, find the CrewDB.id by UUID crew.id
+            case Some(crew) => crewDao.findDBCrewModel(crew.id).map(_ match {
+              case Some(c) => Map(profile.loginInfo.providerKey -> Some(c.id))
+              case None => Map(profile.loginInfo.providerKey -> None)
+            })
+            //else None
+            case _ => Future.successful(Map(profile.loginInfo.providerKey -> None))
+          }
+          crewIds.flatMap(c_ids =>
+            dbConfig.db.run(insertProfiles(userDB.id, List(profile), c_ids))
+          ).flatMap(_ => find(userDB.id))
+          //addProfiles(userDB, List(profile))
+        })
       })
     })
   }
