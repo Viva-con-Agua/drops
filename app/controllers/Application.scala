@@ -76,6 +76,7 @@ class Application @Inject() (
           // save user in database and return a future of the saved user
           userService.save(crewSupporter)
         })
+        //Future.sequence(users).map((list) => Ok(Json.toJson(list)))
         Future.sequence(users).map((list) => Ok(Json.toJson(list)))
       })
     )
