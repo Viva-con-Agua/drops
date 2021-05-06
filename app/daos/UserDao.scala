@@ -381,7 +381,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   private def insertProfiles(userID: Long, userProfiles: List[Profile], crewDBids: Map[String, Option[Long]]): DBIOAction[List[Long],slick.dbio.NoStream,slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Write with slick.dbio.Effect.Transactional] = {
     // Assign a Supporter to an Crew via SupporterCrew. Each SupporterCrew Object contains one Role.
     def supporterCrewAssignment(crewDBiD: Option[Long], s: Long, r: Option[Role]) = crewDBiD match {
-      case Some(crewId) => (supporterCrews returning supporterCrews.map(_.supporterId)) += (SupporterCrewDB(s, crewId, r, None, None, None))
+      case Some(crewId) => (supporterCrews returning supporterCrews.map(_.id)) += (SupporterCrewDB(s, crewId, r, None, None, None))
       case _ => DBIO.successful(false)
     }
 
