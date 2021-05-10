@@ -21,7 +21,7 @@ import models.{Organization, BankAccount}
  */
 case class AddressDB(
   id: Long,
-  publicId: Option[UUID],
+  publicId: UUID,
   street: String,
   additional: Option[String],
   zip: String,
@@ -40,14 +40,14 @@ case class AddressDB(
       )
 }
 
-  object AddressDB extends ((Long, Option[UUID], String, Option[String], String, String, String, Long) => AddressDB) {
+  object AddressDB extends ((Long, UUID, String, Option[String], String, String, String, Long) => AddressDB) {
 
-  def apply(tuple: (Long, Option[UUID], String, Option[String], String, String, String, Long)): AddressDB =
+  def apply(tuple: (Long, UUID, String, Option[String], String, String, String, Long)): AddressDB =
     AddressDB(tuple._1, tuple._2, tuple._3, tuple._4, tuple._5, tuple._6, tuple._7, tuple._8)
 
   def apply(id: Long, address: Address, supporterId: Long):AddressDB = AddressDB(id, address.publicId, address.street, address.additional, address.zip, address.city, address.country, supporterId)
 
-  def apply(id: Long, uuid: Option[UUID], address: Address, supporterId: Long):AddressDB = AddressDB(id, uuid, address.street, address.additional, address.zip, address.city, address.country, supporterId)
+  def apply(id: Long, uuid: UUID, address: Address, supporterId: Long):AddressDB = AddressDB(id, uuid, address.street, address.additional, address.zip, address.city, address.country, supporterId)
 
   def apply(address: Address, supporterId: Long):AddressDB = AddressDB(0, address.publicId, address.street, address.additional, address.zip, address.city, address.country, supporterId)
   

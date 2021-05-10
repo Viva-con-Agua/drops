@@ -72,7 +72,7 @@ docker rm drops
 
 >
 *Notice:* 
-All server generated output will be written to the `server-output` file.
+All server generated output will be written to the command line (logs in the case of a docker image).
 This is also needed to confirm users since the production server also uses a mock
 mail server.
 >
@@ -365,6 +365,10 @@ and your service.
 ChangeLog
 =========
 
+## Version 0.36.67 (2021-5-10)
+* [[B] #4 - UserDAO does not execute inserts as a transaction](https://github.com/SOTETO/drops/issues/4)
+* [[B] #6 - DummyUser creation throws an error on Insert](https://github.com/SOTETO/drops/issues/6)
+* [[B] #8 - Database error on inserting Address](https://github.com/SOTETO/drops/issues/8)
 
 ## Version 0.36.61 (2019-4-16)
 

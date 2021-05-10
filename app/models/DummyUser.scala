@@ -39,7 +39,13 @@ object DummyUser {
           (res, i) => res + pillars.toList(i)
         )
       },
-      Set(),
+      Set(AddressStub(
+       (json \ "location" \ "street" \ "name").as[String],
+        None,
+        (json \ "location" \ "postcode").as[Int].toString,
+        (json \ "location" \ "city").as[String],
+        (json \ "location" \ "country").as[String]
+      ).toAddress),
       Some("active"),
       None
     )
