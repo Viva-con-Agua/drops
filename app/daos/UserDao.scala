@@ -60,12 +60,12 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   val oauthTokens = TableQuery[OauthTokenTableDef]
   val addresses = TableQuery[AddressTableDef]
   
-  def uuidFromString(uuid: Option[String]) = {
-    uuid match {
-      case Some(id) => Some(UUID.fromString(id))
-      case _ => None
-    }
-  }
+//  def uuidFromString(uuid: Option[String]) = {
+//    uuid match {
+//      case Some(id) => Some(UUID.fromString(id))
+//      case _ => None
+//    }
+//  }
 
   implicit val getUserResult = GetResult(r => UserDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextLong, r.nextLong))
   implicit val getProfileResult = GetResult(r => ProfileDB(r.nextLong, r.nextBoolean, r.nextString, r.nextLong))
@@ -74,7 +74,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   implicit val getSupporterInfoResult = GetResult(r => SupporterDB(r.nextLong, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextLongOption, r.nextStringOption, r.nextLong))
   implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong, r.nextStringOption, r.nextLongOption)))
   implicit val getOauth1InfoResult = GetResult(r => Some(OAuth1InfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
-  implicit val getAddressInfoResult = GetResult(r => Some(AddressDB(r.nextLong, uuidFromString(r.nextStringOption), r.nextString, r.nextStringOption, r.nextString, r.nextString, r.nextString, r.nextLong)))
+  implicit val getAddressInfoResult = GetResult(r => Some(AddressDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextStringOption, r.nextString, r.nextString, r.nextString, r.nextLong)))
 
 
 
@@ -387,7 +387,7 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
 
     // Assign Address to Supporter.
     def addressAssignment(address: Option[Address], supporterId: Long) = address match {
-      case Some(a) => (addresses returning addresses.map(_.id)) += AddressDB(0, a, supporterId)
+      case Some(a) => (addresses returning addresses.map(_.id)) += AddressDB(a, supporterId)
       case _ => DBIO.successful(false)
     }
 

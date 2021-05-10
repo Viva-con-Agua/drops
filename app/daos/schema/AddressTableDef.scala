@@ -17,7 +17,7 @@ class AddressTableDef(tag: Tag) extends Table[AddressDB](tag, "Address") {
   def supporterId = column[Long]("supporter_id")
 
   def * =
-    (id, publicId.?, street, additional.?, zip, city, country, supporterId) <> (AddressDB.tupled, AddressDB.unapply)
+    (id, publicId, street, additional.?, zip, city, country, supporterId) <> (AddressDB.tupled, AddressDB.unapply)
 
   def supporterKey = foreignKey("supporter_id", supporterId, TableQuery[SupporterTableDef])(_.id, onUpdate = ForeignKeyAction.Cascade)
 

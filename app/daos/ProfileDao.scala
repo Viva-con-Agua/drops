@@ -133,7 +133,7 @@ class MariadbProfileDao @Inject()(val crewDao: MariadbCrewDao) extends ProfileDa
     s <- supporters.filter(s => s.profileId === p.id)
   } yield s
   dbConfig.db.run(action.result).flatMap(result => {
-    dbConfig.db.run((addresses returning addresses.map(_.id)) += AddressDB(0, Some(UUID.randomUUID()), profile.supporter.address.head, result.head.id))
+    dbConfig.db.run((addresses returning addresses.map(_.id)) += AddressDB(0, UUID.randomUUID(), profile.supporter.address.head, result.head.id))
   })
  }
 //  def getSupporterCrewDB(sc: SupporterCrewDB) : Future[SupporterCrewDB] = dbConfig.db.run(
