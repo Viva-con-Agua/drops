@@ -74,7 +74,19 @@ class MariadbUserDao @Inject()(val crewDao: MariadbCrewDao) extends UserDao {
   implicit val getSupporterInfoResult = GetResult(r => SupporterDB(r.nextLong, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextStringOption, r.nextLongOption, r.nextStringOption, r.nextLong))
   implicit val getSupporterCrewInfoResult = GetResult(r => Some(SupporterCrewDB(r.nextLong, r.nextLong, r.nextLong, r.nextStringOption, r.nextStringOption, r.nextLong, r.nextLong, r.nextStringOption, r.nextLongOption)))
   implicit val getOauth1InfoResult = GetResult(r => Some(OAuth1InfoDB(r.nextLong, r.nextString, r.nextString, r.nextLong)))
-  implicit val getAddressInfoResult = GetResult(r => Some(AddressDB(r.nextLong, UUID.fromString(r.nextString), r.nextString, r.nextStringOption, r.nextString, r.nextString, r.nextString, r.nextLong)))
+  implicit val getAddressInfoResult = GetResult(r => {
+    val id = r.nextLong
+    val uuidOption = r.nextStringOption
+    val street = r.nextString
+    val additional = r.nextStringOption
+    val zip = r.nextString
+    val city = r.nextString
+    val country = r.nextString
+    val supporter_id = r.nextLong
+    uuidOption.map(uuidString =>
+      AddressDB(id, UUID.fromString(uuidString), street, additional, zip, city, country, supporter_id)
+    )
+  })
 
 
 
