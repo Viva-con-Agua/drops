@@ -31,21 +31,21 @@ class NatsController @Inject() (
 
   def publishLogout(publicId : UUID): Future[String] = {
       import utils.nats._
-      natsPublishActor.ask(NatsPublishActor.Publish(server, "LOGOUT", publicId.toString)).mapTo[String].map( message => message)
+      natsPublishActor.ask(NatsPublishActor.Publish(server, "drops.user.logout", publicId.toString)).mapTo[String].map( message => message)
   }
 
   def publishCreate(model: String, publicId: UUID): Future[String] = {
     import utils.nats._
-    natsPublishActor.ask(NatsPublishActor.Publish(server, "CREATE", publicId.toString)).mapTo[String].map( message => message)
+    natsPublishActor.ask(NatsPublishActor.Publish(server, "drops.user.created", publicId.toString)).mapTo[String].map( message => message)
   }
 
   def publishUpdate(model: String, publicId: UUID): Future[String] = {
     import utils.nats._
-    natsPublishActor.ask(NatsPublishActor.Publish(server, "UPDATE", publicId.toString)).mapTo[String].map( message => message)
+    natsPublishActor.ask(NatsPublishActor.Publish(server, "drops.user.updated", publicId.toString)).mapTo[String].map( message => message)
   }
 
   def publishDelete(model: String, publicId: UUID): Future[String] = {
     import utils.nats._
-    natsPublishActor.ask(NatsPublishActor.Publish(server, "DELETE", publicId.toString)).mapTo[String].map( message => message)
+    natsPublishActor.ask(NatsPublishActor.Publish(server, "drops.user.deleted", publicId.toString)).mapTo[String].map( message => message)
   }
 }
